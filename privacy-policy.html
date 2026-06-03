@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>นโยบายความเป็นส่วนตัว — H2HFleet</title>
+<style>
+  :root {
+    --primary: #1E40AF;
+    --accent: #2563EB;
+    --light: #EFF6FF;
+    --text: #1E293B;
+    --muted: #64748B;
+    --border: #E2E8F0;
+    --success: #059669;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Thai', sans-serif;
+    background: #F8FAFC;
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+  header {
+    background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
+    color: white;
+    padding: 48px 24px 40px;
+    text-align: center;
+  }
+  .logo-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .logo-icon {
+    width: 48px; height: 48px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+  }
+  .logo-text { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+  header h1 { font-size: 22px; font-weight: 700; opacity: 0.95; margin-bottom: 8px; }
+  header p { font-size: 13px; opacity: 0.75; }
+  .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px;
+    margin-top: 12px;
+  }
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+  .toc {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 36px;
+  }
+  .toc h3 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .toc ol { padding-left: 20px; }
+  .toc li { margin-bottom: 6px; }
+  .toc a { color: var(--accent); text-decoration: none; font-size: 14px; }
+  .toc a:hover { text-decoration: underline; }
+  section {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+  }
+  section h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--light);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  section h2 .num {
+    background: var(--accent);
+    color: white;
+    border-radius: 8px;
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 20px 0 8px;
+  }
+  p { margin-bottom: 12px; color: var(--text); }
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 12px;
+  }
+  ul li {
+    padding: 6px 0 6px 24px;
+    position: relative;
+    color: var(--text);
+    border-bottom: 1px solid #F1F5F9;
+  }
+  ul li:last-child { border-bottom: none; }
+  ul li::before {
+    content: '';
+    position: absolute;
+    left: 6px; top: 14px;
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .highlight-box {
+    background: var(--light);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 10px 10px 0;
+    padding: 14px 16px;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  .warning-box {
+    background: #FEF9C3;
+    border-left: 4px solid #CA8A04;
+    border-radius: 0 10px 10px 0;
+    padding: 14px 16px;
+    margin: 16px 0;
+    font-size: 14px;
+    color: #713F12;
+  }
+  .contact-box {
+    background: linear-gradient(135deg, #1E3A8A, #2563EB);
+    color: white;
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-top: 8px;
+  }
+  .contact-box h3 { color: white; margin-top: 0; }
+  .contact-box ul li { color: white; border-color: rgba(255,255,255,0.15); }
+  .contact-box ul li::before { background: #93C5FD; }
+  .provider-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin: 14px 0;
+  }
+  .provider-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .provider-card .name {
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+  .provider-card p { font-size: 13px; color: var(--muted); margin: 0; }
+  footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--muted);
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+  }
+  @media (max-width: 600px) {
+    section { padding: 20px 18px; }
+    header { padding: 36px 16px 32px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-row">
+    <div class="logo-icon">🚛</div>
+    <span class="logo-text">H2HFleet</span>
+  </div>
+  <h1>นโยบายความเป็นส่วนตัว</h1>
+  <p>ระบบบริหารจัดการรถยนต์สำหรับ SME ไทย</p>
+  <div class="badge">มีผลบังคับใช้: 3 มิถุนายน 2568 &nbsp;|&nbsp; LINE: @655jmtme</div>
+</header>
+
+<div class="container">
+
+  <div class="toc">
+    <h3>สารบัญ</h3>
+    <ol>
+      <li><a href="#s1">บทนำ</a></li>
+      <li><a href="#s2">ข้อมูลที่เราเก็บรวบรวม</a></li>
+      <li><a href="#s3">วัตถุประสงค์ในการใช้ข้อมูล</a></li>
+      <li><a href="#s4">การเปิดเผยข้อมูลแก่บุคคลที่สาม</a></li>
+      <li><a href="#s5">ความยินยอมในการติดตาม GPS</a></li>
+      <li><a href="#s6">สิทธิของผู้ใช้</a></li>
+      <li><a href="#s7">ความปลอดภัยของข้อมูล</a></li>
+      <li><a href="#s8">การติดต่อ</a></li>
+      <li><a href="#s9">การเปลี่ยนแปลงนโยบาย</a></li>
+    </ol>
+  </div>
+
+  <section id="s1">
+    <h2><span class="num">1</span>บทนำ</h2>
+    <p>H2HFleet ("เรา" หรือ "บริการ") ให้ความสำคัญกับความเป็นส่วนตัวของผู้ใช้งานเป็นอย่างยิ่ง นโยบายนี้อธิบายว่าเราเก็บรวบรวม ใช้ และปกป้องข้อมูลส่วนบุคคลของคุณอย่างไร เมื่อคุณใช้งานแอปพลิเคชัน H2HFleet และบริการที่เกี่ยวข้อง</p>
+    <div class="highlight-box">นโยบายนี้ครอบคลุมการใช้งานแอป H2HFleet และบัญชี LINE Official Account <strong>@655jmtme</strong> ทั้งหมด</div>
+  </section>
+
+  <section id="s2">
+    <h2><span class="num">2</span>ข้อมูลที่เราเก็บรวบรวม</h2>
+
+    <h3>2.1 ข้อมูลที่คุณให้โดยตรง</h3>
+    <ul>
+      <li>ชื่อ อีเมล และรหัสผ่าน (เข้ารหัสด้วย bcrypt)</li>
+      <li>ข้อมูลบริษัทหรือองค์กรของคุณ</li>
+      <li>ข้อมูลรถยนต์ เช่น ทะเบียน ยี่ห้อ รุ่น ประเภทรถ</li>
+      <li>ข้อมูลค่าใช้จ่าย เช่น ค่าน้ำมัน ค่าซ่อม วันที่ และจำนวนเงิน</li>
+      <li>หมายเลข IMEI ของอุปกรณ์ GPS (หากมี)</li>
+    </ul>
+
+    <h3>2.2 ข้อมูลที่เก็บโดยอัตโนมัติ</h3>
+    <ul>
+      <li>ตำแหน่ง GPS จากโทรศัพท์ของคนขับ (เฉพาะเมื่อเปิดใช้งาน "โหมดคนขับ")</li>
+      <li>ตำแหน่ง GPS จากอุปกรณ์ติดตามที่ติดตั้งในรถยนต์</li>
+      <li>ความเร็ว ทิศทาง และเวลาของการเดินทาง</li>
+      <li>ประวัติเส้นทางการเดินทาง</li>
+    </ul>
+
+    <h3>2.3 ข้อมูล LINE</h3>
+    <ul>
+      <li>โทเค็น LINE Notify ที่คุณเชื่อมต่อด้วยตนเอง</li>
+      <li>เราไม่เก็บรหัสผ่าน หรือข้อมูลส่วนตัว LINE อื่นใด</li>
+    </ul>
+  </section>
+
+  <section id="s3">
+    <h2><span class="num">3</span>วัตถุประสงค์ในการใช้ข้อมูล</h2>
+    <p>เราใช้ข้อมูลของคุณเพื่อวัตถุประสงค์ดังต่อไปนี้เท่านั้น:</p>
+    <ul>
+      <li>แสดงตำแหน่งรถยนต์แบบเรียลไทม์บนแผนที่ภายในแอป</li>
+      <li>บันทึกและวิเคราะห์ประวัติการเดินทาง (ระยะทาง ความเร็ว เวลา)</li>
+      <li>สร้างรายงานสรุปค่าใช้จ่ายและการใช้งานรถยนต์</li>
+      <li>สร้างสรุปอัจฉริยะด้วย AI เป็นภาษาไทย</li>
+      <li>ส่งการแจ้งเตือนและสรุปประจำวันผ่าน LINE Notify</li>
+      <li>ปรับปรุงและพัฒนาคุณภาพของบริการ</li>
+    </ul>
+  </section>
+
+  <section id="s4">
+    <h2><span class="num">4</span>การเปิดเผยข้อมูลแก่บุคคลที่สาม</h2>
+    <p>เราอาจแบ่งปันข้อมูลกับผู้ให้บริการภายนอกที่จำเป็น ดังนี้:</p>
+    <div class="provider-grid">
+      <div class="provider-card">
+        <div class="name">🗄️ Supabase</div>
+        <p>ฐานข้อมูลหลักและระบบยืนยันตัวตน มาตรฐาน SOC 2 Type II</p>
+      </div>
+      <div class="provider-card">
+        <div class="name">🤖 OpenAI</div>
+        <p>สร้างสรุปภาษาไทย รับเฉพาะสถิติ ไม่มีข้อมูลระบุตัวบุคคล</p>
+      </div>
+      <div class="provider-card">
+        <div class="name">💬 LINE Corporation</div>
+        <p>ส่งการแจ้งเตือนผ่าน LINE Notify ตามที่ผู้ใช้ตั้งค่า</p>
+      </div>
+    </div>
+    <p style="margin-top:8px; color: var(--muted); font-size:13px;">เราไม่ขาย ให้เช่า หรือแบ่งปันข้อมูลส่วนบุคคลของคุณกับบุคคลที่สามเพื่อวัตถุประสงค์ทางการตลาด</p>
+  </section>
+
+  <section id="s5">
+    <h2><span class="num">5</span>ความยินยอมในการติดตาม GPS</h2>
+    <div class="warning-box">
+      ⚠️ <strong>สำคัญ:</strong> การเปิดใช้งาน "โหมดคนขับ" จะเก็บและส่งตำแหน่ง GPS ของโทรศัพท์คนขับ
+    </div>
+    <p>ผู้จัดการหรือเจ้าของรถมีหน้าที่:</p>
+    <ul>
+      <li>แจ้งให้คนขับทราบว่ามีการติดตาม GPS ระหว่างการทำงาน</li>
+      <li>ขอความยินยอมจากคนขับก่อนเปิดใช้งานการติดตาม</li>
+      <li>ใช้ข้อมูลตำแหน่งเพื่อวัตถุประสงค์ทางธุรกิจที่ชอบด้วยกฎหมายเท่านั้น</li>
+      <li>ปฏิบัติตามกฎหมายคุ้มครองข้อมูลส่วนบุคคล (PDPA) ของประเทศไทย</li>
+    </ul>
+  </section>
+
+  <section id="s6">
+    <h2><span class="num">6</span>สิทธิของผู้ใช้</h2>
+    <p>คุณมีสิทธิดังต่อไปนี้เกี่ยวกับข้อมูลส่วนบุคคลของคุณ:</p>
+    <ul>
+      <li><strong>สิทธิในการเข้าถึง</strong> — ขอดูข้อมูลที่เราเก็บเกี่ยวกับคุณ</li>
+      <li><strong>สิทธิในการแก้ไข</strong> — ขอให้แก้ไขข้อมูลที่ไม่ถูกต้อง</li>
+      <li><strong>สิทธิในการลบ</strong> — ขอให้ลบข้อมูลส่วนบุคคลของคุณ</li>
+      <li><strong>สิทธิในการถอนความยินยอม</strong> — ยกเลิกการติดตาม GPS ได้ทุกเมื่อ</li>
+      <li><strong>สิทธิในการโอนย้ายข้อมูล</strong> — ขอรับข้อมูลในรูปแบบที่อ่านได้</li>
+    </ul>
+  </section>
+
+  <section id="s7">
+    <h2><span class="num">7</span>ความปลอดภัยของข้อมูล</h2>
+    <ul>
+      <li>การเข้ารหัส SSL/TLS สำหรับการส่งข้อมูลทุกครั้ง</li>
+      <li>Row Level Security (RLS) ป้องกันการเข้าถึงข้อมูลข้ามบริษัท</li>
+      <li>รหัสผ่านถูกเข้ารหัสด้วย bcrypt ก่อนบันทึก</li>
+      <li>การยืนยันตัวตนด้วย JWT Token</li>
+      <li>เซิร์ฟเวอร์ตั้งอยู่ในภูมิภาคเอเชียแปซิฟิก</li>
+    </ul>
+  </section>
+
+  <section id="s8">
+    <h2><span class="num">8</span>การติดต่อ</h2>
+    <div class="contact-box">
+      <h3>ติดต่อ H2HFleet</h3>
+      <ul>
+        <li>LINE Official Account: <strong>@655jmtme</strong></li>
+        <li>ชื่อบริการ: H2HFleet</li>
+        <li>เราจะตอบกลับภายใน 7 วันทำการ</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="s9">
+    <h2><span class="num">9</span>การเปลี่ยนแปลงนโยบาย</h2>
+    <p>เราอาจปรับปรุงนโยบายนี้เป็นครั้งคราว โดยจะแจ้งผ่านแอปพลิเคชันหรือ LINE Official Account (<strong>@655jmtme</strong>) ล่วงหน้าอย่างน้อย 7 วัน การใช้งานต่อเนื่องหลังจากนั้นถือว่าคุณยอมรับนโยบายที่ปรับปรุงแล้ว</p>
+  </section>
+
+</div>
+
+<footer>
+  <p>© 2568 H2HFleet &nbsp;|&nbsp; LINE: @655jmtme &nbsp;|&nbsp; นโยบายความเป็นส่วนตัว มีผลบังคับใช้ตั้งแต่ 3 มิถุนายน 2568</p>
+</footer>
+
+</body>
+</html>

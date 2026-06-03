@@ -1,0 +1,35 @@
+# Flutter
+h2hfleet/.dart_tool/
+h2hfleet/.flutter-plugins
+h2hfleet/.flutter-plugins-dependencies
+h2hfleet/build/
+h2hfleet/.packages
+h2hfleet/pubspec.lock
+
+# iOS
+h2hfleet/ios/Pods/
+h2hfleet/ios/.symlinks/
+h2hfleet/ios/Flutter/Flutter.framework
+h2hfleet/ios/Flutter/Flutter.podspec
+
+# Android
+h2hfleet/android/.gradle/
+h2hfleet/android/local.properties
+h2hfleet/android/key.properties
+
+# Node
+node_modules/
+package-lock.json
+h2hfleet/assets/images/node_modules/
+h2hfleet/assets/images/package-lock.json
+
+# Generated
+h2hfleet/assets/images/gen_icon.mjs
+create_docs.js
+H2HFleet_PrivacyPolicy.docx
+H2HFleet_TermsOfService.docx
+h2hfleet/assets/images/preview.html
+
+# Misc
+.DS_Store
+*.log
