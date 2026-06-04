@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>H2HFleet - ระบบบริหารจัดการรถยนต์ สำหรับ SME ไทย</title>
+  <meta name="description" content="H2HFleet - แอปพลิเคชันบริหารจัดการรถยนต์สำหรับธุรกิจ SME ไทย ติดตาม GPS เรียลไทม์ วิเคราะห์ค่าใช้จ่าย AI สรุมภาษาไทย">
+  <meta property="og:image" content="https://rnai-io.github.io/H2Hfleet/assets/images/logo.svg">
+  <meta property="og:url" content="https://h2hfleet.app">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #1E40AF;
+      --accent: #2563EB;
+      --success: #059669;
+      --warning: #CA8A04;
+      --text: #1E293B;
+      --muted: #64748B;
+      --light: #F1F5F9;
+      --white: #FFFFFF;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Thai', Roboto, sans-serif;
+      background: #FFFFFF;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* Header & Nav */
+    header {
+      background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
+      color: white;
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .logo-icon { font-size: 28px; }
+
+    .nav-links {
+      display: flex;
+      gap: 30px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      font-size: 14px;
+      transition: opacity 0.3s;
+    }
+
+    .nav-links a:hover { opacity: 0.8; }
+
+    /* Hero Section */
+    .hero {
+      background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
+      color: white;
+      padding: 80px 20px;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 800;
+      margin-bottom: 20px;
+      line-height: 1.2;
+    }
+
+    .hero p {
+      font-size: 18px;
+      opacity: 0.9;
+      margin-bottom: 30px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 60px;
+    }
+
+    .btn {
+      padding: 14px 28px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-primary {
+      background: white;
+      color: var(--primary);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: 2px solid white;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .hero-image {
+      max-width: 500px;
+      height: auto;
+      margin-bottom: 40px;
+    }
+
+    /* Features Section */
+    .features {
+      padding: 80px 20px;
+      background: var(--light);
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 36px;
+      font-weight: 800;
+      margin-bottom: 50px;
+      color: var(--text);
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .feature-card {
+      background: white;
+      border-radius: 12px;
+      padding: 40px 30px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: all 0.3s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    }
+
+    .feature-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+
+    .feature-card h3 {
+      font-size: 20px;
+      margin-bottom: 15px;
+      color: var(--primary);
+    }
+
+    .feature-card p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    /* Stats Section */
+    .stats {
+      padding: 60px 20px;
+      background: white;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 40px;
+      text-align: center;
+    }
+
+    .stat-item h4 {
+      font-size: 32px;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .stat-item p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* Download Section */
+    .download {
+      padding: 80px 20px;
+      background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
+      color: white;
+      text-align: center;
+    }
+
+    .download h2 {
+      font-size: 36px;
+      margin-bottom: 30px;
+    }
+
+    .download-buttons {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+    }
+
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: white;
+      color: var(--primary);
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 700;
+      transition: all 0.3s;
+    }
+
+    .download-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+
+    .app-icon { font-size: 24px; }
+
+    /* Footer */
+    footer {
+      background: #0F172A;
+      color: white;
+      padding: 40px 20px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: #93C5FD;
+      text-decoration: none;
+    }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 32px; }
+      .hero p { font-size: 16px; }
+      .section-title { font-size: 28px; }
+      .nav-links { display: none; }
+      .btn-group { flex-direction: column; }
+      .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="container">
+      <nav class="nav">
+        <div class="logo">
+          <span class="logo-icon">🚛</span>
+          <span>H2HFleet</span>
+        </div>
+        <ul class="nav-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#download">Download</a></li>
+          <li><a href="https://rnai-io.github.io/H2Hfleet/privacy-policy.html" target="_blank">Privacy</a></li>
+          <li><a href="https://rnai-io.github.io/H2Hfleet/terms-of-service.html" target="_blank">Terms</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <h1>🚛 ระบบบริหารจัดการรถยนต์<br>สำหรับ SME ไทย</h1>
+      <p>ติดตาม GPS เรียลไทม์ • วิเคราะห์ค่าใช้จ่าย • AI สรุปภาษาไทย • บริหารจัดการรถได้ง่ายๆ</p>
+
+      <div class="btn-group">
+        <a href="https://apps.apple.com" class="btn btn-primary">📱 App Store</a>
+        <a href="https://play.google.com" class="btn btn-primary">🤖 Google Play</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features" id="features">
+    <div class="container">
+      <h2 class="section-title">✨ ฟีเจอร์หลัก</h2>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🗺️</div>
+          <h3>GPS Realtime</h3>
+          <p>ติดตามตำแหน่งรถและคนขับแบบเรียลไทม์บนแผนที่สด พร้อม dual marker</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>วิเคราะห์เส้นทาง</h3>
+          <p>ดูประวัติการเดินทาง ระยะทาง ความเร็ว เวลาจอด แบบละเอียด</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">💰</div>
+          <h3>บันทึกค่าใช้จ่าย</h3>
+          <p>บันทึกค่าน้ำมัน ค่าซ่อม ค่ายาง วิเคราะห์ค่าใช้จ่ายต่อเดือน</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🤖</div>
+          <h3>AI สรุปไทย</h3>
+          <p>AI วิเคราะห์และสรุปค่าใช้จ่ายประจำวัน พร้อมแนะนำการประหยัด</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">💬</div>
+          <h3>LINE Integration</h3>
+          <p>ส่งสรุปไป LINE Bot รับแจ้งเตือนค่าใช้จ่ายแบบเรียลไทม์</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <h3>โหมดคนขับ</h3>
+          <p>คนขับกดเริ่มเดินทาง แอปส่ง GPS ให้อัตโนมัติทุก 60 วินาที</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="stats">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <h4>0+</h4>
+          <p>ผู้ใช้งาน</p>
+        </div>
+        <div class="stat-item">
+          <h4>99.9%</h4>
+          <p>Uptime</p>
+        </div>
+        <div class="stat-item">
+          <h4>ฟรี</h4>
+          <p>ลองใช้เลย</p>
+        </div>
+        <div class="stat-item">
+          <h4>24/7</h4>
+          <p>Support</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download Section -->
+  <section class="download" id="download">
+    <div class="container">
+      <h2>📲 ดาวน์โหลดแอป H2HFleet</h2>
+      <p style="margin-bottom: 40px; font-size: 18px;">เปิดใช้งานบน iOS และ Android</p>
+
+      <div class="download-buttons">
+        <a href="https://apps.apple.com" class="download-btn">
+          <span class="app-icon">🍎</span>
+          <span>App Store</span>
+        </a>
+        <a href="https://play.google.com" class="download-btn">
+          <span class="app-icon">🤖</span>
+          <span>Google Play</span>
+        </a>
+      </div>
+
+      <p style="opacity: 0.9; font-size: 14px;">หรือติดต่อเราได้ที่ LINE @655jmtme</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="https://rnai-io.github.io/H2Hfleet/privacy-policy.html">นโยบายความเป็นส่วนตัว</a>
+        <a href="https://rnai-io.github.io/H2Hfleet/terms-of-service.html">ข้อกำหนดการใช้บริการ</a>
+        <a href="#">ติดต่อเรา</a>
+      </div>
+      <p>© 2568 H2HFleet | Made with ❤️ for Thai SMEs</p>
+      <p style="margin-top: 10px; opacity: 0.7;">LINE Official: @655jmtme</p>
+    </div>
+  </footer>
+</body>
+</html>
