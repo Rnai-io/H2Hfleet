@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dio/dio.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../providers/auth_provider.dart';
 import '../../../../providers/vehicles_provider.dart';
@@ -14,6 +15,7 @@ import '../../../line/line_settings_screen.dart';
 import '../../../line/line_service.dart';
 import '../../../map/map_screen.dart';
 import '../../../driver/driver_mode_screen.dart';
+import '../../../settings/ai_settings_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -53,38 +55,44 @@ class DashboardScreen extends ConsumerWidget {
     final currencyFormat = NumberFormat('#,##0', 'th_TH');
 
     Future<void> sendLineNotify(String summary) async {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('line_notify_token') ?? '';
-      if (token.isEmpty) {
+      try {
+        final channelToken = 'KlxTUlAtEC4NNmBbAcWvo83SCTzirO5zOHOiicwpiWlXKExRUf9SbfTtv8+tW9+cZc/uS5/mhUt/WZEzPRV+EgYoqlCnyv19BtEaqSULuCFkBzX0FBWLeg47H6UEKvD4h2xYzvKKKuaUnfwezepwLQdB04t89/1O/w1cDnyilFU=';
+        final userId = 'U6e671a7fd6cc0e51d05dce910e63090e';
+
+        final message = '''🚛 H2HFleet สรุปประจำวัน
+
+$summary
+
+📊 สถิติ:
+• รถ: $vehicleCount คัน
+• ค่าใช้จ่ายวันนี้: ฿${todayTotal.toStringAsFixed(0)}
+• เดือนนี้: ฿${monthTotal.toStringAsFixed(0)}''';
+
+        final dio = Dio();
+        final response = await dio.post(
+          'https://rdobhvuiadmsqdfugrlp.supabase.co/functions/v1/line-push-message',
+          data: {
+            'userId': userId,
+            'message': message,
+            'channelToken': channelToken,
+          },
+        );
+
+        final ok = response.statusCode == 200;
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('ยังไม่ได้ตั้งค่า LINE Token'),
-              action: SnackBarAction(
-                label: 'ตั้งค่า',
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const LineSettingsScreen()),
-                ),
-              ),
+              content: Text(ok ? 'ส่งสรุปไป LINE สำเร็จ ✅' : 'ส่งไม่สำเร็จ'),
+              backgroundColor: ok ? AppColors.success : AppColors.danger,
             ),
           );
         }
-        return;
-      }
-      final message = LineService().buildDailySummary(
-        vehicleCount: vehicleCount,
-        todayTotal: todayTotal,
-        monthTotal: monthTotal,
-        aiSummary: summary,
-      );
-      final ok = await LineService().sendNotify(token: token, message: message);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(ok ? 'ส่งสรุปไป LINE สำเร็จ ✅' : 'ส่งไม่สำเร็จ ตรวจสอบ Token'),
-            backgroundColor: ok ? AppColors.success : AppColors.danger,
-          ),
-        );
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.danger),
+          );
+        }
       }
     }
 
@@ -256,6 +264,21 @@ class DashboardScreen extends ConsumerWidget {
                               const SizedBox(width: 8),
                               const Text('AI สรุปวันนี้',
                                 style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
+                              ),
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (_) => const AiSettingsScreen()),
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text('ตั้งค่า',
+                                    style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+                                ),
                               ),
                             ],
                           ),

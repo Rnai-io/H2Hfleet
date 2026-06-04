@@ -25,7 +25,9 @@ class LocationService {
       if (permission == LocationPermission.denied) return false;
     }
     if (permission == LocationPermission.deniedForever) return false;
-    return true;
+    // WhenInUse เพียงพอสำหรับ MVP (ไม่ต้อง Always)
+    return permission == LocationPermission.whileInUse ||
+        permission == LocationPermission.always;
   }
 
   Future<bool> startTracking(String vehicleId) async {

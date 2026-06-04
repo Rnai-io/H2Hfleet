@@ -45,7 +45,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     final vehicleLocs = locationsAsync.valueOrNull ?? [];
     final driverLocs = driverLocsAsync.valueOrNull ?? [];
-    final totalOnline = vehicleLocs.length + driverLocs.length;
+    // นับ unique vehicles (รถ 1 คันมีได้ทั้ง vehicle marker และ driver marker)
+    final uniqueVehicleIds = {
+      ...vehicleLocs.map((l) => l.vehicleId),
+      ...driverLocs.map((d) => d.vehicleId),
+    };
+    final vehicleCount = uniqueVehicleIds.length;
+    final activeDriverCount = driverLocs.length;
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -95,21 +101,27 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           ),
                         ],
                       ),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.map_rounded,
-                              color: AppColors.primary, size: 18),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'แผนที่รถสด',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
-                            ),
+                          Row(
+                            children: [
+                              const Icon(Icons.map_rounded,
+                                  color: AppColors.primary, size: 16),
+                              const SizedBox(width: 6),
+                              const Text(
+                                'สถานะ Online',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
                           ),
-                          const Spacer(),
-                          _VehicleCountBadge(totalOnline),
+                          const SizedBox(height: 4),
+                          _VehicleCountBadge(vehicleCount, activeDriverCount),
                         ],
                       ),
                     ),
@@ -355,25 +367,33 @@ class _MapPlaceholder extends StatelessWidget {
 }
 
 class _VehicleCountBadge extends StatelessWidget {
-  final int count;
-  const _VehicleCountBadge(this.count);
+  final int vehicleCount;
+  final int driverCount;
+  const _VehicleCountBadge(this.vehicleCount, this.driverCount);
+
+  Widget _chip(String label, Color color, Color bg) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
+        child: Text(label,
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
+      );
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: count > 0 ? AppColors.primarySurface : AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        '$count คัน',
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: count > 0 ? AppColors.primary : AppColors.textHint,
-        ),
-      ),
+    if (vehicleCount == 0 && driverCount == 0) {
+      return _chip('ไม่มีออนไลน์', AppColors.textHint, AppColors.surface);
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (vehicleCount > 0)
+          _chip('🚛 รถ $vehicleCount', AppColors.primary, AppColors.primarySurface),
+        if (vehicleCount > 0 && driverCount > 0)
+          const SizedBox(width: 6),
+        if (driverCount > 0)
+          _chip('👤 คนขับ $driverCount', AppColors.success, AppColors.successSurface),
+      ],
     );
   }
 }

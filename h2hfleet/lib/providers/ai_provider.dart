@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/openai_service.dart';
+import '../services/gemini_service.dart';
 import 'expenses_provider.dart';
 import 'vehicles_provider.dart';
 
@@ -34,8 +34,8 @@ final aiSummaryProvider = FutureProvider<String>((ref) async {
 
   final totalSpent = todayExpenses.fold<double>(0, (sum, e) => sum + e.amount);
 
-  // เรียก AI (รวมกรณีไม่มีค่าใช้จ่ายวันนี้ → ให้ tip ประจำวัน)
-  return OpenAIService().generateFleetSummary(
+  // เรียก Gemini AI (รวมกรณีไม่มีค่าใช้จ่ายวันนี้ → ให้ tip ประจำวัน)
+  return GeminiService().generateFleetSummary(
     totalSpent: totalSpent,
     expenses: byType,
     vehicleCount: vehicleCount,

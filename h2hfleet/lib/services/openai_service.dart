@@ -1,79 +1,93 @@
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OpenAIService {
   final _dio = Dio();
+  static const _prefKey = 'openai_api_key';
 
-  // OpenAI Responses API (gpt-5.4-mini)
-  // ใส่ API Key จริงที่นี่ (อย่า commit ขึ้น GitHub)
-  static const _apiKey = String.fromEnvironment('OPENAI_API_KEY', defaultValue: '');
-  static const _model = 'gpt-5.4-mini';
-  static const _endpoint = 'https://api.openai.com/v1/responses';
+  static Future<void> saveKey(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefKey, key);
+  }
+
+  static Future<String> getKey() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_prefKey) ?? '';
+  }
+
+  String _localSummary(
+    double totalSpent,
+    Map<String, double> expenses,
+    int vehicleCount,
+  ) {
+    if (expenses.isEmpty) {
+      return '🚛 วันนี้ยังไม่มีค่าใช้จ่าย ($vehicleCount คัน)\n✅ อย่าลืมตรวจน้ำมัน ยาง และสภาพรถ';
+    }
+    final topEntry = expenses.entries.reduce((a, b) => a.value > b.value ? a : b);
+    final lines = <String>['📊 สรุปวันนี้: ฿${totalSpent.toStringAsFixed(0)} บาท ($vehicleCount คัน)'];
+    for (final e in expenses.entries) {
+      lines.add('• ${e.key}: ฿${e.value.toStringAsFixed(0)}');
+    }
+    lines.add('');
+    if (topEntry.value > 3000) {
+      lines.add('⚠️ ${topEntry.key} สูงผิดปกติ ควรตรวจสอบ');
+    } else {
+      lines.add('✅ ค่าใช้จ่ายอยู่ในเกณฑ์ปกติ');
+    }
+    return lines.join('\n');
+  }
 
   Future<String> generateFleetSummary({
     required double totalSpent,
     required Map<String, double> expenses,
     required int vehicleCount,
   }) async {
-    try {
-      final prompt = _buildPrompt(
-        totalSpent: totalSpent,
-        expenses: expenses,
-        vehicleCount: vehicleCount,
-      );
+    final apiKey = await getKey();
+    if (apiKey.isEmpty) return 'ยังไม่ได้ตั้งค่า OpenAI API Key\nไปที่ Settings → AI Settings';
 
-      final response = await _dio.post(
-        _endpoint,
+    try {
+      final prompt = expenses.isEmpty
+          ? 'วันนี้ยังไม่มีค่าใช้จ่ายรถ ($vehicleCount คัน) แนะนำสิ่งที่ควรตรวจสอบประจำวันสั้นๆ'
+          : 'รถ $vehicleCount คัน ค่าใช้จ่ายวันนี้รวม ${totalSpent.toStringAsFixed(0)} บาท\n'
+            '${expenses.entries.map((e) => '- ${e.key}: ${e.value.toStringAsFixed(0)} บาท').join('\n')}\n\n'
+            'สรุปสั้นๆ ให้เจ้าของกิจการ: มีอะไรผิดปกติไหม? ควรระวังอะไร?';
+
+      final res = await _dio.post(
+        'https://api.openai.com/v1/chat/completions',
         options: Options(
           headers: {
-            'Authorization': 'Bearer $_apiKey',
+            'Authorization': 'Bearer $apiKey',
             'Content-Type': 'application/json',
           },
+          sendTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(seconds: 15),
         ),
         data: {
-          'model': _model,
-          'instructions':
-              'คุณเป็น AI ผู้ช่วยจัดการรถบริษัทสำหรับ SME ไทย ตอบเป็นภาษาไทยเท่านั้น กระชับ ไม่เกิน 60 คำ',
-          'input': prompt,
-          'max_output_tokens': 200,
+          'model': 'gpt-4o-mini',
+          'messages': [
+            {
+              'role': 'system',
+              'content': 'คุณเป็น AI ผู้ช่วยจัดการรถบริษัทสำหรับ SME ไทย ตอบเป็นภาษาไทยเท่านั้น กระชับ ไม่เกิน 60 คำ',
+            },
+            {'role': 'user', 'content': prompt},
+          ],
+          'max_tokens': 200,
           'temperature': 0.7,
         },
       );
 
-      // Responses API format:
-      // response.data['output'][0]['content'][0]['text']
-      final output = response.data['output'] as List?;
-      if (output == null || output.isEmpty) return 'ไม่มีข้อมูลวันนี้';
-
-      final content = output[0]['content'] as List?;
-      if (content == null || content.isEmpty) return 'ไม่มีข้อมูลวันนี้';
-
-      return content[0]['text']?.toString().trim() ?? 'ไม่มีข้อมูลวันนี้';
+      return res.data['choices'][0]['message']['content']?.toString().trim()
+          ?? 'ไม่มีข้อมูลวันนี้';
     } on DioException catch (e) {
-      final statusCode = e.response?.statusCode;
-      final msg = e.response?.data?['error']?['message'] ?? e.message;
-      return 'AI Error ($statusCode): $msg';
+      if (e.response?.statusCode == 401) {
+        return _localSummary(totalSpent, expenses, vehicleCount);
+      }
+      if (e.response?.statusCode == 429) {
+        return _localSummary(totalSpent, expenses, vehicleCount);
+      }
+      return _localSummary(totalSpent, expenses, vehicleCount);
     } catch (e) {
-      return 'ไม่สามารถสร้างสรุปได้ในขณะนี้';
+      return _localSummary(totalSpent, expenses, vehicleCount);
     }
   }
-
-  String _buildPrompt({
-    required double totalSpent,
-    required Map<String, double> expenses,
-    required int vehicleCount,
-  }) {
-    if (expenses.isEmpty) {
-      return 'วันนี้ยังไม่มีค่าใช้จ่ายรถ ($vehicleCount คัน) แนะนำสิ่งที่ควรตรวจสอบประจำวันสั้นๆ';
-    }
-
-    final expenseList = expenses.entries
-        .map((e) => '- ${e.key}: ${e.value.toStringAsFixed(0)} บาท')
-        .join('\n');
-
-    return '''
-รถ $vehicleCount คัน ค่าใช้จ่ายวันนี้รวม ${totalSpent.toStringAsFixed(0)} บาท
-$expenseList
-
-สรุปสั้นๆ ให้เจ้าของกิจการ: มีค่าใช้จ่ายอะไรผิดปกติไหม? ควรระวังอะไร?''';
-   }
 }
