@@ -57,14 +57,13 @@ class DashboardScreen extends ConsumerWidget {
       try {
         // ดึง LINE credentials จาก SharedPreferences (ตั้งค่าใน Settings → LINE)
         final prefs = await SharedPreferences.getInstance();
-        final channelToken = prefs.getString('line_channel_token') ?? '';
         final userId = prefs.getString('line_user_id') ?? '';
 
-        if (channelToken.isEmpty || userId.isEmpty) {
+        if (userId.isEmpty) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('กรุณาตั้งค่า LINE ก่อน (Settings → LINE)'),
+                content: Text('กรุณาตั้งค่า LINE User ID ก่อน (กดเมนู LINE Notify)'),
                 backgroundColor: AppColors.warning,
               ),
             );
@@ -87,7 +86,6 @@ $summary
           data: {
             'userId': userId,
             'message': message,
-            'channelToken': channelToken,
           },
         );
 
