@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>H2HFleet — Live Demo | ระบบบริหารรถ SME ไทย</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #1E3A8A;
+    --accent: #2563EB;
+    --success: #059669;
+    --warning: #D97706;
+    --danger: #DC2626;
+    --text: #1E293B;
+    --muted: #64748B;
+    --surface: #F8FAFC;
+    --card: #FFFFFF;
+    --border: #E2E8F0;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Thai', sans-serif; background:var(--surface); color:var(--text); height:100vh; overflow:hidden; }
+
+  /* ===== HEADER ===== */
+  .header {
+    background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
+    color: white;
+    padding: 0 20px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    position: relative;
+    z-index: 1000;
+  }
+  .logo { display:flex; align-items:center; gap:10px; font-size:20px; font-weight:800; }
+  .logo-icon { font-size:24px; }
+  .demo-badge {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .header-right { display:flex; align-items:center; gap:12px; }
+  .live-dot {
+    display: flex; align-items: center; gap:6px;
+    font-size: 12px; color: rgba(255,255,255,0.9);
+  }
+  .live-dot::before {
+    content: '';
+    width: 8px; height: 8px;
+    background: #4ADE80;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:0.5; transform:scale(1.2); }
+  }
+
+  /* ===== LAYOUT ===== */
+  .app { display:flex; height:calc(100vh - 56px); }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar {
+    width: 360px;
+    min-width: 360px;
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .sidebar-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 12px 6px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-content { flex:1; overflow-y:auto; display:none; }
+  .tab-content.active { display:block; }
+
+  /* ===== STAT CARDS ===== */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 12px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+  }
+  .stat-card {
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+  }
+  .stat-card .num { font-size:20px; font-weight:800; color:var(--accent); }
+  .stat-card .lbl { font-size:10px; color:var(--muted); margin-top:2px; }
+
+  /* ===== VEHICLE LIST ===== */
+  .vehicle-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .vehicle-item:hover { background: var(--surface); }
+  .vehicle-item.selected { background: #EFF6FF; }
+  .vehicle-icon {
+    width: 42px; height: 42px;
+    background: var(--accent);
+    border-radius: 12px;
+    display: flex; align-items:center; justify-content:center;
+    color: white; font-size: 20px;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+  .vehicle-icon.idle { background: var(--warning); }
+  .vehicle-icon.stopped { background: var(--muted); }
+  .vehicle-info { flex:1; min-width:0; }
+  .vehicle-plate { font-size:14px; font-weight:800; color:var(--text); }
+  .vehicle-meta { font-size:11px; color:var(--muted); margin-top:2px; }
+  .vehicle-status {
+    display:flex; flex-direction:column; align-items:flex-end; gap:4px;
+  }
+  .status-badge {
+    font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px;
+  }
+  .badge-running { background:#DCFCE7; color:var(--success); }
+  .badge-idle { background:#FEF3C7; color:var(--warning); }
+  .badge-stopped { background:#F1F5F9; color:var(--muted); }
+  .speed-text { font-size:11px; font-weight:700; color:var(--muted); }
+
+  /* ===== AI PANEL ===== */
+  .ai-panel { padding: 16px; }
+  .ai-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px;
+  }
+  .ai-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #7C3AED, #2563EB);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 18px;
+  }
+  .ai-title { font-size:14px; font-weight:800; }
+  .ai-subtitle { font-size:11px; color:var(--muted); }
+  .ai-badge { font-size:10px; background:#EDE9FE; color:#7C3AED; padding:2px 8px; border-radius:20px; font-weight:700; }
+
+  .ai-summary-box {
+    background: linear-gradient(135deg, #EFF6FF, #F5F3FF);
+    border: 1px solid #BFDBFE;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 14px;
+    position: relative;
+    min-height: 80px;
+  }
+  .ai-summary-text { font-size:13px; line-height:1.7; color:var(--text); }
+  .ai-typing { display:flex; gap:4px; align-items:center; }
+  .ai-typing span {
+    width:6px; height:6px; background:#7C3AED; border-radius:50%;
+    animation: bounce 1.2s infinite;
+  }
+  .ai-typing span:nth-child(2) { animation-delay:0.2s; }
+  .ai-typing span:nth-child(3) { animation-delay:0.4s; }
+  @keyframes bounce {
+    0%,60%,100% { transform:translateY(0); }
+    30% { transform:translateY(-6px); }
+  }
+  .ai-btn {
+    width:100%; padding:10px; border:none; border-radius:10px;
+    background: linear-gradient(135deg, #7C3AED, #2563EB);
+    color:white; font-weight:700; font-size:13px; cursor:pointer;
+    transition: opacity 0.2s; margin-bottom: 12px;
+  }
+  .ai-btn:hover { opacity:0.9; }
+
+  .ai-insights { display:flex; flex-direction:column; gap:8px; }
+  .insight-card {
+    background: var(--card);
+    border-radius: 10px;
+    padding: 10px 12px;
+    border-left: 3px solid var(--accent);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .insight-card.warning { border-left-color: var(--warning); }
+  .insight-card.success { border-left-color: var(--success); }
+  .insight-card.danger { border-left-color: var(--danger); }
+  .insight-title { font-size:12px; font-weight:700; color:var(--text); margin-bottom:3px; }
+  .insight-desc { font-size:11px; color:var(--muted); line-height:1.5; }
+  .insight-value { font-size:14px; font-weight:800; }
+
+  /* ===== ALERTS ===== */
+  .alert-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .alert-dot {
+    width: 8px; height: 8px; border-radius:50%; margin-top:5px; flex-shrink:0;
+  }
+  .alert-dot.red { background:var(--danger); }
+  .alert-dot.yellow { background:var(--warning); }
+  .alert-dot.green { background:var(--success); }
+  .alert-title { font-size:13px; font-weight:700; color:var(--text); }
+  .alert-desc { font-size:11px; color:var(--muted); margin-top:2px; line-height:1.5; }
+  .alert-time { font-size:10px; color:var(--muted); margin-top:4px; }
+
+  /* ===== CHART SECTION ===== */
+  .charts-panel { padding:16px; }
+  .chart-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border: 1px solid var(--border);
+  }
+  .chart-title { font-size:13px; font-weight:700; margin-bottom:10px; color:var(--text); }
+  .chart-wrap { position:relative; height:140px; }
+
+  /* Driver score */
+  .driver-list { display:flex; flex-direction:column; gap:8px; }
+  .driver-row {
+    display:flex; align-items:center; gap:10px; padding:8px 12px;
+    background:var(--surface); border-radius:10px;
+  }
+  .driver-rank { font-size:16px; font-weight:800; width:24px; text-align:center; }
+  .driver-info { flex:1; }
+  .driver-name { font-size:12px; font-weight:700; }
+  .driver-plate { font-size:10px; color:var(--muted); }
+  .score-bar-wrap { display:flex; align-items:center; gap:8px; }
+  .score-bar {
+    flex:1; height:8px; background:#E2E8F0; border-radius:4px; overflow:hidden;
+  }
+  .score-fill { height:100%; border-radius:4px; transition:width 0.6s; }
+  .score-num { font-size:13px; font-weight:800; }
+
+  /* ===== MAP ===== */
+  .map-section { flex:1; display:flex; flex-direction:column; position:relative; }
+  #map { flex:1; z-index:1; }
+  .map-overlay {
+    position: absolute; top:12px; left:12px; z-index:800;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .map-control-card {
+    background:white; border-radius:12px; padding:10px 14px;
+    box-shadow:0 2px 12px rgba(0,0,0,0.12); font-size:12px;
+  }
+  .map-title { font-weight:800; color:var(--text); font-size:13px; }
+  .map-sub { color:var(--muted); margin-top:2px; }
+  .sim-badge {
+    background:var(--warning); color:white; padding:4px 10px;
+    border-radius:8px; font-size:11px; font-weight:700;
+    animation:blink 1s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+  /* Custom map markers */
+  .leaflet-div-icon { background:none !important; border:none !important; }
+  .truck-marker {
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+  }
+  .truck-label {
+    background:white; padding:2px 6px; border-radius:5px;
+    font-size:10px; font-weight:700; white-space:nowrap;
+    box-shadow:0 1px 4px rgba(0,0,0,0.15);
+  }
+  .truck-circle {
+    width:32px; height:32px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px; border:2px solid white;
+    box-shadow:0 2px 6px rgba(0,0,0,0.2);
+  }
+
+  /* Route line tooltip */
+  .popup-custom { font-size:12px; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width:768px) {
+    .sidebar { width:100%; min-width:unset; }
+    .map-section { display:none; }
+    .stats-bar { grid-template-columns:repeat(2,1fr); }
+  }
+
+  /* Scrollbar style */
+  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:#CBD5E1; border-radius:2px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo">
+    <span class="logo-icon">🚛</span>
+    <span>H2HFleet</span>
+    <span class="demo-badge">LIVE DEMO</span>
+  </div>
+  <div class="header-right">
+    <div class="live-dot">Realtime Active</div>
+    <span style="color:rgba(255,255,255,0.6);font-size:12px;" id="clock">--:--:--</span>
+  </div>
+</header>
+
+<!-- MAIN APP -->
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="num" id="stat-online">4</div>
+        <div class="lbl">🟢 Online</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="stat-idle">1</div>
+        <div class="lbl">🟡 Idle</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="stat-expense">฿<span id="stat-exp-num">8,420</span></div>
+        <div class="lbl">💰 วันนี้</div>
+      </div>
+      <div class="stat-card">
+        <div class="num">98%</div>
+        <div class="lbl">📡 Uptime</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="sidebar-tabs">
+      <button class="tab-btn active" onclick="switchTab('vehicles',this)">🚛 รถ</button>
+      <button class="tab-btn" onclick="switchTab('ai',this)">🤖 AI</button>
+      <button class="tab-btn" onclick="switchTab('alerts',this)">🔔 แจ้งเตือน</button>
+      <button class="tab-btn" onclick="switchTab('charts',this)">📊 วิเคราะห์</button>
+    </div>
+
+    <!-- Tab: Vehicles -->
+    <div class="tab-content active" id="tab-vehicles">
+      <div id="vehicle-list"></div>
+    </div>
+
+    <!-- Tab: AI -->
+    <div class="tab-content" id="tab-ai">
+      <div class="ai-panel">
+        <div class="ai-header">
+          <div class="ai-icon">🤖</div>
+          <div>
+            <div class="ai-title">AI Fleet Copilot</div>
+            <div class="ai-subtitle">Gemini 2.0 Flash · ฟรี</div>
+          </div>
+          <span class="ai-badge">AI พร้อมใช้</span>
+        </div>
+
+        <div class="ai-summary-box" id="ai-box">
+          <div class="ai-typing" id="ai-typing">
+            <span></span><span></span><span></span>
+          </div>
+          <div class="ai-summary-text" id="ai-text" style="display:none"></div>
+        </div>
+
+        <button class="ai-btn" onclick="refreshAI()">✨ สร้าง AI Summary ใหม่</button>
+
+        <div class="ai-insights">
+          <div class="insight-card warning">
+            <div class="insight-title">⚠️ รถ กข-5890 Idle นาน</div>
+            <div class="insight-desc">Idle 1.8 ชั่วโมง · คาดสูญเสีย <strong>฿640</strong> ค่าน้ำมัน</div>
+          </div>
+          <div class="insight-card danger">
+            <div class="insight-title">🔴 ค่าน้ำมันสูงผิดปกติ</div>
+            <div class="insight-desc">รถ งจ-1122 ใช้น้ำมัน +22% จากค่าเฉลี่ย → ควรตรวจเครื่องยนต์</div>
+          </div>
+          <div class="insight-card success">
+            <div class="insight-title">✅ คนขับยอดเยี่ยมวันนี้</div>
+            <div class="insight-desc">นายสมชาย — คะแนน 96/100 ไม่มีเบรกแรง ไม่มี Overspeed</div>
+          </div>
+          <div class="insight-card">
+            <div class="insight-title">📅 แจ้งเตือน Maintenance</div>
+            <div class="insight-desc">รถ กข-1234 เปลี่ยนน้ำมันเครื่องใน <strong>3 วัน</strong> (ครบ 10,000 กม.)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Alerts -->
+    <div class="tab-content" id="tab-alerts">
+      <div id="alert-list">
+        <div class="alert-item">
+          <div class="alert-dot red"></div>
+          <div>
+            <div class="alert-title">🚨 Overspeed — งจ-1122</div>
+            <div class="alert-desc">ความเร็ว 112 กม./ชม. เกินกำหนด 90 กม./ชม. บน ถ.มอเตอร์เวย์</div>
+            <div class="alert-time">เมื่อ 3 นาทีที่แล้ว</div>
+          </div>
+        </div>
+        <div class="alert-item">
+          <div class="alert-dot yellow"></div>
+          <div>
+            <div class="alert-title">🟡 Idle นาน — กข-5890</div>
+            <div class="alert-desc">หยุดจอดเครื่องติดนานกว่า 1 ชั่วโมง บริเวณหน้าโรงงาน</div>
+            <div class="alert-time">เมื่อ 1.8 ชั่วโมงที่แล้ว</div>
+          </div>
+        </div>
+        <div class="alert-item">
+          <div class="alert-dot yellow"></div>
+          <div>
+            <div class="alert-title">⛽ น้ำมันต่ำ — กข-7788</div>
+            <div class="alert-desc">ระดับน้ำมันเหลือ 15% ควรเติมก่อนออกเที่ยวถัดไป</div>
+            <div class="alert-time">เมื่อ 22 นาทีที่แล้ว</div>
+          </div>
+        </div>
+        <div class="alert-item">
+          <div class="alert-dot green"></div>
+          <div>
+            <div class="alert-title">✅ รถมาถึงปลายทาง — กข-1234</div>
+            <div class="alert-desc">ส่งปูนซีเมนต์สำเร็จ โรงงานปูนเหนือ · 18 เที่ยว/วันนี้</div>
+            <div class="alert-time">เมื่อ 5 นาทีที่แล้ว</div>
+          </div>
+        </div>
+        <div class="alert-item">
+          <div class="alert-dot red"></div>
+          <div>
+            <div class="alert-title">🔧 Maintenance Due — กข-1234</div>
+            <div class="alert-desc">ครบกำหนดเปลี่ยนน้ำมันเครื่องใน 3 วัน (9,740/10,000 กม.)</div>
+            <div class="alert-time">วันนี้</div>
+          </div>
+        </div>
+        <div class="alert-item">
+          <div class="alert-dot green"></div>
+          <div>
+            <div class="alert-title">📍 เข้า Geofence — กข-3456</div>
+            <div class="alert-desc">รถเข้าพื้นที่คลังสินค้า Zone A เรียบร้อย</div>
+            <div class="alert-time">เมื่อ 18 นาทีที่แล้ว</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Charts -->
+    <div class="tab-content" id="tab-charts">
+      <div class="charts-panel">
+        <div class="chart-card">
+          <div class="chart-title">💰 ค่าใช้จ่ายรายวัน (7 วัน)</div>
+          <div class="chart-wrap"><canvas id="expenseChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">⛽ สัดส่วนค่าใช้จ่ายเดือนนี้</div>
+          <div class="chart-wrap" style="height:160px"><canvas id="expenseTypeChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">🏆 Driver Score วันนี้</div>
+          <div class="driver-list" id="driver-scores"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">📊 ระยะทาง vs ค่าน้ำมัน (เดือนนี้)</div>
+          <div class="chart-wrap"><canvas id="effChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAP -->
+  <section class="map-section">
+    <div class="map-overlay">
+      <div class="map-control-card">
+        <div class="map-title">🗺️ Live GPS Tracking</div>
+        <div class="map-sub" id="map-status">รถออนไลน์ 4 คัน · อัปเดตทุก 3 วินาที</div>
+      </div>
+      <div class="sim-badge" id="sim-badge" style="display:none">⚡ SIMULATION MODE</div>
+    </div>
+    <div id="map"></div>
+  </section>
+
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const VEHICLES = [
+  { id:'v1', plate:'กข-1234', nick:'ปูน A', type:'🏗️', status:'running', lat:13.7563, lng:100.5018, speed:58, heading:45, fuel:72, driver:'สมชาย ใจดี', score:96, idle:0, color:'#2563EB', expense:1850 },
+  { id:'v2', plate:'กข-3456', nick:'ปูน B', type:'🏗️', status:'running', lat:13.7800, lng:100.5200, speed:42, heading:120, fuel:88, driver:'วิชัย รักงาน', score:88, idle:0, color:'#2563EB', expense:2100 },
+  { id:'v3', plate:'กข-5890', nick:'น้ำ 1', type:'💧', status:'idle', lat:13.7300, lng:100.4900, speed:0, heading:0, fuel:61, driver:'ประสิทธิ์ เก่งดี', score:74, idle:108, color:'#D97706', expense:980 },
+  { id:'v4', plate:'กข-7788', nick:'ล่อง A', type:'📦', status:'running', lat:13.7650, lng:100.5400, speed:71, heading:200, fuel:15, driver:'อนันต์ ขยัน', score:82, idle:0, color:'#2563EB', expense:2190 },
+  { id:'v5', plate:'งจ-1122', nick:'ล่อง B', type:'📦', status:'running', lat:13.8000, lng:100.5600, speed:112, heading:300, fuel:55, driver:'ธนา รวดเร็ว', score:61, idle:0, color:'#DC2626', expense:1300 },
+];
+
+// ============================================================
+// CLOCK
+// ============================================================
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ============================================================
+// VEHICLE LIST
+// ============================================================
+let selectedVehicle = null;
+
+function renderVehicleList() {
+  const el = document.getElementById('vehicle-list');
+  el.innerHTML = VEHICLES.map(v => {
+    const statusClass = v.status === 'running' ? 'running' : v.status === 'idle' ? 'idle' : 'stopped';
+    const statusTh = v.status === 'running' ? 'วิ่งอยู่' : v.status === 'idle' ? 'Idle' : 'จอด';
+    const iconClass = v.status === 'idle' ? 'idle' : v.status === 'stopped' ? 'stopped' : '';
+    const speedText = v.status === 'running' ? `${Math.round(v.speed)} กม./ชม.` : v.status === 'idle' ? `Idle ${v.idle}นาที` : 'จอด';
+    const isHigh = v.speed > 100;
+    return `
+      <div class="vehicle-item${selectedVehicle === v.id ? ' selected' : ''}" onclick="selectVehicle('${v.id}')">
+        <div class="vehicle-icon ${iconClass}">${v.type}</div>
+        <div class="vehicle-info">
+          <div class="vehicle-plate">${v.plate}</div>
+          <div class="vehicle-meta">${v.nick} · ⛽ ${v.fuel}% · 👤 ${v.driver}</div>
+        </div>
+        <div class="vehicle-status">
+          <span class="status-badge badge-${statusClass}">${statusTh}</span>
+          <span class="speed-text${isHigh ? ' style="color:#DC2626"' : ''}">${speedText}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function selectVehicle(id) {
+  selectedVehicle = id;
+  renderVehicleList();
+  const v = VEHICLES.find(x => x.id === id);
+  if (v && markers[id]) {
+    map.setView([v.lat, v.lng], 15);
+    markers[id].openPopup();
+  }
+}
+
+// ============================================================
+// MAP
+// ============================================================
+const map = L.map('map', { zoomControl: false }).setView([13.76, 100.52], 12);
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap · H2HFleet Demo',
+  maxZoom: 19,
+}).addTo(map);
+
+const markers = {};
+const routeLines = {};
+const routePoints = {};
+
+function getMarkerIcon(v) {
+  const color = v.status === 'idle' ? '#D97706' : v.status === 'stopped' ? '#64748B' :
+                v.speed > 100 ? '#DC2626' : '#2563EB';
+  const dot = v.status === 'running' && v.speed > 0 ? `
+    <div style="position:absolute;top:-2px;right:-2px;width:10px;height:10px;
+      background:#4ADE80;border-radius:50%;border:2px solid white;"></div>` : '';
+  const html = `
+    <div class="truck-marker" style="position:relative">
+      <div class="truck-label" style="color:${color};border:1px solid ${color}20">${v.plate}</div>
+      <div style="position:relative">
+        <div class="truck-circle" style="background:${color}">${v.type}</div>
+        ${dot}
+      </div>
+    </div>`;
+  return L.divIcon({ html, className:'leaflet-div-icon', iconSize:[80,60], iconAnchor:[40,60] });
+}
+
+function createPopup(v) {
+  const statusColor = v.status === 'running' ? '#059669' : v.status === 'idle' ? '#D97706' : '#64748B';
+  const statusTh = v.status === 'running' ? '🟢 วิ่งอยู่' : v.status === 'idle' ? '🟡 Idle' : '⚫ จอด';
+  const speedAlert = v.speed > 100 ? `<div style="color:#DC2626;font-weight:700;margin-top:4px">⚠️ ความเร็วเกินกำหนด!</div>` : '';
+  return `
+    <div class="popup-custom" style="min-width:200px">
+      <div style="font-weight:800;font-size:14px;color:#1E3A8A;border-bottom:1px solid #E2E8F0;padding-bottom:6px;margin-bottom:8px">
+        ${v.type} ${v.plate} — ${v.nick}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">
+        <div>📍 <strong>${v.lat.toFixed(4)}, ${v.lng.toFixed(4)}</strong></div>
+        <div>🏎️ <strong>${Math.round(v.speed)} กม./ชม.</strong></div>
+        <div>⛽ น้ำมัน <strong>${v.fuel}%</strong></div>
+        <div>👤 ${v.driver}</div>
+        <div>🏆 คะแนน <strong>${v.score}/100</strong></div>
+        <div>💰 วันนี้ <strong>฿${v.expense.toLocaleString()}</strong></div>
+      </div>
+      ${speedAlert}
+      <div style="margin-top:8px;font-size:11px;color:${statusColor};font-weight:700">${statusTh}</div>
+    </div>`;
+}
+
+VEHICLES.forEach(v => {
+  routePoints[v.id] = [[v.lat, v.lng]];
+  const marker = L.marker([v.lat, v.lng], { icon: getMarkerIcon(v) })
+    .addTo(map)
+    .bindPopup(createPopup(v));
+  markers[v.id] = marker;
+
+  if (v.status === 'running') {
+    routeLines[v.id] = L.polyline(routePoints[v.id], {
+      color: v.id === 'v5' ? '#DC2626' : '#2563EB',
+      weight: 3, opacity: 0.6, dashArray: '6,4'
+    }).addTo(map);
+  }
+});
+
+// ============================================================
+// ANIMATION — เคลื่อนรถตามเส้นทางสมมติ
+// ============================================================
+const BANGKOK_ROUTES = {
+  v1: [ [13.7563,100.5018],[13.7590,100.5100],[13.7640,100.5180],[13.7680,100.5240],[13.7650,100.5300],[13.7600,100.5350],[13.7563,100.5018] ],
+  v2: [ [13.7800,100.5200],[13.7750,100.5300],[13.7700,100.5400],[13.7650,100.5450],[13.7600,100.5400],[13.7650,100.5300],[13.7750,100.5200],[13.7800,100.5200] ],
+  v3: [ [13.7300,100.4900],[13.7280,100.4920],[13.7270,100.4950],[13.7280,100.4970],[13.7300,100.4950],[13.7300,100.4900] ],
+  v4: [ [13.7650,100.5400],[13.7700,100.5500],[13.7750,100.5580],[13.7800,100.5650],[13.7850,100.5700],[13.7800,100.5600],[13.7750,100.5500],[13.7650,100.5400] ],
+  v5: [ [13.8000,100.5600],[13.7950,100.5500],[13.7900,100.5400],[13.7850,100.5300],[13.7800,100.5200],[13.7850,100.5100],[13.7950,100.5200],[13.8000,100.5600] ],
+};
+const routeIdx = { v1:0, v2:0, v3:0, v4:0, v5:0 };
+
+function animateVehicles() {
+  VEHICLES.forEach(v => {
+    if (v.status === 'idle' || v.status === 'stopped') return;
+
+    const route = BANGKOK_ROUTES[v.id];
+    routeIdx[v.id] = (routeIdx[v.id] + 1) % route.length;
+    const [newLat, newLng] = route[routeIdx[v.id]];
+
+    // คำนวณ heading
+    const dLat = newLat - v.lat;
+    const dLng = newLng - v.lng;
+    v.heading = Math.atan2(dLng, dLat) * 180 / Math.PI;
+
+    // Fluctuate speed slightly
+    if (v.id !== 'v5') {
+      v.speed = Math.max(30, Math.min(90, v.speed + (Math.random()-0.5)*10));
+    } else {
+      v.speed = Math.max(100, Math.min(120, v.speed + (Math.random()-0.5)*5));
+    }
+
+    v.lat = newLat;
+    v.lng = newLng;
+
+    // Move marker
+    markers[v.id].setLatLng([newLat, newLng]);
+    markers[v.id].setIcon(getMarkerIcon(v));
+    markers[v.id].setPopupContent(createPopup(v));
+
+    // Update route trail
+    routePoints[v.id].push([newLat, newLng]);
+    if (routePoints[v.id].length > 20) routePoints[v.id].shift();
+    if (routeLines[v.id]) routeLines[v.id].setLatLngs(routePoints[v.id]);
+  });
+
+  // Update sidebar stats
+  renderVehicleList();
+  updateStats();
+}
+
+setInterval(animateVehicles, 3000);
+
+// ============================================================
+// STATS UPDATE
+// ============================================================
+function updateStats() {
+  const online = VEHICLES.filter(v => v.status === 'running').length;
+  const idle = VEHICLES.filter(v => v.status === 'idle').length;
+  const totalExp = VEHICLES.reduce((s,v) => s+v.expense, 0);
+  document.getElementById('stat-online').textContent = online;
+  document.getElementById('stat-idle').textContent = idle;
+  document.getElementById('stat-exp-num').textContent = totalExp.toLocaleString();
+  document.getElementById('map-status').textContent = `รถออนไลน์ ${online} คัน · อัปเดตทุก 3 วินาที`;
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+
+  if (name === 'charts' && !chartsBuilt) buildCharts();
+  if (name === 'ai' && !aiStarted) startAI();
+}
+
+// ============================================================
+// AI FLEET COPILOT (rule-based Thai summaries)
+// ============================================================
+let aiStarted = false;
+
+const AI_SUMMARIES = [
+  `📊 สรุปวันนี้: รถทั้งหมด 5 คัน วิ่งรวม 23 เที่ยว
+ค่าใช้จ่ายรวม ฿8,420 บาท
+
+⚠️ รถ กข-5890 idle นาน 1.8 ชม. สูญเสียน้ำมัน ~฿640
+🔴 รถ งจ-1122 ความเร็วสูงผิดปกติ (112 กม./ชม.)
+✅ คนขับ สมชาย ได้คะแนนสูงสุด 96/100
+📅 รถ กข-1234 ควรเข้าเปลี่ยนน้ำมันภายใน 3 วัน
+
+ประเมินประสิทธิภาพโดยรวม: ดี`,
+
+  `🚛 ฟลีทวันนี้มีความเสี่ยง 2 จุด:
+
+1️⃣ งจ-1122 ขับเร็วเกินกำหนด → แนะนำแจ้งเตือนคนขับ
+2️⃣ กข-5890 Idle นาน → ตรวจสอบว่ารอสินค้าหรือเครื่องเสีย
+
+💡 ถ้าลด Idle ได้ คาดประหยัดน้ำมัน ฿640-1,200/วัน
+💰 ต้นทุนต่อกม.เฉลี่ยวันนี้: 5.2 บาท/กม.`,
+
+  `✨ AI วิเคราะห์แนวโน้ม:
+
+รถ กข-7788 น้ำมันเหลือ 15% → ควรเติมด่วน
+ก่อนออกเที่ยวถัดไป ไม่เช่นนั้นเสี่ยงรถหยุดกลางทาง
+
+Driver Score เฉลี่ยทั้งทีม: 80/100 (ดีขึ้น +5 จากเมื่อวาน)
+คนขับที่ต้องพัฒนา: ธนา รวดเร็ว (61/100)
+
+📈 เดือนนี้ประหยัดน้ำมันได้ 8% จากการตรวจ Idle`,
+];
+
+let aiIdx = 0;
+
+function startAI() {
+  aiStarted = true;
+  runAI();
+}
+
+function runAI() {
+  const box = document.getElementById('ai-box');
+  const typing = document.getElementById('ai-typing');
+  const text = document.getElementById('ai-text');
+  typing.style.display = 'flex';
+  text.style.display = 'none';
+
+  setTimeout(() => {
+    typing.style.display = 'none';
+    text.style.display = 'block';
+    text.textContent = AI_SUMMARIES[aiIdx % AI_SUMMARIES.length];
+  }, 1800);
+}
+
+function refreshAI() {
+  aiIdx++;
+  runAI();
+}
+
+// ============================================================
+// CHARTS
+// ============================================================
+let chartsBuilt = false;
+
+function buildCharts() {
+  chartsBuilt = true;
+
+  // Expense 7 days
+  new Chart(document.getElementById('expenseChart'), {
+    type: 'bar',
+    data: {
+      labels: ['10/6','11/6','12/6','13/6','14/6','15/6 (วันนี้)'],
+      datasets: [{
+        label: 'ค่าใช้จ่าย (฿)',
+        data: [7200, 9100, 6800, 8450, 7900, 8420],
+        backgroundColor: ['#BFDBFE','#BFDBFE','#BFDBFE','#BFDBFE','#BFDBFE','#2563EB'],
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{display:false} },
+      scales: { y:{ beginAtZero:true, ticks:{callback:v=>'฿'+v.toLocaleString()} } }
+    }
+  });
+
+  // Expense type donut
+  new Chart(document.getElementById('expenseTypeChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['น้ำมัน','ซ่อมบำรุง','ยาง','ค่าทางด่วน','อื่นๆ'],
+      datasets: [{
+        data: [62, 18, 9, 7, 4],
+        backgroundColor: ['#2563EB','#D97706','#059669','#7C3AED','#64748B'],
+        borderWidth: 2, borderColor: '#fff',
+      }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: {
+        legend:{ position:'right', labels:{font:{size:10},padding:8} }
+      }
+    }
+  });
+
+  // Driver scores
+  const drivers = VEHICLES.map(v => ({name:v.driver, plate:v.plate, score:v.score}))
+    .sort((a,b) => b.score - a.score);
+  const ranks = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+  const colors = ['#059669','#2563EB','#D97706','#64748B','#DC2626'];
+  document.getElementById('driver-scores').innerHTML = drivers.map((d,i) => `
+    <div class="driver-row">
+      <div class="driver-rank">${ranks[i]}</div>
+      <div class="driver-info">
+        <div class="driver-name">${d.name}</div>
+        <div class="driver-plate">${d.plate}</div>
+      </div>
+      <div class="score-bar-wrap" style="flex:1">
+        <div class="score-bar">
+          <div class="score-fill" style="width:${d.score}%;background:${colors[i]}"></div>
+        </div>
+        <div class="score-num" style="color:${colors[i]}">${d.score}</div>
+      </div>
+    </div>`).join('');
+
+  // Efficiency scatter
+  new Chart(document.getElementById('effChart'), {
+    type: 'bar',
+    data: {
+      labels: VEHICLES.map(v => v.plate),
+      datasets: [
+        {
+          label: 'ต้นทุน/กม. (บาท)',
+          data: [5.1, 5.4, 8.2, 6.1, 7.8],
+          backgroundColor: ['#2563EB','#2563EB','#DC2626','#D97706','#DC2626'],
+          borderRadius: 6,
+          yAxisID: 'y',
+        }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{display:false} },
+      scales: { y:{ beginAtZero:true, title:{display:true, text:'฿/กม.'} } }
+    }
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+renderVehicleList();
+updateStats();
+
+// Auto-start AI after 1 second on load
+setTimeout(() => {
+  switchTab('ai', document.querySelector('.tab-btn:nth-child(2)'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+  document.getElementById('tab-vehicles').classList.add('active');
+  startAI();
+}, 500);
+</script>
+</body>
+</html>
