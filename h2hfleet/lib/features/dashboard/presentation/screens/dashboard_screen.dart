@@ -8,6 +8,7 @@ import '../../../../providers/auth_provider.dart';
 import '../../../../providers/vehicles_provider.dart';
 import '../../../../providers/expenses_provider.dart';
 import '../../../../providers/ai_provider.dart';
+import '../../../../providers/locale_provider.dart';
 import '../../../vehicles/presentation/screens/vehicle_list_screen.dart';
 import '../../../expenses/presentation/screens/expense_list_screen.dart';
 import '../../../expenses/presentation/screens/add_expense_dialog.dart';
@@ -24,6 +25,7 @@ class DashboardScreen extends ConsumerWidget {
     final vehiclesAsync = ref.watch(vehiclesProvider);
     final expensesAsync = ref.watch(expensesProvider);
     final aiSummaryAsync = ref.watch(aiSummaryProvider);
+    final s = ref.watch(strProvider);
 
     final now = DateTime.now();
     final todayTotal = expensesAsync.when(
@@ -62,8 +64,8 @@ class DashboardScreen extends ConsumerWidget {
         if (userId.isEmpty) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('กรุณาตั้งค่า LINE User ID ก่อน (กดเมนู LINE Notify)'),
+              SnackBar(
+                content: Text(s.noLineUserId),
                 backgroundColor: AppColors.warning,
               ),
             );
@@ -93,7 +95,7 @@ $summary
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(ok ? 'ส่งสรุปไป LINE สำเร็จ ✅' : 'ส่งไม่สำเร็จ'),
+              content: Text(ok ? s.sendLineSuccess : s.sendLineFail),
               backgroundColor: ok ? AppColors.success : AppColors.danger,
             ),
           );
@@ -154,7 +156,8 @@ $summary
                                         color: Colors.white, size: 20),
                                   ),
                                   const SizedBox(width: 10),
-                                  const Text('H2HFleet',
+                                  const Text(
+                            'H2HFleet',
                                     style: TextStyle(
                                       color: Colors.white, fontSize: 20,
                                       fontWeight: FontWeight.w800,
@@ -173,11 +176,26 @@ $summary
                                 ),
                                 onPressed: () => ref.read(authRepositoryProvider).logout(),
                               ),
+                              GestureDetector(
+                                onTap: () => ref.read(localeProvider.notifier).toggle(),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+                                  ),
+                                  child: Text(
+                                    s.isTh ? 'TH' : 'EN',
+                                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800),
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'สวัสดี! วันนี้รถของคุณเป็นอย่างไรบ้าง?',
+                            s.greeting,
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.9),
                               fontSize: 14, fontWeight: FontWeight.w400,
@@ -211,8 +229,8 @@ $summary
                         Expanded(
                           child: _StatCard(
                             icon: Icons.directions_car_filled_rounded,
-                            label: 'รถทั้งหมด',
-                            value: '$vehicleCount คัน',
+                            label: s.totalVehicles,
+                            value: '$vehicleCount ${s.vehiclesUnit}',
                             iconBg: AppColors.primarySurface,
                             iconColor: AppColors.primary,
                           ),
@@ -221,7 +239,7 @@ $summary
                         Expanded(
                           child: _StatCard(
                             icon: Icons.today_rounded,
-                            label: 'ค่าใช้จ่ายวันนี้',
+                            label: s.todayExpense,
                             value: '฿${currencyFormat.format(todayTotal)}',
                             iconBg: todayTotal > 5000 ? AppColors.dangerSurface : AppColors.successSurface,
                             iconColor: todayTotal > 5000 ? AppColors.danger : AppColors.success,
@@ -231,7 +249,7 @@ $summary
                         Expanded(
                           child: _StatCard(
                             icon: Icons.calendar_month_rounded,
-                            label: 'เดือนนี้',
+                            label: s.monthExpense,
                             value: '฿${currencyFormat.format(monthTotal)}',
                             iconBg: AppColors.warningSurface,
                             iconColor: AppColors.warning,
@@ -273,7 +291,7 @@ $summary
                                 child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 16),
                               ),
                               const SizedBox(width: 8),
-                              const Text('AI สรุปวันนี้',
+                              Text(s.aiSummaryTitle,
                                 style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
                               ),
                               const Spacer(),
@@ -287,7 +305,7 @@ $summary
                                     color: Colors.white.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
-                                  child: const Text('ตั้งค่า',
+                                  child: Text(s.settings,
                                     style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
                                 ),
                               ),
@@ -315,14 +333,14 @@ $summary
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                                     ),
-                                    child: const Row(
+                                    child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(Icons.chat_bubble_outline_rounded,
+                                        const Icon(Icons.chat_bubble_outline_rounded,
                                             color: Colors.white, size: 15),
-                                        SizedBox(width: 6),
-                                        Text('ส่งสรุปไป LINE',
-                                            style: TextStyle(
+                                        const SizedBox(width: 6),
+                                        Text(s.sendToLine,
+                                            style: const TextStyle(
                                                 color: Colors.white,
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w700)),
@@ -339,11 +357,11 @@ $summary
                                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                 ),
                                 const SizedBox(width: 10),
-                                Text('กำลังวิเคราะห์...', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13)),
+                                Text(s.analyzing, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13)),
                               ],
                             ),
                             error: (_, __) => Text(
-                              'ยังไม่มีข้อมูลสำหรับวันนี้',
+                              s.noDataToday,
                               style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13),
                             ),
                           ),
@@ -353,15 +371,15 @@ $summary
                     const SizedBox(height: 20),
 
                     // Quick Menu
-                    const _SectionHeader('เมนูด่วน'),
+                    _SectionHeader(s.quickMenu),
                     const SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
                           child: _QuickMenuCard(
                             icon: Icons.directions_car_rounded,
-                            label: 'รถของฉัน',
-                            subtitle: '$vehicleCount คัน',
+                            label: s.myVehicles,
+                            subtitle: '$vehicleCount ${s.vehiclesUnit}',
                             color: AppColors.primary,
                             onTap: () => Navigator.of(context).push(
                               MaterialPageRoute(builder: (_) => const VehicleListScreen()),
@@ -372,8 +390,8 @@ $summary
                         Expanded(
                           child: _QuickMenuCard(
                             icon: Icons.map_rounded,
-                            label: 'แผนที่สด',
-                            subtitle: 'ติดตามรถ GPS',
+                            label: s.liveMap,
+                            subtitle: s.trackGps,
                             color: const Color(0xFF0EA5E9),
                             onTap: () => Navigator.of(context).push(
                               MaterialPageRoute(builder: (_) => const MapScreen()),
@@ -388,8 +406,8 @@ $summary
                         Expanded(
                           child: _QuickMenuCard(
                             icon: Icons.receipt_long_rounded,
-                            label: 'บันทึกค่าใช้จ่าย',
-                            subtitle: 'เพิ่มค่าใช้จ่าย',
+                            label: s.addExpense,
+                            subtitle: s.addExpenseSubtitle,
                             color: AppColors.success,
                             onTap: () => showDialog(
                               context: context,
@@ -401,8 +419,8 @@ $summary
                         Expanded(
                           child: _QuickMenuCard(
                             icon: Icons.bar_chart_rounded,
-                            label: 'รายงาน',
-                            subtitle: 'ดูค่าใช้จ่าย',
+                            label: s.reports,
+                            subtitle: s.viewExpenses,
                             color: AppColors.warning,
                             onTap: () => Navigator.of(context).push(
                               MaterialPageRoute(builder: (_) => const ExpenseListScreen()),
@@ -417,8 +435,8 @@ $summary
                         Expanded(
                           child: _QuickMenuCard(
                             icon: Icons.chat_bubble_outline_rounded,
-                            label: 'LINE Notify',
-                            subtitle: 'ตั้งค่า & ส่งสรุป',
+                            label: s.lineNotify,
+                            subtitle: s.lineNotifySubtitle,
                             color: const Color(0xFF06C755),
                             onTap: () => Navigator.of(context).push(
                               MaterialPageRoute(builder: (_) => const LineSettingsScreen()),
@@ -433,8 +451,8 @@ $summary
                         Expanded(
                           child: _QuickMenuCard(
                             icon: Icons.drive_eta_rounded,
-                            label: 'โหมดคนขับ',
-                            subtitle: 'ส่ง GPS อัตโนมัติ',
+                            label: s.driverMode,
+                            subtitle: s.driverModeSubtitle,
                             color: AppColors.success,
                             onTap: () => Navigator.of(context).push(
                               MaterialPageRoute(builder: (_) => const DriverModeScreen()),
@@ -447,14 +465,14 @@ $summary
                     const SizedBox(height: 20),
 
                     // Recent Expenses
-                    const _SectionHeader('ค่าใช้จ่ายล่าสุด'),
+                    _SectionHeader(s.recentExpenses),
                     const SizedBox(height: 12),
                     expensesAsync.when(
                       data: (expenses) {
                         if (expenses.isEmpty) {
                           return _EmptyState(
                             icon: Icons.receipt_long_rounded,
-                            message: 'ยังไม่มีค่าใช้จ่าย\nกดเพิ่มค่าใช้จ่ายเพื่อเริ่มต้น',
+                            message: s.noExpenses,
                           );
                         }
                         return Container(
