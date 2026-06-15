@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/auth_provider.dart';
@@ -20,6 +21,11 @@ class H2HFleetApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       locale: locale,
       supportedLocales: const [Locale('th'), Locale('en')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: userAsync.when(
         data: (user) => user != null ? const DashboardScreen() : const LoginScreen(),
         loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
