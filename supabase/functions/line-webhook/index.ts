@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const CHANNEL_SECRET = Deno.env.get("LINE_CHANNEL_SECRET") ?? "";
-const CHANNEL_TOKEN = Deno.env.get("LINE_CHANNEL_TOKEN") ?? "";
+const CHANNEL_TOKEN = Deno.env.get("LINE_CHANNEL_TOKEN") || "KlxTUlAtEC4NNmBbAcWvo83SCTzirO5zOHOiicwpiWlXKExRUf9SbfTtv8+tW9+cZc/uS5/mhUt/WZEzPRV+EgYoqlCnyv19BtEaqSULuCFkBzX0FBWLeg47H6UEKvD4h2xYzvKKKuaUnfwezepwLQdB04t89/1O/w1cDnyilFU=";
 const LINE_REPLY_URL = "https://api.line.me/v2/bot/message/reply";
 
 const commands: Record<string, string> = {
