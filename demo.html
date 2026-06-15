@@ -48,6 +48,17 @@
     font-weight: 700;
   }
   .header-right { display:flex; align-items:center; gap:12px; }
+  .lang-toggle {
+    display:flex; align-items:center;
+    background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3);
+    border-radius:20px; padding:2px; gap:2px;
+  }
+  .lang-btn {
+    padding:4px 10px; border-radius:16px; border:none; cursor:pointer;
+    font-size:12px; font-weight:700; transition:all 0.2s;
+    background:transparent; color:rgba(255,255,255,0.7);
+  }
+  .lang-btn.active { background:white; color:#1E3A8A; }
   .live-dot {
     display: flex; align-items: center; gap:6px;
     font-size: 12px; color: rgba(255,255,255,0.9);
@@ -322,7 +333,11 @@
     <span class="demo-badge">LIVE DEMO</span>
   </div>
   <div class="header-right">
-    <div class="live-dot">Realtime Active</div>
+    <div class="live-dot" id="txt-live">Realtime Active</div>
+    <div class="lang-toggle">
+      <button class="lang-btn" onclick="setLang('th')" id="btn-th">TH</button>
+      <button class="lang-btn active" onclick="setLang('en')" id="btn-en">EN</button>
+    </div>
     <span style="color:rgba(255,255,255,0.6);font-size:12px;" id="clock">--:--:--</span>
   </div>
 </header>
@@ -336,28 +351,28 @@
     <div class="stats-bar">
       <div class="stat-card">
         <div class="num" id="stat-online">4</div>
-        <div class="lbl">🟢 Online</div>
+        <div class="lbl" data-i18n="online">🟢 Online</div>
       </div>
       <div class="stat-card">
         <div class="num" id="stat-idle">1</div>
-        <div class="lbl">🟡 Idle</div>
+        <div class="lbl" data-i18n="idle">🟡 Idle</div>
       </div>
       <div class="stat-card">
         <div class="num" id="stat-expense">฿<span id="stat-exp-num">8,420</span></div>
-        <div class="lbl">💰 วันนี้</div>
+        <div class="lbl" data-i18n="today">💰 วันนี้</div>
       </div>
       <div class="stat-card">
         <div class="num">98%</div>
-        <div class="lbl">📡 Uptime</div>
+        <div class="lbl" data-i18n="uptime">📡 Uptime</div>
       </div>
     </div>
 
     <!-- Tabs -->
     <div class="sidebar-tabs">
-      <button class="tab-btn active" onclick="switchTab('vehicles',this)">🚛 รถ</button>
+      <button class="tab-btn active" onclick="switchTab('vehicles',this)" data-i18n="tab-vehicles">🚛 รถ</button>
       <button class="tab-btn" onclick="switchTab('ai',this)">🤖 AI</button>
-      <button class="tab-btn" onclick="switchTab('alerts',this)">🔔 แจ้งเตือน</button>
-      <button class="tab-btn" onclick="switchTab('charts',this)">📊 วิเคราะห์</button>
+      <button class="tab-btn" onclick="switchTab('alerts',this)" data-i18n="tab-alerts">🔔 แจ้งเตือน</button>
+      <button class="tab-btn" onclick="switchTab('charts',this)" data-i18n="tab-charts">📊 วิเคราะห์</button>
     </div>
 
     <!-- Tab: Vehicles -->
@@ -530,9 +545,14 @@ function renderVehicleList() {
   const el = document.getElementById('vehicle-list');
   el.innerHTML = VEHICLES.map(v => {
     const statusClass = v.status === 'running' ? 'running' : v.status === 'idle' ? 'idle' : 'stopped';
-    const statusTh = v.status === 'running' ? 'วิ่งอยู่' : v.status === 'idle' ? 'Idle' : 'จอด';
+    const statusTh = getStatusLabel(v.status);
     const iconClass = v.status === 'idle' ? 'idle' : v.status === 'stopped' ? 'stopped' : '';
-    const speedText = v.status === 'running' ? `${Math.round(v.speed)} กม./ชม.` : v.status === 'idle' ? `Idle ${v.idle}นาที` : 'จอด';
+    const isEn = currentLang === 'en';
+    const speedText = v.status === 'running'
+      ? `${Math.round(v.speed)} ${isEn ? 'km/h' : 'กม./ชม.'}`
+      : v.status === 'idle'
+      ? `${isEn ? 'Idle' : 'Idle'} ${v.idle}${isEn ? 'min' : 'นาที'}`
+      : (isEn ? 'Stopped' : 'จอด');
     const isHigh = v.speed > 100;
     return `
       <div class="vehicle-item${selectedVehicle === v.id ? ' selected' : ''}" onclick="selectVehicle('${v.id}')">
@@ -855,6 +875,122 @@ function buildCharts() {
       scales: { y:{ beginAtZero:true, title:{display:true, text:'฿/กม.'} } }
     }
   });
+}
+
+// ============================================================
+// LANGUAGE / i18n
+// ============================================================
+const LANG = {
+  th: {
+    'live': 'เรียลไทม์',
+    'online': '🟢 ออนไลน์',
+    'idle': '🟡 จอดรอ',
+    'today': '💰 วันนี้',
+    'uptime': '📡 อัปไทม์',
+    'tab-vehicles': '🚛 รถ',
+    'tab-alerts': '🔔 แจ้งเตือน',
+    'tab-charts': '📊 วิเคราะห์',
+    'map-status': v => `รถออนไลน์ ${v} คัน · อัปเดตทุก 3 วินาที`,
+    'status-running': 'วิ่งอยู่',
+    'status-idle': 'จอดรอ',
+    'status-stopped': 'จอด',
+    'chart-expense': '💰 ค่าใช้จ่ายรายวัน (7 วัน)',
+    'chart-type': '⛽ สัดส่วนค่าใช้จ่ายเดือนนี้',
+    'chart-driver': '🏆 Driver Score วันนี้',
+    'chart-eff': '📊 ต้นทุนต่อกิโลเมตร',
+    'ai-subtitle': 'Gemini 2.0 Flash · ฟรี',
+    'ai-ready': 'AI พร้อมใช้',
+    'ai-refresh': '✨ สร้าง AI Summary ใหม่',
+    'insight1-title': '⚠️ รถ กข-5890 Idle นาน',
+    'insight1-desc': 'Idle 1.8 ชั่วโมง · คาดสูญเสีย ฿640 ค่าน้ำมัน',
+    'insight2-title': '🔴 ค่าน้ำมันสูงผิดปกติ',
+    'insight2-desc': 'รถ งจ-1122 ใช้น้ำมัน +22% จากค่าเฉลี่ย → ควรตรวจเครื่องยนต์',
+    'insight3-title': '✅ คนขับยอดเยี่ยมวันนี้',
+    'insight3-desc': 'นายสมชาย — คะแนน 96/100 ไม่มีเบรกแรง ไม่มี Overspeed',
+    'insight4-title': '📅 แจ้งเตือน Maintenance',
+    'insight4-desc': 'รถ กข-1234 เปลี่ยนน้ำมันเครื่องใน 3 วัน (ครบ 10,000 กม.)',
+  },
+  en: {
+    'live': 'Realtime Active',
+    'online': '🟢 Online',
+    'idle': '🟡 Idle',
+    'today': '💰 Today',
+    'uptime': '📡 Uptime',
+    'tab-vehicles': '🚛 Vehicles',
+    'tab-alerts': '🔔 Alerts',
+    'tab-charts': '📊 Analytics',
+    'map-status': v => `${v} vehicles online · Updates every 3s`,
+    'status-running': 'Running',
+    'status-idle': 'Idle',
+    'status-stopped': 'Stopped',
+    'chart-expense': '💰 Daily Expenses (7 days)',
+    'chart-type': '⛽ Expense Breakdown This Month',
+    'chart-driver': '🏆 Driver Score Today',
+    'chart-eff': '📊 Cost per Kilometer',
+    'ai-subtitle': 'Gemini 2.0 Flash · Free',
+    'ai-ready': 'AI Ready',
+    'ai-refresh': '✨ Regenerate AI Summary',
+    'insight1-title': '⚠️ KH-5890 Long Idle',
+    'insight1-desc': 'Idling 1.8 hrs · Est. fuel loss ฿640',
+    'insight2-title': '🔴 Abnormal Fuel Usage',
+    'insight2-desc': 'NJ-1122 used +22% more fuel than average → Check engine',
+    'insight3-title': '✅ Top Driver Today',
+    'insight3-desc': 'Somchai — Score 96/100 · No hard braking · No overspeed',
+    'insight4-title': '📅 Maintenance Alert',
+    'insight4-desc': 'KH-1234 oil change due in 3 days (9,740/10,000 km)',
+  }
+};
+
+let currentLang = 'en';
+
+function setLang(lang) {
+  currentLang = lang;
+  const t = LANG[lang];
+
+  // toggle button styles
+  document.getElementById('btn-th').classList.toggle('active', lang === 'th');
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+
+  // live dot
+  document.getElementById('txt-live').textContent = t['live'];
+
+  // all data-i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key]) el.textContent = t[key];
+  });
+
+  // map status
+  const online = VEHICLES.filter(v => v.status === 'running').length;
+  document.getElementById('map-status').textContent = t['map-status'](online);
+
+  // AI panel dynamic text
+  document.querySelector('.ai-subtitle').textContent = t['ai-subtitle'];
+  document.querySelector('.ai-badge').textContent = t['ai-ready'];
+  document.querySelector('.ai-btn').textContent = t['ai-refresh'];
+
+  // AI insights
+  const iKeys = [
+    ['insight1-title','insight1-desc'],
+    ['insight2-title','insight2-desc'],
+    ['insight3-title','insight3-desc'],
+    ['insight4-title','insight4-desc'],
+  ];
+  document.querySelectorAll('.insight-card').forEach((card, i) => {
+    if (!iKeys[i]) return;
+    card.querySelector('.insight-title').textContent = t[iKeys[i][0]];
+    card.querySelector('.insight-desc').textContent = t[iKeys[i][1]];
+  });
+
+  // re-render vehicle list to apply new status labels
+  renderVehicleList();
+}
+
+function getStatusLabel(status) {
+  const t = LANG[currentLang];
+  if (status === 'running') return t['status-running'];
+  if (status === 'idle') return t['status-idle'];
+  return t['status-stopped'];
 }
 
 // ============================================================
