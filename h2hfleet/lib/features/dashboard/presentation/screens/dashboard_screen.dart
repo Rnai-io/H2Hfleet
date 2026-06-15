@@ -12,7 +12,6 @@ import '../../../vehicles/presentation/screens/vehicle_list_screen.dart';
 import '../../../expenses/presentation/screens/expense_list_screen.dart';
 import '../../../expenses/presentation/screens/add_expense_dialog.dart';
 import '../../../line/line_settings_screen.dart';
-import '../../../line/line_service.dart';
 import '../../../map/map_screen.dart';
 import '../../../driver/driver_mode_screen.dart';
 import '../../../settings/ai_settings_screen.dart';
@@ -56,8 +55,22 @@ class DashboardScreen extends ConsumerWidget {
 
     Future<void> sendLineNotify(String summary) async {
       try {
-        final channelToken = 'KlxTUlAtEC4NNmBbAcWvo83SCTzirO5zOHOiicwpiWlXKExRUf9SbfTtv8+tW9+cZc/uS5/mhUt/WZEzPRV+EgYoqlCnyv19BtEaqSULuCFkBzX0FBWLeg47H6UEKvD4h2xYzvKKKuaUnfwezepwLQdB04t89/1O/w1cDnyilFU=';
-        final userId = 'U6e671a7fd6cc0e51d05dce910e63090e';
+        // ดึง LINE credentials จาก SharedPreferences (ตั้งค่าใน Settings → LINE)
+        final prefs = await SharedPreferences.getInstance();
+        final channelToken = prefs.getString('line_channel_token') ?? '';
+        final userId = prefs.getString('line_user_id') ?? '';
+
+        if (channelToken.isEmpty || userId.isEmpty) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('กรุณาตั้งค่า LINE ก่อน (Settings → LINE)'),
+                backgroundColor: AppColors.warning,
+              ),
+            );
+          }
+          return;
+        }
 
         final message = '''🚛 H2HFleet สรุปประจำวัน
 

@@ -55,6 +55,25 @@ serve(async (req) => {
         const text = event.message.text?.trim().toLowerCase() ?? "";
         const replyToken = event.replyToken;
 
+        // ตอบ User ID เมื่อพิมพ์ "id"
+        if (text === "id" || text === "userid" || text === "user id") {
+          await fetch(LINE_REPLY_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${CHANNEL_TOKEN}`,
+            },
+            body: JSON.stringify({
+              replyToken,
+              messages: [{
+                type: "text",
+                text: `🆔 LINE User ID ของคุณ:\n\n${event.source?.userId ?? "ไม่พบ User ID"}\n\n📋 Copy ไปวางในแอป H2HFleet\nSettings → LINE Notify → LINE User ID`,
+              }],
+            }),
+          });
+          continue;
+        }
+
         let replyText = "🚛 H2HFleet Bot\n\nพิมพ์ 'ช่วย' เพื่อดูคำสั่งทั้งหมด";
 
         // ค้นหาคำสั่งที่ตรงกัน

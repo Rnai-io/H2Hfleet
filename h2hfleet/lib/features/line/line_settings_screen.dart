@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerStatefulWidget, ConsumerState;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dio/dio.dart';
 import '../../core/theme/app_theme.dart';
-import 'line_service.dart';
 
 class LineSettingsScreen extends ConsumerStatefulWidget {
   const LineSettingsScreen({super.key});
@@ -13,31 +13,44 @@ class LineSettingsScreen extends ConsumerStatefulWidget {
 
 class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
   final _tokenCtrl = TextEditingController();
-  bool _obscure = true;
+  final _userIdCtrl = TextEditingController();
+  bool _obscureToken = true;
   bool _isTesting = false;
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    _loadToken();
+    _loadSettings();
   }
 
-  Future<void> _loadToken() async {
+  Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('line_notify_token') ?? '';
-    if (mounted) _tokenCtrl.text = token;
+    if (mounted) {
+      _tokenCtrl.text = prefs.getString('line_channel_token') ?? '';
+      _userIdCtrl.text = prefs.getString('line_user_id') ?? '';
+    }
   }
 
-  Future<void> _saveToken() async {
+  Future<void> _saveSettings() async {
+    if (_tokenCtrl.text.trim().isEmpty || _userIdCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('กรุณาใส่ Channel Token และ User ID ให้ครบ'),
+          backgroundColor: AppColors.warning,
+        ),
+      );
+      return;
+    }
     setState(() => _isSaving = true);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('line_notify_token', _tokenCtrl.text.trim());
+    await prefs.setString('line_channel_token', _tokenCtrl.text.trim());
+    await prefs.setString('line_user_id', _userIdCtrl.text.trim());
     if (mounted) {
       setState(() => _isSaving = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('บันทึก Token สำเร็จ'),
+          content: Text('บันทึกการตั้งค่า LINE สำเร็จ ✅'),
           backgroundColor: AppColors.success,
         ),
       );
@@ -46,31 +59,48 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
 
   Future<void> _testSend() async {
     final token = _tokenCtrl.text.trim();
-    if (token.isEmpty) {
+    final userId = _userIdCtrl.text.trim();
+    if (token.isEmpty || userId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('กรุณาใส่ LINE Notify Token ก่อน')),
+        const SnackBar(content: Text('กรุณาใส่ Channel Token และ User ID ก่อน')),
       );
       return;
     }
     setState(() => _isTesting = true);
-    final ok = await LineService().sendNotify(
-      token: token,
-      message: '\n✅ H2HFleet: ทดสอบการส่งข้อความสำเร็จ!',
-    );
-    if (mounted) {
-      setState(() => _isTesting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(ok ? 'ส่งข้อความทดสอบสำเร็จ! ✅' : 'ส่งไม่สำเร็จ กรุณาตรวจสอบ Token'),
-          backgroundColor: ok ? AppColors.success : AppColors.danger,
-        ),
+    try {
+      final dio = Dio();
+      final response = await dio.post(
+        'https://rdobhvuiadmsqdfugrlp.supabase.co/functions/v1/line-push-message',
+        data: {
+          'userId': userId,
+          'message': '✅ H2HFleet: ทดสอบการส่งข้อความสำเร็จ!\n\nระบบ LINE แจ้งเตือนพร้อมใช้งาน 🚛',
+          'channelToken': token,
+        },
       );
+      if (mounted) {
+        final ok = response.statusCode == 200;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ok ? 'ส่งทดสอบไป LINE สำเร็จ! ✅' : 'ส่งไม่สำเร็จ กรุณาตรวจสอบ Token'),
+            backgroundColor: ok ? AppColors.success : AppColors.danger,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.danger),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isTesting = false);
     }
   }
 
   @override
   void dispose() {
     _tokenCtrl.dispose();
+    _userIdCtrl.dispose();
     super.dispose();
   }
 
@@ -81,7 +111,7 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF06C755),
         foregroundColor: Colors.white,
-        title: const Text('LINE Notify',
+        title: const Text('ตั้งค่า LINE แจ้งเตือน',
             style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white)),
         centerTitle: false,
       ),
@@ -90,7 +120,7 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Explanation card
+            // Info card
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -98,32 +128,24 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: const Color(0xFF06C755).withValues(alpha: 0.3)),
               ),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
                       Icon(Icons.chat_bubble_rounded, color: Color(0xFF06C755), size: 20),
                       SizedBox(width: 8),
-                      Text('LINE Notify คืออะไร?',
+                      Text('LINE Messaging API',
                           style: TextStyle(
                               fontWeight: FontWeight.w700,
                               color: Color(0xFF065F46),
                               fontSize: 14)),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'LINE Notify ช่วยส่งสรุปรายงานรถของคุณเข้า LINE โดยอัตโนมัติ ทำให้ติดตามค่าใช้จ่ายได้ง่ายขึ้น',
+                  SizedBox(height: 8),
+                  Text(
+                    'ระบบส่งข้อความสรุปรายงานรถตรงไปยัง LINE ของคุณ\nต้องการ Channel Access Token และ User ID จาก LINE Developers',
                     style: TextStyle(fontSize: 13, color: Color(0xFF065F46), height: 1.5),
-                  ),
-                  const SizedBox(height: 12),
-                  TextButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.open_in_new_rounded, size: 14, color: Color(0xFF06C755)),
-                    label: const Text('วิธีรับ Token จาก LINE Notify',
-                        style: TextStyle(fontSize: 12, color: Color(0xFF06C755))),
-                    style: TextButton.styleFrom(padding: EdgeInsets.zero),
                   ),
                 ],
               ),
@@ -131,17 +153,21 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
 
             const SizedBox(height: 24),
 
-            const Text('LINE Notify Token',
+            // Channel Access Token
+            const Text('Channel Access Token',
                 style: TextStyle(
                     fontSize: 13, fontWeight: FontWeight.w700,
                     color: AppColors.textSecondary)),
+            const SizedBox(height: 4),
+            const Text('รับได้จาก LINE Developers Console → Messaging API → Channel access token',
+                style: TextStyle(fontSize: 11, color: AppColors.textHint)),
             const SizedBox(height: 8),
             TextFormField(
               controller: _tokenCtrl,
-              obscureText: _obscure,
+              obscureText: _obscureToken,
               style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
               decoration: InputDecoration(
-                hintText: 'วาง Token ที่นี่...',
+                hintText: 'วาง Channel Access Token ที่นี่...',
                 hintStyle: const TextStyle(color: AppColors.textHint),
                 filled: true,
                 fillColor: AppColors.card,
@@ -160,15 +186,50 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
                 ),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _obscure ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                    _obscureToken ? Icons.visibility_off_rounded : Icons.visibility_rounded,
                     color: AppColors.textSecondary, size: 20,
                   ),
-                  onPressed: () => setState(() => _obscure = !_obscure),
+                  onPressed: () => setState(() => _obscureToken = !_obscureToken),
                 ),
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
+
+            // User ID
+            const Text('LINE User ID',
+                style: TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary)),
+            const SizedBox(height: 4),
+            const Text('รับได้จาก LINE Developers Console → Webhook → User ID หรือ ส่ง "ID" ใน LINE Bot',
+                style: TextStyle(fontSize: 11, color: AppColors.textHint)),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _userIdCtrl,
+              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+              decoration: InputDecoration(
+                hintText: 'U xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+                hintStyle: const TextStyle(color: AppColors.textHint),
+                filled: true,
+                fillColor: AppColors.card,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.divider),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.divider),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFF06C755), width: 2),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
 
             Row(
               children: [
@@ -193,7 +254,7 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _isSaving ? null : _saveToken,
+                    onPressed: _isSaving ? null : _saveSettings,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF06C755),
                       foregroundColor: Colors.white,
@@ -216,7 +277,7 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
             const Divider(),
             const SizedBox(height: 16),
 
-            const Text('วิธีใช้งาน',
+            const Text('วิธีรับ User ID จาก LINE Bot',
                 style: TextStyle(
                     fontSize: 14, fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary)),
@@ -230,10 +291,11 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
 }
 
 const _steps = [
-  (1, 'เข้าไปที่ notify-bot.line.me แล้ว login ด้วยบัญชี LINE'),
-  (2, 'กด "Generate token" แล้วเลือกห้อง LINE ที่ต้องการรับข้อความ'),
-  (3, 'Copy Token ที่ได้มาวางในช่องด้านบน'),
-  (4, 'กด "ทดสอบส่ง" เพื่อยืนยันว่า Token ถูกต้อง'),
+  (1, 'เปิด LINE แล้วส่งข้อความ "id" หรือ "ช่วย" ไปยัง H2HFleet Bot (@655jmtme)'),
+  (2, 'Bot จะตอบกลับพร้อม User ID ของคุณ (เริ่มต้นด้วย U...)'),
+  (3, 'Copy User ID แล้ววางในช่อง LINE User ID ด้านบน'),
+  (4, 'รับ Channel Access Token จาก LINE Developers → Messaging API'),
+  (5, 'กด "บันทึก" แล้วกด "ทดสอบส่ง" เพื่อยืนยัน'),
 ];
 
 class _StepItem extends StatelessWidget {

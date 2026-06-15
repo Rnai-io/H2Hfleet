@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,6 +23,8 @@ class MapScreen extends ConsumerStatefulWidget {
 class _MapScreenState extends ConsumerState<MapScreen> {
   final _mapController = MapController();
   VehicleLocationModel? _selected;
+  bool _simulatorMode = false;
+  VehicleModel? _simulatorTarget;
 
   static const _defaultCenter = LatLng(13.7563, 100.5018); // Bangkok
 
@@ -134,7 +137,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           // Fit all button
           Positioned(
             right: 12,
-            bottom: _selected != null ? 220 : 80,
+            bottom: _selected != null ? 220 : 130,
             child: _MapFab(
               icon: Icons.fit_screen_rounded,
               onTap: () {
@@ -163,12 +166,77 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           // Refresh button
           Positioned(
             right: 12,
-            bottom: _selected != null ? 170 : 28,
+            bottom: _selected != null ? 170 : 78,
             child: _MapFab(
               icon: Icons.refresh_rounded,
               onTap: () => ref.read(vehicleLocationsProvider.notifier).refresh(),
             ),
           ),
+
+          // Simulator toggle button
+          Positioned(
+            right: 12,
+            bottom: _selected != null ? 120 : 26,
+            child: _simulatorMode
+                ? Material(
+                    color: AppColors.warning,
+                    borderRadius: BorderRadius.circular(12),
+                    elevation: 3,
+                    child: InkWell(
+                      onTap: () => setState(() {
+                        _simulatorMode = false;
+                        _simulatorTarget = null;
+                      }),
+                      borderRadius: BorderRadius.circular(12),
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.science_rounded, color: Colors.white, size: 18),
+                            SizedBox(width: 6),
+                            Text('ออกจาก Simulator',
+                                style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                : _MapFab(
+                    icon: Icons.science_rounded,
+                    onTap: () => _showSimulatorDialog(context, vehicleMap),
+                  ),
+          ),
+
+          // Simulator hint banner
+          if (_simulatorMode)
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: _selected != null ? 280 : 140,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.warning,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8)],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.touch_app_rounded, color: Colors.white, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _simulatorTarget != null
+                            ? 'แตะแผนที่เพื่อย้าย ${_simulatorTarget!.plateNumber}'
+                            : 'กรุณาเลือกรถก่อน',
+                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
           // Vehicle detail bottom sheet
           if (_selected != null)
@@ -204,7 +272,20 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       options: MapOptions(
         initialCenter: firstPoint,
         initialZoom: 12,
-        onTap: (_, __) => setState(() => _selected = null),
+        onTap: (_, latLng) {
+          if (_simulatorMode && _simulatorTarget != null) {
+            // Simulator: ย้ายรถไปยังจุดที่แตะ
+            final speed = 40.0 + (math.Random().nextDouble() * 60);
+            ref.read(vehicleLocationsProvider.notifier).simulateLocation(
+              vehicleId: _simulatorTarget!.id,
+              lat: latLng.latitude,
+              lng: latLng.longitude,
+              speed: speed,
+            );
+          } else {
+            setState(() => _selected = null);
+          }
+        },
       ),
       children: [
         TileLayer(
@@ -227,20 +308,41 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
+  // สีตามความสดใหม่ของข้อมูล
+  Color _freshnessColor(DateTime updatedAt) {
+    final age = DateTime.now().difference(updatedAt);
+    if (age.inMinutes < 2) return AppColors.success;
+    if (age.inMinutes < 10) return AppColors.warning;
+    return AppColors.danger;
+  }
+
   Marker _buildVehicleMarker(VehicleLocationModel loc, VehicleModel? vehicle) {
     final isSelected = _selected?.vehicleId == loc.vehicleId;
+    final isSimTarget = _simulatorMode && _simulatorTarget?.id == loc.vehicleId;
+    final markerColor = isSimTarget
+        ? AppColors.warning
+        : isSelected
+            ? AppColors.primary
+            : const Color(0xFF2563EB);
+    final freshnessColor = _freshnessColor(loc.updatedAt);
+
     return Marker(
       point: LatLng(loc.lat, loc.lng),
-      width: 80,
-      height: 80,
+      width: 88,
+      height: 88,
       child: GestureDetector(
         onTap: () {
-          setState(() => _selected = loc);
-          _mapController.move(LatLng(loc.lat, loc.lng), 15);
+          if (_simulatorMode) {
+            setState(() => _simulatorTarget = vehicle);
+          } else {
+            setState(() => _selected = loc);
+            _mapController.move(LatLng(loc.lat, loc.lng), 15);
+          }
         },
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Plate label
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
@@ -264,24 +366,53 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
             ),
             const SizedBox(height: 2),
-            // Marker icon
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : const Color(0xFF2563EB),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.4),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
+            // Marker icon with heading arrow
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                // Heading arrow (ถ้ามี)
+                if (loc.heading != null)
+                  Transform.rotate(
+                    angle: (loc.heading! * math.pi / 180),
+                    child: Icon(
+                      Icons.navigation_rounded,
+                      color: markerColor.withValues(alpha: 0.5),
+                      size: 44,
+                    ),
                   ),
-                ],
-              ),
-              child: const Icon(Icons.local_shipping_rounded,
-                  color: Colors.white, size: 16),
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: markerColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: markerColor.withValues(alpha: 0.4),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.local_shipping_rounded,
+                      color: Colors.white, size: 17),
+                ),
+                // สถานะจุดเล็ก (freshness indicator)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: freshnessColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -347,6 +478,61 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             child: const Icon(Icons.person_rounded, color: Colors.white, size: 16),
           ),
         ],
+      ),
+    );
+  }
+
+  // Dialog เลือกรถสำหรับ Simulator
+  void _showSimulatorDialog(BuildContext context, Map<String, VehicleModel> vehicleMap) {
+    if (vehicleMap.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ยังไม่มีรถในระบบ กรุณาเพิ่มรถก่อน')),
+      );
+      return;
+    }
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.science_rounded, color: AppColors.warning, size: 20),
+                SizedBox(width: 8),
+                Text('GPS Simulator', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text('เลือกรถที่ต้องการ simulate แล้วแตะบนแผนที่เพื่อย้ายตำแหน่ง',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+            const SizedBox(height: 16),
+            ...vehicleMap.values.map((v) => ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                        color: AppColors.primarySurface,
+                        borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(Icons.local_shipping_rounded,
+                        color: AppColors.primary, size: 20),
+                  ),
+                  title: Text(v.plateNumber, style: const TextStyle(fontWeight: FontWeight.w700)),
+                  subtitle: Text(v.nickName ?? '${v.brand} ${v.model}'.trim()),
+                  onTap: () {
+                    setState(() {
+                      _simulatorMode = true;
+                      _simulatorTarget = v;
+                    });
+                    Navigator.of(context).pop();
+                  },
+                )),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
