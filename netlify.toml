@@ -1,0 +1,55 @@
+# ============================================================
+# Netlify deploy config — H2HFleet (Flutter Web)
+# Repo: Rnai-io/H2Hfleet   ·   App lives in /h2hfleet
+# Netlify build image has NO Flutter SDK, so we install it at build time.
+# ============================================================
+
+[build]
+  # Build runs inside the Flutter project folder
+  base = "h2hfleet"
+  # flutter build web outputs here (relative to base)  -> h2hfleet/build/web
+  publish = "build/web"
+  # Install pinned Flutter, then build the web release.
+  command = """
+    set -e
+    if [ ! -x "$HOME/flutter/bin/flutter" ]; then
+      echo "Cloning Flutter $FLUTTER_VERSION ...";
+      git clone https://github.com/flutter/flutter.git --depth 1 -b "$FLUTTER_VERSION" "$HOME/flutter";
+    fi
+    export PATH="$PATH:$HOME/flutter/bin";
+    flutter --version;
+    flutter config --no-analytics --enable-web;
+    flutter pub get;
+    flutter build web --release --no-tree-shake-icons;
+  """
+
+[build.environment]
+  # Pin the Flutter version (must satisfy pubspec.lock: flutter >= 3.38.4 / dart >= 3.11).
+  # To upgrade later, change this to a newer released tag (e.g. "3.41.0").
+  FLUTTER_VERSION = "3.38.4"
+  # Speeds up flutter clone (we only need the latest commit of that tag)
+  GIT_LFS_SKIP_SMUDGE = "1"
+
+# ---- SPA routing: send all paths to index.html so refresh / deep links work ----
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# ---- Cache built immutable assets aggressively, never cache the HTML shell ----
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
