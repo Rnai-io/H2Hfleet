@@ -129,28 +129,40 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                   ),
                 ),
                 SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 92,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      children: [
-                        _CategoryChip(
-                          icon: Icons.apps_rounded,
-                          label: s.allCategories,
-                          color: AppColors.textSecondary,
-                          selected: _categoryFilter == null,
-                          onTap: () => setState(() => _categoryFilter = null),
-                        ),
-                        ...kPartCategories.map((cat) => _CategoryChip(
-                              icon: cat.icon,
-                              label: cat.label(s.isTh),
-                              color: cat.color,
-                              selected: _categoryFilter == cat.key,
-                              onTap: () => setState(
-                                  () => _categoryFilter = _categoryFilter == cat.key ? null : cat.key),
-                            )),
-                      ],
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        const spacing = 10.0;
+                        // 5 per row, wrapping down; drop to 4 on very narrow screens.
+                        final cols = constraints.maxWidth < 340 ? 4 : 5;
+                        final itemWidth =
+                            (constraints.maxWidth - spacing * (cols - 1)) / cols;
+                        final chips = <Widget>[
+                          _CategoryChip(
+                            icon: Icons.apps_rounded,
+                            label: s.allCategories,
+                            color: AppColors.textSecondary,
+                            selected: _categoryFilter == null,
+                            onTap: () => setState(() => _categoryFilter = null),
+                          ),
+                          ...kPartCategories.map((cat) => _CategoryChip(
+                                icon: cat.icon,
+                                label: cat.label(s.isTh),
+                                color: cat.color,
+                                selected: _categoryFilter == cat.key,
+                                onTap: () => setState(() => _categoryFilter =
+                                    _categoryFilter == cat.key ? null : cat.key),
+                              )),
+                        ];
+                        return Wrap(
+                          spacing: spacing,
+                          runSpacing: 10,
+                          children: chips
+                              .map((c) => SizedBox(width: itemWidth, child: c))
+                              .toList(),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -286,9 +298,8 @@ class _CategoryChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 76,
-        margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+        height: 78,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
           color: selected ? color.withValues(alpha: 0.14) : AppColors.card,
           borderRadius: BorderRadius.circular(14),
@@ -297,17 +308,20 @@ class _CategoryChip extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 24),
+            Icon(icon, color: color, size: 22),
             const SizedBox(height: 6),
-            Text(label,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: selected ? color : AppColors.textSecondary,
-                )),
+            Flexible(
+              child: Text(label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    height: 1.1,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    color: selected ? color : AppColors.textSecondary,
+                  )),
+            ),
           ],
         ),
       ),
