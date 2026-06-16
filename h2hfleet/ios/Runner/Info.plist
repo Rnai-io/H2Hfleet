@@ -53,6 +53,10 @@
 	<string>แอปต้องการตำแหน่งเพื่อส่งข้อมูล GPS ของรถไปยังระบบติดตามแม้ขณะใช้งานแอปอื่น</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>แอปต้องการตำแหน่งเพื่อติดตาม GPS รถตลอดการเดินทาง</string>
+	<key>NSCameraUsageDescription</key>
+	<string>แอปต้องการกล้องเพื่อถ่ายรูปอะไหล่/การซ่อมบำรุงรถ</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>แอปต้องการเข้าถึงรูปภาพเพื่อแนบรูปการซ่อมบำรุงรถ</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

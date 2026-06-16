@@ -42,7 +42,15 @@ post_install do |installer|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
       config.build_settings['CODE_SIGNING_ALLOWED'] = 'YES'
       config.build_settings['CODE_SIGNING_REQUIRED'] = 'YES'
+      config.build_settings['CODE_SIGN_IDENTITY'] = 'Apple Development'
+      config.build_settings['CODE_SIGN_STYLE'] = 'Automatic'
       config.build_settings['DEVELOPMENT_TEAM'] = 'H4X9654279'
+    end
+  end
+  # Re-sign all embedded frameworks to fix 0xe8008014 on iOS 26 beta
+  installer.aggregate_targets.each do |aggregate_target|
+    aggregate_target.xcconfigs.each do |config_name, config_file|
+      config_file.attributes['CODE_SIGN_IDENTITY'] = 'Apple Development'
     end
   end
 end

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -16,6 +17,8 @@ import '../../../line/line_settings_screen.dart';
 import '../../../map/map_screen.dart';
 import '../../../driver/driver_mode_screen.dart';
 import '../../../settings/ai_settings_screen.dart';
+import '../../../settings/company_profile_screen.dart';
+import '../../../maintenance/maintenance_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -57,7 +60,7 @@ class DashboardScreen extends ConsumerWidget {
 
     Future<void> sendLineNotify(String summary) async {
       try {
-        // ดึง LINE credentials จาก SharedPreferences (ตั้งค่าใน Settings → LINE)
+        // ดึง LINE User ID จาก SharedPreferences (ตั้งค่าใน Settings → LINE)
         final prefs = await SharedPreferences.getInstance();
         final userId = prefs.getString('line_user_id') ?? '';
 
@@ -82,28 +85,55 @@ $summary
 • ค่าใช้จ่ายวันนี้: ฿${todayTotal.toStringAsFixed(0)}
 • เดือนนี้: ฿${monthTotal.toStringAsFixed(0)}''';
 
-        final dio = Dio();
+        const supabaseUrl = 'https://rdobhvuiadmsqdfugrlp.supabase.co';
+        const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkb2JodnVpYWRtc3FkZnVncmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNjU4MzMsImV4cCI6MjA5NDc0MTgzM30.7pvs8B38unEmBkPmP14lfgDrr59wjd-WroMiqpkIzvY';
+
+        final dio = Dio(BaseOptions(validateStatus: (status) => true));
+
         final response = await dio.post(
-          'https://rdobhvuiadmsqdfugrlp.supabase.co/functions/v1/line-push-message',
-          data: {
+          '$supabaseUrl/functions/v1/line-push-message',
+          data: jsonEncode({
             'userId': userId,
             'message': message,
-          },
+          }),
+          options: Options(headers: {
+            'apikey': anonKey,
+            'Authorization': 'Bearer $anonKey',
+            'Content-Type': 'application/json',
+          }),
         );
 
         final ok = response.statusCode == 200;
         if (context.mounted) {
+          final detail = ok ? '' : '\n[${response.statusCode}] ${response.data}';
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(ok ? s.sendLineSuccess : s.sendLineFail),
+              content: Text(ok ? s.sendLineSuccess : '${s.sendLineFail}$detail'),
               backgroundColor: ok ? AppColors.success : AppColors.danger,
+              duration: const Duration(seconds: 8),
+            ),
+          );
+        }
+      } on DioException catch (e) {
+        // แม้ validateStatus = true ยัง throw — ดึง body มาแสดง
+        final body = e.response?.data?.toString() ?? e.message ?? '$e';
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('LINE Error [${e.response?.statusCode}]: $body'),
+              backgroundColor: AppColors.danger,
+              duration: const Duration(seconds: 8),
             ),
           );
         }
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.danger),
+            SnackBar(
+              content: Text('Network Error: $e'),
+              backgroundColor: AppColors.danger,
+              duration: const Duration(seconds: 8),
+            ),
           );
         }
       }
@@ -443,6 +473,18 @@ $summary
                             ),
                           ),
                         ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _QuickMenuCard(
+                            icon: Icons.build_circle_rounded,
+                            label: s.maintenance,
+                            subtitle: s.maintenanceSubtitle,
+                            color: const Color(0xFFEA580C),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const MaintenanceScreen()),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -459,7 +501,18 @@ $summary
                             ),
                           ),
                         ),
-                        const Expanded(child: SizedBox()),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _QuickMenuCard(
+                            icon: Icons.apartment_rounded,
+                            label: s.companyProfile,
+                            subtitle: s.companyProfileSubtitle,
+                            color: const Color(0xFF6366F1),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const CompanyProfileScreen()),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),

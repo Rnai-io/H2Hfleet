@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerStatefulWidget, ConsumerState;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -63,27 +64,54 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
     }
     setState(() => _isTesting = true);
     try {
-      final dio = Dio();
+      const supabaseUrl = 'https://rdobhvuiadmsqdfugrlp.supabase.co';
+      const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkb2JodnVpYWRtc3FkZnVncmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNjU4MzMsImV4cCI6MjA5NDc0MTgzM30.7pvs8B38unEmBkPmP14lfgDrr59wjd-WroMiqpkIzvY';
+
+      final dio = Dio(BaseOptions(validateStatus: (status) => true));
+
       final response = await dio.post(
-        'https://rdobhvuiadmsqdfugrlp.supabase.co/functions/v1/line-push-message',
-        data: {
+        '$supabaseUrl/functions/v1/line-push-message',
+        data: jsonEncode({
           'userId': userId,
           'message': '✅ H2HFleet: ทดสอบการส่งข้อความสำเร็จ!\n\nระบบ LINE แจ้งเตือนพร้อมใช้งาน 🚛',
-        },
+        }),
+        options: Options(headers: {
+          'apikey': anonKey,
+          'Authorization': 'Bearer $anonKey',
+          'Content-Type': 'application/json',
+        }),
       );
+
       if (mounted) {
         final ok = response.statusCode == 200;
+        final detail = ok ? '' : '\n[${response.statusCode}] ${response.data}';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(ok ? 'ส่งทดสอบไป LINE สำเร็จ! ✅' : 'ส่งไม่สำเร็จ'),
+            content: Text(ok ? 'ส่งทดสอบไป LINE สำเร็จ! ✅' : 'LINE Error$detail'),
             backgroundColor: ok ? AppColors.success : AppColors.danger,
+            duration: const Duration(seconds: 8),
+          ),
+        );
+      }
+    } on DioException catch (e) {
+      final body = e.response?.data?.toString() ?? e.message ?? '$e';
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('LINE Error [${e.response?.statusCode}]: $body'),
+            backgroundColor: AppColors.danger,
+            duration: const Duration(seconds: 8),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.danger),
+          SnackBar(
+            content: Text('Network Error: $e'),
+            backgroundColor: AppColors.danger,
+            duration: const Duration(seconds: 8),
+          ),
         );
       }
     } finally {
@@ -137,7 +165,7 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'ใส่แค่ LINE User ID ของคุณ ระบบจะส่งสรุปรายงานรถตรงเข้า LINE โดยอัตโนมัติ',
+                    'กรอก LINE User ID เพื่อรับสรุปรายงานรถตรงเข้า LINE',
                     style: TextStyle(fontSize: 13, color: Color(0xFF065F46), height: 1.5),
                   ),
                 ],
@@ -146,19 +174,20 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
 
             const SizedBox(height: 24),
 
-            const Text('LINE User ID',
+            // User ID
+            const Text('LINE User ID (ผู้รับแจ้งเตือน)',
                 style: TextStyle(
                     fontSize: 13, fontWeight: FontWeight.w700,
                     color: AppColors.textSecondary)),
             const SizedBox(height: 4),
-            const Text('รับได้โดยพิมพ์ "id" ใน LINE Bot @655jmtme',
+            const Text('พิมพ์ "id" ใน LINE Bot เพื่อรับ User ID ของคุณ',
                 style: TextStyle(fontSize: 11, color: AppColors.textHint)),
             const SizedBox(height: 8),
             TextFormField(
               controller: _userIdCtrl,
               style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
               decoration: InputDecoration(
-                hintText: 'U xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+                hintText: 'Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
                 hintStyle: const TextStyle(color: AppColors.textHint),
                 filled: true,
                 fillColor: AppColors.card,
@@ -228,7 +257,7 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
             const Divider(),
             const SizedBox(height: 16),
 
-            const Text('วิธีรับ User ID',
+            const Text('วิธีตั้งค่า',
                 style: TextStyle(
                     fontSize: 14, fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary)),
@@ -242,11 +271,10 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
 }
 
 const _steps = [
-  (1, 'เปิด LINE แล้วค้นหา @655jmtme หรือ H2HFleet Bot'),
-  (2, 'พิมพ์ "id" ส่งไปที่ Bot'),
-  (3, 'Bot จะตอบกลับ User ID ของคุณ (เริ่มต้นด้วย U...)'),
-  (4, 'Copy User ID แล้ววางในช่องด้านบน'),
-  (5, 'กด "บันทึก" แล้วกด "ทดสอบส่ง" เพื่อยืนยัน'),
+  (1, 'เปิด LINE แล้ว Add @H2HFleet Bot เป็นเพื่อน'),
+  (2, 'พิมพ์ "id" ใน Bot เพื่อรับ User ID (เริ่มต้นด้วย U...)'),
+  (3, 'วาง User ID ในช่องด้านบน'),
+  (4, 'กด "บันทึก" แล้วกด "ทดสอบส่ง" เพื่อยืนยัน'),
 ];
 
 class _StepItem extends StatelessWidget {

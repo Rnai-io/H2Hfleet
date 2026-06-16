@@ -132,6 +132,50 @@ class AppStrings {
       ? ['เปิด LINE แล้วค้นหา @655jmtme หรือ H2HFleet Bot', 'พิมพ์ "id" ส่งไปที่ Bot', 'Bot จะตอบกลับ User ID ของคุณ (เริ่มต้นด้วย U...)', 'Copy User ID แล้ววางในช่องด้านบน', 'กด "บันทึก" แล้วกด "ทดสอบส่ง" เพื่อยืนยัน']
       : ['Open LINE and search for @655jmtme or H2HFleet Bot', 'Type "id" and send to the Bot', 'The Bot will reply with your User ID (starts with U...)', 'Copy and paste the User ID in the field above', 'Tap "Save" then "Test Send" to confirm'];
 
+  // ─── Company Profile ───────────────────────────
+  String get companyProfile => isTh ? 'ตั้งค่าโปรไฟล์บริษัท' : 'Company Profile';
+  String get companyProfileSubtitle => isTh ? 'ชื่อ ที่อยู่ เบอร์โทร' : 'Name, address, phone';
+  String get companyProfileDesc => isTh
+      ? 'กรอกข้อมูลบริษัทเพื่อใช้แสดงในรายงานและเอกสารต่างๆ ข้อมูลจะเก็บเฉพาะในอุปกรณ์นี้'
+      : "Enter your company info to show on reports and documents. Data is stored only on this device.";
+  String get companyProfileSaved => isTh ? 'บันทึกข้อมูลบริษัทสำเร็จ ✅' : 'Company profile saved ✅';
+  String get companyName => isTh ? 'ชื่อบริษัท' : 'Company Name';
+  String get companyNameHint => isTh ? 'บริษัท เอช ทู เอช จำกัด' : 'H2H Co., Ltd.';
+  String get companyAddress => isTh ? 'ที่อยู่' : 'Address';
+  String get companyAddressHint => isTh ? 'เลขที่ ถนน ตำบล อำเภอ จังหวัด รหัสไปรษณีย์' : 'Street, district, province, postal code';
+  String get companyPhone => isTh ? 'เบอร์โทรศัพท์' : 'Phone Number';
+  String get companyEmail => isTh ? 'อีเมล' : 'Email';
+  String get companyTaxId => isTh ? 'เลขประจำตัวผู้เสียภาษี' : 'Tax ID';
+  String get companyTaxIdHint => isTh ? 'สำหรับออกใบกำกับภาษี (ไม่บังคับ)' : 'For tax invoices (optional)';
+
+  // ─── Maintenance ────────────────────────────────
+  String get maintenance => isTh ? 'ซ่อมบำรุง' : 'Maintenance';
+  String get maintenanceSubtitle => isTh ? 'ซ่อม เปลี่ยนอะไหล่' : 'Repairs & parts';
+  String get maintenanceTitle => isTh ? 'ซ่อมบำรุงรถ' : 'Vehicle Maintenance';
+  String get selectPartCategory => isTh ? 'เลือกหมวดอะไหล่' : 'Select Part Category';
+  String get allCategories => isTh ? 'ทั้งหมด' : 'All';
+  String get addMaintenance => isTh ? 'เพิ่มรายการซ่อมบำรุง' : 'Add Maintenance';
+  String get partName => isTh ? 'ชื่ออะไหล่ / รายการ' : 'Part Name / Item';
+  String get partNameHint => isTh ? 'เช่น ผ้าเบรกหน้า, น้ำมันเครื่อง 5W-30' : 'e.g. Front brake pads, 5W-30 engine oil';
+  String get maintenanceDescription => isTh ? 'รายละเอียดการซ่อม' : 'Repair Description';
+  String get maintenanceDescriptionHint =>
+      isTh ? 'อธิบายอาการ/งานที่ทำ' : 'Describe the issue or work done';
+  String get maintenanceCost => isTh ? 'ค่าใช้จ่าย' : 'Cost';
+  String get dueDate => isTh ? 'วันที่นัด/กำหนด' : 'Due Date';
+  String get attachPhoto => isTh ? 'แนบรูปภาพ' : 'Attach Photo';
+  String get takePhoto => isTh ? 'ถ่ายรูป' : 'Take Photo';
+  String get chooseFromGallery => isTh ? 'เลือกจากคลังภาพ' : 'Choose from Gallery';
+  String get removePhoto => isTh ? 'ลบรูปภาพ' : 'Remove Photo';
+  String get statusPending => isTh ? 'รอดำเนินการ' : 'Pending';
+  String get statusCompleted => isTh ? 'เสร็จแล้ว' : 'Completed';
+  String get statusOverdue => isTh ? 'เกินกำหนด' : 'Overdue';
+  String get markCompleted => isTh ? 'ทำเครื่องหมายว่าเสร็จแล้ว' : 'Mark as Completed';
+  String get noMaintenanceRecords =>
+      isTh ? 'ยังไม่มีรายการซ่อมบำรุง\nกด + เพื่อเริ่มบันทึก' : 'No maintenance records yet\nTap + to start logging';
+  String get maintenanceSaved => isTh ? 'บันทึกรายการซ่อมบำรุงสำเร็จ ✅' : 'Maintenance record saved ✅';
+  String get selectVehicleFirst => isTh ? 'กรุณาเลือกรถก่อน' : 'Please select a vehicle first';
+  String get confirmDeleteRecord => isTh ? 'ยืนยันลบรายการนี้?' : 'Delete this record?';
+
   // ─── AI Settings ───────────────────────────────
   String get aiSettings => isTh ? 'ตั้งค่า AI (Gemini)' : 'AI Settings (Gemini)';
   String get geminiApiKey => isTh ? 'Gemini API Key' : 'Gemini API Key';
