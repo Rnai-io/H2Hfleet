@@ -1,46 +1,77 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="description" content="H2HFleet — ระบบบริหารฟลีตอัจฉริยะสำหรับ SME ไทย เปิดมือถือ 30 วินาทีรู้ทุกอย่าง: ติดตามรถ ต้นทุน คนขับ และซ่อมบำรุง ด้วย AI">
+  <meta name="theme-color" content="#1E40AF">
 
-  <!-- iOS meta tags & icons -->
+  <!-- iOS / mobile web app -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="h2hfleet">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="H2HFleet">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Open Graph / social link preview -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="H2HFleet">
+  <meta property="og:title" content="H2HFleet — ระบบบริหารฟลีตอัจฉริยะสำหรับ SME">
+  <meta property="og:description" content="ติดตามรถ ต้นทุน คนขับ และซ่อมบำรุง ด้วย AI · เปิดมือถือ 30 วินาทีรู้ทุกอย่าง">
+  <meta property="og:image" content="https://h2hfleet.netlify.app/icons/Icon-512.png">
+  <meta property="og:url" content="https://h2hfleet.netlify.app/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="H2HFleet — ระบบบริหารฟลีตอัจฉริยะสำหรับ SME">
+  <meta name="twitter:description" content="ติดตามรถ ต้นทุน คนขับ และซ่อมบำรุง ด้วย AI">
+  <meta name="twitter:image" content="https://h2hfleet.netlify.app/icons/Icon-512.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>h2hfleet</title>
+  <title>H2HFleet · ระบบบริหารฟลีตอัจฉริยะ SME</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    /* Branded loading splash shown until Flutter renders its first frame */
+    #h2h-splash {
+      position: fixed; inset: 0; z-index: 99999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: linear-gradient(160deg, #1E3A8A 0%, #1E40AF 55%, #2563EB 100%);
+      color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Thai', sans-serif;
+      transition: opacity .45s ease; gap: 22px;
+    }
+    #h2h-splash.hide { opacity: 0; pointer-events: none; }
+    #h2h-splash .brand { display: flex; align-items: center; gap: 12px; font-size: 30px; font-weight: 800; letter-spacing: -.5px; }
+    #h2h-splash .brand .truck { font-size: 38px; }
+    #h2h-splash .tag { font-size: 14px; color: rgba(255,255,255,.82); font-weight: 500; }
+    #h2h-splash .spinner {
+      width: 34px; height: 34px; margin-top: 6px;
+      border: 3px solid rgba(255,255,255,.25); border-top-color: #fff;
+      border-radius: 50%; animation: h2hspin .8s linear infinite;
+    }
+    @keyframes h2hspin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <div id="h2h-splash">
+    <div class="brand"><span class="truck">🚛</span><span>H2HFleet</span></div>
+    <div class="tag">ระบบบริหารฟลีตอัจฉริยะ · กำลังเริ่มต้น…</div>
+    <div class="spinner"></div>
+  </div>
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+  <script>
+    // Remove the splash once Flutter paints its first frame (with a safety fallback).
+    function h2hHideSplash() {
+      var s = document.getElementById('h2h-splash');
+      if (s) { s.classList.add('hide'); setTimeout(function () { if (s) s.remove(); }, 500); }
+    }
+    window.addEventListener('flutter-first-frame', h2hHideSplash);
+    setTimeout(h2hHideSplash, 12000); // fallback: never leave the splash stuck
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
