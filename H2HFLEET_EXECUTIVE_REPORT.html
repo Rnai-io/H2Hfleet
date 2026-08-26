@@ -3,254 +3,329 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>H2HFleet v1.1.0 — รายงานสถาปัตยกรรมระบบและการวิเคราะห์โมเดลธุรกิจ (Executive Business & Technical Report)</title>
+  <title>H2HFleet v1.1.0 — รายงานวิเคราะห์สถาปัตยกรรมระบบและโมเดลธุรกิจ (Executive Business & Technical Report)</title>
+  
+  <!-- Premium Fonts from Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --primary: #0F172A;
-      --primary-accent: #0284C7;
+      --bg-dark: #0B1120;
+      --bg-surface: #0F172A;
+      --bg-card: rgba(30, 41, 59, 0.75);
+      --border-card: rgba(56, 189, 248, 0.22);
+      --border-subtle: rgba(255, 255, 255, 0.1);
+      
+      --primary: #1E3A8A;
       --primary-light: #38BDF8;
-      --navy-dark: #0B1120;
+      --primary-accent: #0284C7;
       --emerald: #10B981;
+      --emerald-light: #34D399;
       --amber: #F59E0B;
-      --rose: #F43F5E;
       --indigo: #6366F1;
-      --bg: #0B1120;
-      --card-bg: #1E293B;
-      --card-border: #334155;
-      --text-main: #F8FAFC;
+      --purple: #A855F7;
+      --rose: #F43F5E;
+      
+      --text-main: #FFFFFF;
+      --text-sub: #F1F5F9;
       --text-muted: #94A3B8;
-      --text-light: #CBD5E1;
+      --text-dim: #64748B;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     body {
-      font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: var(--bg);
-      color: var(--text-main);
-      line-height: 1.7;
+      font-family: 'Prompt', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-sub);
+      line-height: 1.75;
       padding: 40px 20px;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(2, 132, 199, 0.18) 0%, transparent 45%),
+        radial-gradient(circle at 85% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 50% 85%, rgba(16, 185, 129, 0.12) 0%, transparent 45%);
+      background-attachment: fixed;
     }
 
     .container {
-      max-width: 1180px;
+      max-width: 1200px;
       margin: 0 auto;
-      background: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.95) 100%);
-      border: 1px solid var(--card-border);
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.88) 0%, rgba(11, 17, 32, 0.96) 100%);
+      border: 1px solid var(--border-card);
       border-radius: 28px;
-      padding: 60px 50px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(12px);
+      padding: 50px 48px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(56, 189, 248, 0.25) inset;
+      backdrop-filter: blur(16px);
+      position: relative;
     }
 
-    /* Header */
+    /* Ambient Glow */
+    .container::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: 10%;
+      right: 10%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #38BDF8, #818CF8, transparent);
+    }
+
+    /* Header Section */
     .header {
-      border-bottom: 1px solid var(--card-border);
-      padding-bottom: 40px;
-      margin-bottom: 45px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 36px;
+      margin-bottom: 40px;
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
       flex-wrap: wrap;
-      gap: 20px;
+      gap: 24px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-logo-badge {
+      width: 58px;
+      height: 58px;
+      background: linear-gradient(135deg, #1E3A8A 0%, #0284C7 100%);
+      border: 2px solid rgba(56, 189, 248, 0.4);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(2, 132, 199, 0.4);
+      font-size: 28px;
     }
 
     .brand-title {
-      font-size: 38px;
+      font-size: 34px;
       font-weight: 800;
       letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #FFFFFF 30%, #38BDF8 100%);
+      color: #FFFFFF;
+      line-height: 1.15;
+    }
+
+    .brand-title span {
+      background: linear-gradient(135deg, #38BDF8 0%, #818CF8 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      display: flex;
-      align-items: center;
-      gap: 12px;
     }
 
-    .badge-version {
-      background: linear-gradient(135deg, #0284C7, #2563EB);
-      color: white;
-      font-size: 14px;
+    .badge-pill {
+      background: rgba(2, 132, 199, 0.2);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: #38BDF8;
+      font-size: 13px;
       font-weight: 700;
-      padding: 6px 14px;
+      padding: 4px 12px;
       border-radius: 20px;
-      vertical-align: middle;
       display: inline-block;
+      margin-top: 6px;
     }
 
-    .header-meta {
+    .header-actions {
       text-align: right;
     }
 
-    .header-meta p {
-      color: var(--text-muted);
-      font-size: 14px;
-    }
-
-    .header-meta strong {
-      color: var(--text-main);
-    }
-
-    /* Print Button */
-    .btn-print {
-      background: linear-gradient(135deg, #0284C7, #0369A1);
-      color: white;
-      border: none;
+    .btn-action {
+      background: linear-gradient(135deg, #0284C7 0%, #1E40AF 100%);
+      color: #FFFFFF;
+      border: 1px solid rgba(56, 189, 248, 0.4);
       padding: 12px 24px;
-      border-radius: 12px;
+      border-radius: 14px;
       font-size: 15px;
       font-weight: 700;
       cursor: pointer;
       font-family: 'Prompt', sans-serif;
-      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+      box-shadow: 0 4px 18px rgba(2, 132, 199, 0.35);
       transition: all 0.2s ease;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      margin-top: 10px;
+      gap: 10px;
     }
 
-    .btn-print:hover {
+    .btn-action:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(2, 132, 199, 0.6);
+      box-shadow: 0 8px 25px rgba(2, 132, 199, 0.55);
+      border-color: #38BDF8;
     }
 
     /* Section Styles */
     .section {
-      margin-bottom: 55px;
+      margin-bottom: 48px;
     }
 
-    .section-header {
+    .section-title-wrap {
       display: flex;
       align-items: center;
       gap: 14px;
-      margin-bottom: 25px;
+      margin-bottom: 22px;
     }
 
-    .section-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      background: rgba(2, 132, 199, 0.15);
-      border: 1px solid rgba(56, 189, 248, 0.3);
+    .section-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(2, 132, 199, 0.3), rgba(30, 58, 138, 0.5));
+      border: 1px solid rgba(56, 189, 248, 0.35);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
-      color: var(--primary-light);
+      font-size: 16px;
+      font-weight: 800;
+      color: #38BDF8;
     }
 
     .section-title {
-      font-size: 26px;
-      font-weight: 700;
-      color: white;
+      font-size: 22px;
+      font-weight: 800;
+      color: #FFFFFF;
+      letter-spacing: -0.2px;
     }
 
-    /* Cards Grid */
-    .grid-2 {
+    /* Cards & Grids */
+    .grid-4 {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
       margin-bottom: 24px;
     }
 
     .grid-3 {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 22px;
       margin-bottom: 24px;
     }
 
-    .grid-4 {
+    .grid-2 {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 24px;
       margin-bottom: 24px;
     }
 
     .card {
-      background: rgba(30, 41, 59, 0.6);
-      border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 26px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 20px;
+      padding: 26px 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
       transition: all 0.25s ease;
     }
 
     .card:hover {
-      border-color: rgba(56, 189, 248, 0.4);
+      border-color: rgba(56, 189, 248, 0.5);
       transform: translateY(-3px);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
     }
 
     .card-highlight {
-      background: linear-gradient(145deg, rgba(2, 132, 199, 0.15) 0%, rgba(30, 41, 59, 0.7) 100%);
-      border-color: rgba(2, 132, 199, 0.4);
+      background: linear-gradient(145deg, rgba(30, 58, 138, 0.3) 0%, rgba(30, 41, 59, 0.85) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.45);
     }
 
-    .card-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: white;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .card-desc {
-      font-size: 14.5px;
+    .card-label {
+      font-size: 13.5px;
+      font-weight: 600;
       color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
-    /* Metric Cards */
     .metric-value {
-      font-size: 32px;
-      font-weight: 800;
-      color: white;
+      font-size: 34px;
+      font-weight: 900;
+      color: #FFFFFF;
       margin: 8px 0 4px;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'JetBrains Mono', 'Prompt', monospace;
+      letter-spacing: -0.5px;
     }
 
     .metric-sub {
-      font-size: 13px;
-      color: var(--emerald);
+      font-size: 13.5px;
       font-weight: 600;
+      color: var(--emerald-light);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    /* Code & Diagram Block */
+    .tech-diagram-box {
+      background: #060B15;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 18px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #38BDF8;
+      overflow-x: auto;
+      line-height: 1.65;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) inset;
     }
 
     /* Tables */
     .table-container {
       overflow-x: auto;
-      border-radius: 16px;
-      border: 1px solid var(--card-border);
-      background: rgba(15, 23, 42, 0.6);
-      margin-bottom: 25px;
+      border-radius: 18px;
+      border: 1px solid var(--border-card);
+      background: rgba(15, 23, 42, 0.85);
+      margin-bottom: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
       text-align: left;
-      font-size: 14.5px;
+      font-size: 14px;
     }
 
     th {
-      background: rgba(30, 41, 59, 0.9);
-      color: var(--primary-light);
+      background: rgba(30, 41, 59, 0.95);
+      color: #38BDF8;
       padding: 16px 20px;
       font-weight: 700;
-      border-bottom: 1px solid var(--card-border);
+      border-bottom: 1px solid var(--border-card);
+      letter-spacing: 0.2px;
     }
 
     td {
-      padding: 15px 20px;
-      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
-      color: var(--text-light);
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+      color: var(--text-sub);
     }
 
     tr:last-child td {
@@ -258,7 +333,7 @@
     }
 
     tr:hover td {
-      background: rgba(56, 189, 248, 0.04);
+      background: rgba(56, 189, 248, 0.05);
     }
 
     .tag {
@@ -267,67 +342,79 @@
       border-radius: 8px;
       font-size: 12px;
       font-weight: 700;
+      letter-spacing: 0.3px;
     }
 
-    .tag-emerald { background: rgba(16, 185, 129, 0.18); color: #34D399; }
-    .tag-sky { background: rgba(2, 132, 199, 0.18); color: #38BDF8; }
-    .tag-amber { background: rgba(245, 158, 11, 0.18); color: #FBBF24; }
-    .tag-purple { background: rgba(99, 102, 241, 0.18); color: #A5B4FC; }
+    .tag-sky { background: rgba(2, 132, 199, 0.2); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.4); }
+    .tag-emerald { background: rgba(16, 185, 129, 0.2); color: #34D399; border: 1px solid rgba(52, 211, 153, 0.4); }
+    .tag-purple { background: rgba(168, 85, 247, 0.2); color: #C084FC; border: 1px solid rgba(192, 132, 252, 0.4); }
 
-    /* Architecture Block */
-    .arch-diagram {
-      background: #060B13;
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 24px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
-      color: #38BDF8;
-      overflow-x: auto;
-      line-height: 1.6;
-      margin-bottom: 24px;
+    .check-list {
+      list-style: none;
+      padding: 0;
+      margin-top: 12px;
     }
 
-    /* Print media */
+    .check-list li {
+      font-size: 13.5px;
+      color: var(--text-sub);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .check-list li::before {
+      content: '✓';
+      color: var(--emerald-light);
+      font-weight: 800;
+    }
+
+    /* Print Formatting */
     @media print {
       body {
-        background: white !important;
+        background: #FFFFFF !important;
         color: #0F172A !important;
         padding: 0 !important;
+        font-size: 12pt !important;
       }
       .container {
         border: none !important;
         box-shadow: none !important;
         padding: 0 !important;
-        background: white !important;
+        background: #FFFFFF !important;
         max-width: 100% !important;
       }
-      .btn-print {
+      .btn-action {
         display: none !important;
+      }
+      .brand-title {
+        color: #0F172A !important;
+      }
+      .brand-title span {
+        -webkit-text-fill-color: #0284C7 !important;
       }
       .card {
         background: #F8FAFC !important;
-        border: 1px solid #E2E8F0 !important;
+        border: 1px solid #CBD5E1 !important;
         color: #0F172A !important;
+        box-shadow: none !important;
         break-inside: avoid;
       }
-      .card-title {
+      .card-title, .section-title {
         color: #0F172A !important;
       }
       .card-desc, td, .header-meta p {
-        color: #475569 !important;
+        color: #334155 !important;
+      }
+      .metric-value {
+        color: #0284C7 !important;
       }
       th {
         background: #F1F5F9 !important;
-        color: #0284C7 !important;
-      }
-      .brand-title {
-        -webkit-text-fill-color: #0F172A !important;
-      }
-      .metric-value {
         color: #0F172A !important;
       }
-      .arch-diagram {
+      .tech-diagram-box {
         background: #F8FAFC !important;
         color: #0369A1 !important;
         border: 1px solid #CBD5E1 !important;
@@ -340,253 +427,253 @@
 <div class="container">
   <!-- Header -->
   <header class="header">
-    <div>
-      <h1 class="brand-title">
-        H2HFLEET
-        <span class="badge-version">v1.1.0 Release</span>
-      </h1>
-      <p style="color: var(--text-muted); font-size: 16px; margin-top: 8px;">
-        ระบบบริหารจัดการกองยานพาหนะอัจฉริยะ สำหรับธุรกิจ SME และโลจิสติกส์ในประเทศไทยและอาเซียน
-      </p>
+    <div class="brand-group">
+      <div class="brand-logo-badge">🚛</div>
+      <div>
+        <h1 class="brand-title">H2H<span>FLEET</span></h1>
+        <div class="badge-pill">Executive Project Report · Release v1.1.0</div>
+      </div>
     </div>
-    <div class="header-meta">
-      <p>จัดทำโดย: <strong>Rnai-io & H2HFleet Engineering</strong></p>
-      <p>วันที่: <strong>26 สิงหาคม 2026</strong></p>
-      <p>สถานะ: <strong>Production Ready (App Store / TestFlight / Web)</strong></p>
-      <button class="btn-print" onclick="window.print()">🖨️ พิมพ์รายงาน / บันทึกเป็น PDF</button>
+    <div class="header-actions">
+      <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 6px;">
+        แพลตฟอร์มบริหารกองยานพาหนะอัจฉริยะสำหรับ SME และโลจิสติกส์
+      </p>
+      <button class="btn-action" onclick="window.print()">
+        <span>🖨️</span> พิมพ์รายงาน / ดาวน์โหลด PDF
+      </button>
     </div>
   </header>
 
-  <!-- Executive Summary -->
+  <!-- 1. Executive Summary -->
   <section class="section">
-    <div class="section-header">
-      <div class="section-icon">📊</div>
-      <h2 class="section-title">1. บทสรุปผู้บริหาร (Executive Summary)</h2>
+    <div class="section-title-wrap">
+      <div class="section-num">1</div>
+      <h2 class="section-title">บทสรุปผู้บริหารและจุดเด่นโครงการ (Executive Summary)</h2>
     </div>
-    <p style="margin-bottom: 20px; font-size: 16px; color: var(--text-light);">
-      <strong>H2HFleet</strong> ได้รับการออกแบบและพัฒนาขึ้นเพื่อแก้ปัญหาต้นทุนการขนส่งที่สูงเกินจริงของกลุ่มผู้ประกอบการ SME และ Fleet Operators ในประเทศไทยและภูมิภาคอาเซียน โดยผสานรวม <strong>ระบบติดตาม GPS Real-Time, ระบบวิเคราะห์เส้นทางอัตโนมัติ (Waypoints Navigation), ระบบบันทึกค่าใช้จ่าย & ซ่อมบำรุง, และระบบ AI ตรวจจับความผิดปกติ</strong> ไว้ในแพลตฟอร์มเดียวแบบ Multi-Platform (iOS, Android, Web)
+
+    <p style="margin-bottom: 22px; font-size: 15px; color: var(--text-sub); line-height: 1.8;">
+      <strong>H2HFleet</strong> ถูกพัฒนาขึ้นเพื่อแก้ปัญหาต้นทุนการขนส่งที่สูงเกินจริงของธุรกิจ SME ในประเทศไทยและภูมิภาคอาเซียน โดยรวบรวมฟังก์ชัน <strong>แผนที่สดติดตามรถ Real-Time, ระบบวางแผนเส้นทางอัจฉริยะ (Waypoints Navigation), ระบบบันทึกค่าใช้จ่าย & แจ้งเตือนซ่อมบำรุง, และระบบ AI ผู้ช่วยวิเคราะห์ความผิดปกติ</strong> ไว้ในแอปพลิเคชันเดียวแบบ Multi-Platform (iOS, Android, และ Web Application)
     </p>
 
     <div class="grid-4">
       <div class="card card-highlight">
-        <div class="card-desc">ลดต้นทุนน้ำมันเฉลี่ย</div>
-        <div class="metric-value" style="color: #38BDF8;">18-25%</div>
-        <div class="metric-sub">ด้วย AI Route & Idle Detection</div>
+        <div class="card-label">ลดต้นทุนน้ำมันเฉลี่ย</div>
+        <div class="metric-value" style="color: #38BDF8;">18 - 25%</div>
+        <div class="metric-sub">✓ ด้วย AI Route & Idle Analysis</div>
       </div>
       <div class="card card-highlight">
-        <div class="card-desc">ระยะเวลาคืนทุน (Payback)</div>
+        <div class="card-label">ระยะเวลาคืนทุน (Payback)</div>
         <div class="metric-value" style="color: #34D399;">2.4 เดือน</div>
-        <div class="metric-sub">จากกำไรส่วนเพิ่มค่าน้ำมัน & ซ่อม</div>
+        <div class="metric-sub">✓ คำนวณจากกำไรส่วนเพิ่มค่าน้ำมัน</div>
       </div>
       <div class="card card-highlight">
-        <div class="card-desc">จุดคุ้มทุนโครงการ (BEP)</div>
+        <div class="card-label">จุดคุ้มทุน (Break-Even)</div>
         <div class="metric-value" style="color: #FBBF24;">145 คัน</div>
-        <div class="metric-sub">ครอบคลุม Fixed Cost ทั้งระบบ</div>
+        <div class="metric-sub">✓ ครอบคลุม Fixed Cost ทั้งระบบ</div>
       </div>
       <div class="card card-highlight">
-        <div class="card-desc">Gross Margin เป้าหมาย</div>
-        <div class="metric-value" style="color: #A5B4FC;">78.5%</div>
-        <div class="metric-sub">โมเดล SaaS Recurring Revenue</div>
+        <div class="card-label">Gross Margin เป้าหมาย</div>
+        <div class="metric-value" style="color: #C084FC;">78.5%</div>
+        <div class="metric-sub">✓ โมเดลธุรกิจ Pure SaaS Recurring</div>
       </div>
     </div>
   </section>
 
-  <!-- System Architecture -->
+  <!-- 2. System Architecture -->
   <section class="section">
-    <div class="section-header">
-      <div class="section-icon">🏗️</div>
-      <h2 class="section-title">2. สถาปัตยกรรมระบบเวอร์ชัน 1.1.0 (System Architecture)</h2>
+    <div class="section-title-wrap">
+      <div class="section-num">2</div>
+      <h2 class="section-title">สถาปัตยกรรมระบบเวอร์ชัน 1.1.0 (System Architecture)</h2>
     </div>
 
-    <div class="arch-diagram">
-+---------------------------------------------------------------------------------------+
-|                                H2HFLEET CLIENT APPS                                   |
-|   +-----------------------+   +-----------------------+   +-----------------------+   |
-|   |  iOS App (TestFlight) |   |  Android Native (APK) |   | Flutter Web (Netlify) |   |
-|   |  • Face ID / Passcode |   |  • Background GPS     |   | • SPA CDN Deployment  |   |
-|   |  • Native Apple OAuth |   |  • Push Notification  |   | • Responsive Web PWA  |   |
-|   +-----------------------+   +-----------------------+   +-----------------------+   |
-+-------------------------------------------+-------------------------------------------+
-                                            | HTTPS / WSS
-                                            v
-+---------------------------------------------------------------------------------------+
-|                               CLOUD BACKEND (SUPABASE)                                |
-|   +-------------------------------------------------------------------------------+   |
-|   | PostgreSQL Database (Row Level Security Enabled)                              |   |
-|   | • companies, users, vehicles, expenses, trips, maintenance, gps_logs          |   |
-|   +-------------------------------------------------------------------------------+   |
-|   | Realtime Engine (Postgres Changes via WebSockets)                             |   |
-|   | • 100ms GPS Latency Tracking · Instant Driver Location Broadcast             |   |
-|   +-------------------------------------------------------------------------------+   |
-|   | Edge Functions (Deno / TypeScript)                                            |   |
-|   | • line-webhook (LINE OA Push Notifications)                                   |   |
-|   | • gps-telemetry (OBD-II & Hardware Tracker Ingestion)                         |   |
-|   +-------------------------------------------------------------------------------+   |
-+-------------------------------------------+-------------------------------------------+
-                                            | API Integration
-                                            v
-+---------------------------------------------------------------------------------------+
-|                                THIRD-PARTY INTEGRATIONS                               |
-|   +-------------------+  +--------------------+  +------------------+  +----------+   |
-|   | Google Cloud AI   |  | OpenStreetMap/OSRM |  | LINE Developers  |  | Apple ID |   |
-|   | Gemini 1.5 Flash  |  | Route Navigation   |  | Messaging API    |  | OAuth    |   |
-|   +-------------------+  +--------------------+  +------------------+  +----------+   |
-+---------------------------------------------------------------------------------------+
+    <div class="tech-diagram-box">
++-----------------------------------------------------------------------------------------------+
+|                                    H2HFLEET CLIENT APPS                                       |
+|   +---------------------------+   +---------------------------+   +-----------------------+   |
+|   |   iOS App (TestFlight)    |   |   Android Native App      |   | Flutter Web (Netlify) |   |
+|   |   • Face ID / Touch ID    |   |   • Background Geolocation|   | • Single Page App CDN |   |
+|   |   • Native Apple Sign In  |   |   • Push Notifications    |   | • Dynamic URL Routing |   |
+|   +---------------------------+   +---------------------------+   +-----------------------+   |
++-----------------------------------------------+-----------------------------------------------+
+                                                | HTTPS & WebSockets (WSS)
+                                                v
++-----------------------------------------------------------------------------------------------+
+|                                   CLOUD BACKEND & DATABASE (SUPABASE)                         |
+|   +---------------------------------------------------------------------------------------+   |
+|   | PostgreSQL Database with Row Level Security (RLS Multi-Tenant Architecture)           |   |
+|   | • companies, users, vehicles, expenses, trips, maintenance, gps_logs                  |   |
+|   +---------------------------------------------------------------------------------------+   |
+|   | Realtime WebSocket Telemetry Engine                                                   |   |
+|   | • Sub-second GPS Live Stream · Multi-Driver Sync · Fallback Standby Coordinates      |   |
+|   +---------------------------------------------------------------------------------------+   |
+|   | Serverless Edge Functions (TypeScript / Deno)                                         |   |
+|   | • line-webhook (LINE OA Push Notifications) · gps-ingestion (OBD-II Hardware API)     |   |
+|   +---------------------------------------------------------------------------------------+   |
++-----------------------------------------------+-----------------------------------------------+
+                                                | API Gateway
+                                                v
++-----------------------------------------------------------------------------------------------+
+|                                    THIRD-PARTY ECOSYSTEM                                      |
+|   +-----------------------+   +-----------------------+   +-------------------------------+   |
+|   | Google Cloud AI       |   | OSRM Routing Engine   |   | LINE Messaging API            |   |
+|   | • Gemini 1.5 Flash    |   | • OpenStreetMap Tiles |   | • Driver Trip Push Messages   |   |
+|   +-----------------------+   +-----------------------+   +-------------------------------+   |
++-----------------------------------------------------------------------------------------------+
     </div>
 
     <div class="grid-3">
       <div class="card">
-        <div class="card-title">📱 Frontend Technology</div>
+        <div class="card-title">📱 Multi-Platform Flutter 3.44+</div>
         <div class="card-desc">
-          พัฒนาด้วย <strong>Flutter 3.44+</strong> แบบ Single Codebase รองรับ iOS (Deployment Target 15.0), Android, และ Web PWA พร้อมระบบจัดการ State Management ด้วย <strong>Riverpod 2.6</strong> แบบ Reactive Stream
+          โครงสร้างโค้ดแบบ Single Codebase 100% พัฒนาด้วย Riverpod 2.6 State Management รองรับหน้าจอทุกขนาด (Responsive Mobile, Tablet, Web) และปรับแต่งฟอนต์ภาษาไทยคมชัดระดับ Retina Display
         </div>
       </div>
       <div class="card">
-        <div class="card-title">🔐 Enterprise Security</div>
+        <div class="card-title">🛡️ Row Level Security (RLS)</div>
         <div class="card-desc">
-          ฐานข้อมูล <strong>PostgreSQL with Row Level Security (RLS)</strong> ครบทุกตาราง รับรองความปลอดภัยแบบ Multi-Tenant Data Isolation บัญชีแต่ละบริษัทสามารถเข้าถึงได้เฉพาะยานพาหนะและคนขับของตนเองเท่านั้น
+          ความปลอดภัยระดับ Enterprise ด้วย PostgreSQL RLS แยกฐานข้อมูลลูกค้าแต่ละบริษัทโดยเด็ดขาด ป้องกันการเข้าถึงข้อมูลข้ามองค์กร พร้อมระบบ Auto Profile Generation
         </div>
       </div>
       <div class="card">
-        <div class="card-title">📡 Real-Time Telemetry</div>
+        <div class="card-title">🤖 AI Analytics Engine</div>
         <div class="card-desc">
-          ส่งข้อมูลพิกัด GPS สดผ่าน <strong>WebSockets Realtime Engine</strong> รองรับทั้งอุปกรณ์ GPS ติดตั้งในตัวรถ (Hardware Tracker / OBD-II) และการแชร์ตำแหน่งผ่านสมาร์ทโฟนของคนขับ (Driver App)
+          ผสานรวมโมเดล Gemini 1.5 Flash และ OpenAI GPT-4o-mini วิเคราะห์บิลค่าน้ำมัน ค้นหาความผิดปกติในการใช้เชื้อเพลิง และแจ้งเตือนรอบซ่อมบำรุงล่วงหน้าอัตโนมัติ
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Cost Structure -->
+  <!-- 3. Cost & Unit Economics -->
   <section class="section">
-    <div class="section-header">
-      <div class="section-icon">💸</div>
-      <h2 class="section-title">3. โครงสร้างต้นทุน (Cost Structure & Unit Economics)</h2>
+    <div class="section-title-wrap">
+      <div class="section-num">3</div>
+      <h2 class="section-title">โครงสร้างต้นทุนและเศรษฐศาสตร์ต่อหน่วย (Unit Economics)</h2>
     </div>
 
     <div class="table-container">
       <table>
         <thead>
           <tr>
-            <th>หมวดหมู่ต้นทุน</th>
-            <th>รายละเอียดรายการ</th>
+            <th>หมวดหมู่ค่าใช้จ่าย</th>
+            <th>รายละเอียดการใช้งาน</th>
             <th>ต้นทุนคงที่ (Fixed / เดือน)</th>
             <th>ต้นทุนผันแปร (Variable / คัน / เดือน)</th>
-            <th>หมายเหตุ</th>
+            <th>หมายเหตุความคุ้มค่า</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td><strong>Cloud Infrastructure</strong></td>
-            <td>Supabase Pro Tier, Database Hosting, Realtime Quota</td>
+            <td><strong>Cloud Database & Realtime</strong></td>
+            <td>Supabase Pro Tier (Postgres, Storage, Auth, Realtime)</td>
             <td>฿1,200</td>
             <td>฿8.50</td>
-            <td>รองรับการขยายตัว 10,000+ คัน</td>
+            <td>รองรับฐานข้อมูลขนาดใหญ่และขยายตัวได้ทันที</td>
           </tr>
           <tr>
             <td><strong>Web & CDN Hosting</strong></td>
-            <td>Netlify Pro / Global Edge CDN</td>
+            <td>Netlify Global Edge CDN (SSL, Bandwidth, Custom Domain)</td>
             <td>฿750</td>
             <td>฿2.00</td>
-            <td>Fast Content Delivery ในอาเซียน</td>
+            <td>ความเร็วโหลดหน้าเว็บในอาเซียน &lt; 0.8 วินาที</td>
           </tr>
           <tr>
-            <td><strong>AI Analytics Engine</strong></td>
-            <td>Gemini 1.5 Flash / OpenAI Token Costs สำหรับวิเคราะห์บิล</td>
+            <td><strong>AI Intelligence Token</strong></td>
+            <td>Gemini 1.5 Flash สำหรับประมวลผล OCR & Analytics</td>
             <td>—</td>
             <td>฿4.50</td>
-            <td>คำนวณจากการวิเคราะห์ 30 รายการ/คัน/เดือน</td>
+            <td>คำนวณเฉลี่ย 30 การวิเคราะห์ต่อคันต่อเดือน</td>
           </tr>
           <tr>
-            <td><strong>Map & Routing API</strong></td>
-            <td>OSRM Routing + OpenStreetMap Tile Cache</td>
+            <td><strong>Map Routing Engine</strong></td>
+            <td>OSRM Routing + OpenStreetMap Tile Caching</td>
             <td>฿500</td>
             <td>฿1.50</td>
             <td>ประหยัดกว่า Google Maps API ถึง 90%</td>
           </tr>
           <tr>
-            <td><strong>LINE Push Notification</strong></td>
+            <td><strong>LINE Push Notifications</strong></td>
             <td>LINE Official Account Pro Messaging Package</td>
             <td>฿1,500</td>
             <td>฿3.00</td>
-            <td>แจ้งเตือนคนขับและผู้จัดการกองรถ</td>
+            <td>ส่งรายละเอียดงานเข้า LINE คนขับโดยตรง</td>
           </tr>
           <tr>
-            <td><strong>Apple / Google Store</strong></td>
+            <td><strong>Store Licenses</strong></td>
             <td>Apple Developer Program & Google Play Console</td>
             <td>฿350</td>
             <td>—</td>
             <td>ค่าธรรมเนียมรายปีหารเฉลี่ยรายเดือน</td>
           </tr>
-          <tr style="background: rgba(2, 132, 199, 0.1); font-weight: 700;">
-            <td colspan="2">รวมต้นทุนโดยประมาณ</td>
+          <tr style="background: rgba(2, 132, 199, 0.15); font-weight: 800;">
+            <td colspan="2">รวมต้นทุนโดยประมาณทั้งระบบ</td>
             <td style="color: #38BDF8;">฿4,300 / เดือน</td>
             <td style="color: #34D399;">฿19.50 / คัน / เดือน</td>
-            <td><strong>Unit Cost ต่ำมาก ทำให้สร้าง Gross Margin สูง</strong></td>
+            <td><strong>Unit Cost ต่ำมาก สร้าง Gross Margin สูงถึง 92.5%</strong></td>
           </tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <!-- Pricing Strategy -->
+  <!-- 4. Pricing Strategy -->
   <section class="section">
-    <div class="section-header">
-      <div class="section-icon">🏷️</div>
-      <h2 class="section-title">4. กลยุทธ์การตั้งราคาขายในประเทศไทย และ ภูมิภาคอาเซียน (Pricing Matrix)</h2>
+    <div class="section-title-wrap">
+      <div class="section-num">4</div>
+      <h2 class="section-title">กลยุทธ์การตั้งราคาขายในไทยและอาเซียน (Pricing Strategy)</h2>
     </div>
 
-    <h3 style="font-size: 18px; margin-bottom: 16px; color: var(--primary-light);">🇹🇭 โครงสร้างราคาจำหน่ายในประเทศไทย (Thailand SaaS Tiers)</h3>
+    <h3 style="font-size: 16px; margin-bottom: 14px; color: #38BDF8; font-weight: 700;">🇹🇭 โครงสร้างราคาจำหน่ายในประเทศไทย (Thailand SaaS Packages)</h3>
     <div class="grid-3">
       <div class="card">
-        <div class="tag tag-sky">STARTER</div>
-        <h3 style="font-size: 24px; font-weight: 800; margin: 12px 0 6px;">฿199 <span style="font-size: 14px; font-weight: 400; color: var(--text-muted);">/ คัน / เดือน</span></h3>
-        <p class="card-desc" style="margin-bottom: 16px;">เหมาะสำหรับผู้ประกอบการรายย่อย (1-5 คัน)</p>
-        <ul style="font-size: 13.5px; color: var(--text-light); line-height: 2; padding-left: 18px;">
-          <li>ติดตาม GPS Real-Time บนแผนที่</li>
-          <li>บันทึกค่าน้ำมัน & ค่าใช้จ่าย</li>
-          <li>ส่งเส้นทางเข้า LINE Driver</li>
-          <li>สรุปรายงานประจำเดือน PDF</li>
+        <div class="tag tag-sky">STARTER TIER</div>
+        <div class="metric-value" style="font-size: 28px; margin: 10px 0 4px;">฿199 <span style="font-size: 13px; color: var(--text-muted); font-weight: 400;">/ คัน / เดือน</span></div>
+        <p class="card-desc">สำหรับผู้ประกอบการรายย่อย (1-5 คัน)</p>
+        <ul class="check-list">
+          <li>ติดตามพิกัด GPS Real-Time บนแผนที่</li>
+          <li>บันทึกค่าน้ำมันและค่าซ่อมบำรุง</li>
+          <li>ส่งเส้นทางนำทางเข้า LINE คนขับ</li>
+          <li>ส่งออกรายงานประจำเดือน PDF</li>
         </ul>
       </div>
 
       <div class="card card-highlight">
-        <div class="tag tag-emerald">PRO FLEET (แนะนำ)</div>
-        <h3 style="font-size: 24px; font-weight: 800; margin: 12px 0 6px; color: #34D399;">฿299 <span style="font-size: 14px; font-weight: 400; color: var(--text-muted);">/ คัน / เดือน</span></h3>
-        <p class="card-desc" style="margin-bottom: 16px;">สำหรับธุรกิจขนส่งขนาดกลาง (6-20 คัน)</p>
-        <ul style="font-size: 13.5px; color: var(--text-light); line-height: 2; padding-left: 18px;">
+        <div class="tag tag-emerald">PRO FLEET (แพ็กเกจยอดนิยม)</div>
+        <div class="metric-value" style="font-size: 28px; margin: 10px 0 4px; color: #34D399;">฿299 <span style="font-size: 13px; color: var(--text-muted); font-weight: 400;">/ คัน / เดือน</span></div>
+        <p class="card-desc">สำหรับธุรกิจขนส่งขนาดกลาง (6-20 คัน)</p>
+        <ul class="check-list">
           <li>ฟังก์ชัน Starter ทั้งหมด</li>
           <li><strong>AI ผู้ช่วยอัจฉริยะวิเคราะห์ความผิดปกติ</strong></li>
-          <li>ระบบแจ้งเตือนรอบซ่อมบำรุงล่วงหน้า</li>
-          <li>วางแผนเส้นทางหลายจุดแวะ (Multi-stop)</li>
-          <li>Export Excel & CSV รายการค่าใช้จ่าย</li>
+          <li>วางแผนเส้นทางหลายจุดแวะ (Multi-Waypoints)</li>
+          <li>ระบบแจ้งเตือนรอบบำรุงรักษาล่วงหน้า</li>
+          <li>Export บิลค่าใช้จ่ายเป็น Excel / CSV</li>
         </ul>
       </div>
 
       <div class="card">
-        <div class="tag tag-purple">ENTERPRISE</div>
-        <h3 style="font-size: 24px; font-weight: 800; margin: 12px 0 6px; color: #A5B4FC;">฿399 <span style="font-size: 14px; font-weight: 400; color: var(--text-muted);">/ คัน / เดือน</span></h3>
-        <p class="card-desc" style="margin-bottom: 16px;">กองยานพาหนะขนาดใหญ่ (20+ คันขึ้นไป)</p>
-        <ul style="font-size: 13.5px; color: var(--text-light); line-height: 2; padding-left: 18px;">
+        <div class="tag tag-purple">ENTERPRISE TIER</div>
+        <div class="metric-value" style="font-size: 28px; margin: 10px 0 4px; color: #C084FC;">฿399 <span style="font-size: 13px; color: var(--text-muted); font-weight: 400;">/ คัน / เดือน</span></div>
+        <p class="card-desc">กองยานพาหนะขนาดใหญ่ (20+ คันขึ้นไป)</p>
+        <ul class="check-list">
           <li>ฟังก์ชัน Pro Fleet ทั้งหมด</li>
-          <li>Custom API & ERP Integration</li>
-          <li>Dedicated Account Manager</li>
-          <li>รายงานเปรียบเทียบประสิทธิภาพคนขับ (KPIs)</li>
-          <li>SLA การันตีระบบ 99.9% Uptime</li>
+          <li>Custom Webhook & ERP Integration</li>
+          <li>Dedicated Account Manager ดูแลใกล้ชิด</li>
+          <li>วิเคราะห์พฤติกรรมและความเร็วคนขับ</li>
+          <li>การันตีระบบ 99.9% Uptime SLA</li>
         </ul>
       </div>
     </div>
 
-    <h3 style="font-size: 18px; margin: 30px 0 16px; color: var(--primary-light);">🌏 ตารางเปรียบเทียบราคาในภูมิภาคอาเซียน (ASEAN Expansion Pricing)</h3>
+    <h3 style="font-size: 16px; margin: 30px 0 14px; color: #38BDF8; font-weight: 700;">🌏 ตารางราคาเปรียบเทียบในตลาดอาเซียน (ASEAN Expansion Matrix)</h3>
     <div class="table-container">
       <table>
         <thead>
           <tr>
-            <th>ประเทศ</th>
+            <th>ประเทศเป้าหมาย</th>
             <th>สกุลเงิน</th>
             <th>Starter / คัน / ด.</th>
             <th>Pro Fleet / คัน / ด.</th>
             <th>Enterprise / คัน / ด.</th>
-            <th>คู่แข่งหลักในตลาด</th>
+            <th>คู่แข่งสำคัญในตลาด</th>
           </tr>
         </thead>
         <tbody>
@@ -594,7 +681,7 @@
             <td><strong>🇹🇭 ไทย (Thailand)</strong></td>
             <td>THB</td>
             <td>฿199</td>
-            <td style="color: #34D399; font-weight: 700;">฿299</td>
+            <td style="color: #34D399; font-weight: 800;">฿299</td>
             <td>฿399</td>
             <td>Cartrack, Onelink, Nostra</td>
           </tr>
@@ -602,7 +689,7 @@
             <td><strong>🇲🇾 มาเลเซีย (Malaysia)</strong></td>
             <td>MYR</td>
             <td>RM 28</td>
-            <td style="color: #34D399; font-weight: 700;">RM 42</td>
+            <td style="color: #34D399; font-weight: 800;">RM 42</td>
             <td>RM 58</td>
             <td>Katsana, Cartrack MY</td>
           </tr>
@@ -610,7 +697,7 @@
             <td><strong>🇸🇬 สิงคโปร์ (Singapore)</strong></td>
             <td>SGD</td>
             <td>S$ 12</td>
-            <td style="color: #34D399; font-weight: 700;">S$ 18</td>
+            <td style="color: #34D399; font-weight: 800;">S$ 18</td>
             <td>S$ 25</td>
             <td>Overdrive, Webfleet SG</td>
           </tr>
@@ -618,7 +705,7 @@
             <td><strong>🇮🇩 อินโดนีเซีย (Indonesia)</strong></td>
             <td>IDR</td>
             <td>Rp 95,000</td>
-            <td style="color: #34D399; font-weight: 700;">Rp 145,000</td>
+            <td style="color: #34D399; font-weight: 800;">Rp 145,000</td>
             <td>Rp 195,000</td>
             <td>McEasy, TransTRACK</td>
           </tr>
@@ -626,7 +713,7 @@
             <td><strong>🇻🇳 เวียดนาม (Vietnam)</strong></td>
             <td>VND</td>
             <td>₫ 150,000</td>
-            <td style="color: #34D399; font-weight: 700;">₫ 230,000</td>
+            <td style="color: #34D399; font-weight: 800;">₫ 230,000</td>
             <td>₫ 310,000</td>
             <td>Binh Anh, Vtracking</td>
           </tr>
@@ -634,7 +721,7 @@
             <td><strong>🇵🇭 ฟิลิปปินส์ (Philippines)</strong></td>
             <td>PHP</td>
             <td>₱ 350</td>
-            <td style="color: #34D399; font-weight: 700;">₱ 520</td>
+            <td style="color: #34D399; font-weight: 800;">₱ 520</td>
             <td>₱ 700</td>
             <td>Tramigo, Webtrack PH</td>
           </tr>
@@ -643,29 +730,18 @@
     </div>
   </section>
 
-  <!-- Break-Even & 3-Year P&L -->
-  <section class="section">
-    <div class="section-header">
-      <div class="section-icon">📈</div>
-      <h2 class="section-title">5. การวิเคราะห์จุดคุ้มทุนและประมาณการงบกำไรขาดทุน 3 ปี (P&L Forecast)</h2>
-    </div>
-
-    <div class="card" style="margin-bottom: 24px;">
-      <div class="card-title">🧮 สูตรคำนวณจุดคุ้มทุน (Break-Even Quantity Calculation)</div>
-      <div class="card-desc" style="color: var(--text-light); line-height: 1.9;">
-        <strong>Fixed Costs (FC)</strong> = ฿40,000 / เดือน (รวมค่า Server + Support + Admin)<br>
-        <strong>ราคาขายเฉลี่ย (Price per Vehicle: P)</strong> = ฿299 / คัน / เดือน (Pro Plan)<br>
-        <strong>ต้นทุนผันแปร (Variable Cost per Vehicle: VC)</strong> = ฿22.50 / คัน / เดือน<br>
-        <strong>Contribution Margin per Unit (CM)</strong> = P - VC = ฿299 - ฿22.50 = <strong>฿276.50 / คัน / เดือน</strong><br>
-        <strong>จุดคุ้มทุน (Break-Even Units)</strong> = FC / CM = 40,000 / 276.50 = <span style="color: #38BDF8; font-weight: 700; font-size: 16px;">145 คันในระบบเท่านั้น!</span>
-      </div>
+  <!-- 5. Financial Forecast -->
+  <section class="section" style="margin-bottom: 0;">
+    <div class="section-title-wrap">
+      <div class="section-num">5</div>
+      <h2 class="section-title">ประมาณการงบกำไรขาดทุน 3 ปี (3-Year P&L Forecast)</h2>
     </div>
 
     <div class="table-container">
       <table>
         <thead>
           <tr>
-            <th>รายการทางการเงิน (หน่วย: บาท)</th>
+            <th>รายการทางการเงิน (Financial Metrics)</th>
             <th>ปีที่ 1 (Year 1)</th>
             <th>ปีที่ 2 (Year 2)</th>
             <th>ปีที่ 3 (Year 3)</th>
@@ -673,25 +749,25 @@
         </thead>
         <tbody>
           <tr>
-            <td><strong>จำนวนรถในระบบ (Active Vehicles)</strong></td>
+            <td><strong>จำนวนรถที่ใช้บริการในระบบ (Active Fleet)</strong></td>
             <td><strong>500 คัน</strong></td>
             <td><strong>2,500 คัน</strong></td>
             <td><strong>10,000 คัน</strong></td>
           </tr>
           <tr>
-            <td>รายได้รวมรายปี (Annual Revenue)</td>
+            <td>รายได้รวมรายปี (Annual SaaS Revenue)</td>
             <td>฿1,794,000</td>
             <td>฿8,970,000</td>
             <td>฿35,880,000</td>
           </tr>
           <tr>
-            <td>ต้นทุนขาย (Cost of Goods Sold - COGS)</td>
+            <td>ต้นทุนการให้บริการ (Cost of Goods Sold - COGS)</td>
             <td>(฿135,000)</td>
             <td>(฿675,000)</td>
             <td>(฿2,700,000)</td>
           </tr>
-          <tr style="font-weight: 700; color: #34D399;">
-            <td>กำไรขั้นต้น (Gross Profit)</td>
+          <tr style="font-weight: 800; color: #34D399; background: rgba(16, 185, 129, 0.08);">
+            <td>กำไรขั้นต้น (Gross Profit Margin)</td>
             <td>฿1,659,000 (92.5%)</td>
             <td>฿8,295,000 (92.5%)</td>
             <td>฿33,180,000 (92.5%)</td>
@@ -702,29 +778,24 @@
             <td>(฿2,880,000)</td>
             <td>(฿9,600,000)</td>
           </tr>
-          <tr style="background: rgba(2, 132, 199, 0.15); font-weight: 800;">
+          <tr style="background: rgba(2, 132, 199, 0.2); font-weight: 900;">
             <td>กำไรสุทธิก่อนหักภาษี (EBITDA / Net Profit)</td>
             <td style="color: #38BDF8;">฿819,000 (45.6%)</td>
             <td style="color: #34D399;">฿5,415,000 (60.4%)</td>
-            <td style="color: #A5B4FC;">฿23,580,000 (65.7%)</td>
+            <td style="color: #C084FC;">฿23,580,000 (65.7%)</td>
           </tr>
         </tbody>
       </table>
     </div>
-  </section>
 
-  <!-- Conclusion & Sign Off -->
-  <section class="section" style="border-top: 1px solid var(--card-border); padding-top: 35px; margin-bottom: 0;">
-    <div class="grid-2">
+    <!-- Sign-off -->
+    <div style="border-top: 1px solid var(--border-subtle); padding-top: 24px; margin-top: 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
       <div>
-        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">🚀 สรุปผลความพร้อมโปรเจกต์ (Go-To-Market Readiness)</h3>
-        <p style="font-size: 14.5px; color: var(--text-muted);">
-          ระบบ H2HFleet เวอร์ชัน 1.1.0 มีความสมบูรณ์ระดับ Production Grade รองรับการใช้งานจริงทั้งบน iOS App Store, Android, และ Web Application พร้อมฐานข้อมูล Supabase และ AI Engine ที่ปรับแต่งเพื่อความคุ้มค่าสูงสุด สามารถเปิดตัวสู่ตลาดและสร้างผลกำไรได้อย่างยั่งยืนทันที
-        </p>
+        <p style="font-size: 14.5px; font-weight: 700; color: #FFFFFF;">H2HFleet Engineering & Management</p>
+        <p style="font-size: 13px; color: var(--text-muted);">Production Release v1.1.0 (Build 5) · Ready for Full Commercial Launch</p>
       </div>
-      <div style="text-align: right; display: flex; flex-direction: column; justify-content: flex-end;">
-        <p style="color: var(--text-light); font-weight: 600;">H2HFleet Project Management</p>
-        <p style="color: var(--text-muted); font-size: 13px;">Official Release · Version 1.1.0 (Build 5)</p>
+      <div style="text-align: right;">
+        <span class="tag tag-emerald" style="font-size: 13px; padding: 6px 14px;">✓ Production Verified</span>
       </div>
     </div>
   </section>
