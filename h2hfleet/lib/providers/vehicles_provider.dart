@@ -14,30 +14,59 @@ class VehiclesNotifier extends StateNotifier<AsyncValue<List<VehicleModel>>> {
     fetchVehicles();
   }
 
+  Future<String?> _getOrCreateCompanyId() async {
+    final user = _supabase.getCurrentUser();
+    if (user == null) return null;
+
+    final userRow = await _supabase.client
+        .from('users')
+        .select('company_id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+    if (userRow != null && userRow['company_id'] != null) {
+      return userRow['company_id'] as String;
+    }
+
+    // Auto-create company & user profile if missing
+    try {
+      final email = user.email ?? 'user_${user.id.substring(0, 6)}@h2hfleet.app';
+      final name = user.userMetadata?['full_name'] as String? ??
+          user.userMetadata?['name'] as String? ??
+          email.split('@').first;
+      final companyName = '$name Fleet';
+
+      final company = await _supabase.client
+          .from('companies')
+          .insert({'name': companyName, 'plan': 'free'})
+          .select()
+          .single();
+
+      final companyId = company['id'] as String;
+
+      await _supabase.client.from('users').upsert({
+        'id': user.id,
+        'email': email,
+        'name': name,
+        'company_id': companyId,
+        'role': 'owner',
+      });
+
+      return companyId;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> fetchVehicles() async {
     try {
       state = const AsyncValue.loading();
 
-      final user = _supabase.getCurrentUser();
-      if (user == null) {
+      final companyId = await _getOrCreateCompanyId();
+      if (companyId == null) {
         state = const AsyncValue.data([]);
         return;
       }
-
-      // maybeSingle() ไม่ throw เมื่อไม่พบ row
-      final userRow = await _supabase.client
-          .from('users')
-          .select('company_id')
-          .eq('id', user.id)
-          .maybeSingle();
-
-      if (userRow == null) {
-        // User profile ยังไม่มีใน DB (อาจ register ไม่สมบูรณ์)
-        state = const AsyncValue.data([]);
-        return;
-      }
-
-      final companyId = userRow['company_id'] as String;
 
       final vehicles = await _supabase.client
           .from('vehicles')
@@ -63,55 +92,41 @@ class VehiclesNotifier extends StateNotifier<AsyncValue<List<VehicleModel>>> {
     required String fuelType,
     String? remark,
   }) async {
-    try {
-      final user = _supabase.getCurrentUser();
-      if (user == null) return;
-
-      final userRow = await _supabase.client
-          .from('users')
-          .select('company_id')
-          .eq('id', user.id)
-          .maybeSingle();
-
-      if (userRow == null) return;
-
-      // payload หลัก (columns ที่มีแน่นอนใน DB)
-      final basePayload = <String, dynamic>{
-        'company_id': userRow['company_id'],
-        'plate_number': plateNumber,
-        'vehicle_type': vehicleType,
-        'brand': brand,
-        'model': model,
-        'year': year,
-        'fuel_type': fuelType,
-        'status': 'active',
-      };
-
-      // ลอง insert พร้อม optional fields ก่อน
-      // ถ้า PGRST204 (column ยังไม่มี) → retry ด้วย base payload เท่านั้น
-      try {
-        final fullPayload = {
-          ...basePayload,
-          if (nickName != null && nickName.isNotEmpty) 'nick_name': nickName,
-          if (remark != null && remark.isNotEmpty) 'remark': remark,
-        };
-        await _supabase.client.from('vehicles').insert(fullPayload);
-      } catch (insertErr) {
-        final errStr = insertErr.toString();
-        if (errStr.contains('PGRST204') ||
-            errStr.contains('schema cache') ||
-            errStr.contains('Could not find')) {
-          // column ยังไม่มีใน DB → insert แค่ core fields
-          await _supabase.client.from('vehicles').insert(basePayload);
-        } else {
-          rethrow;
-        }
-      }
-
-      await fetchVehicles();
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
+    final companyId = await _getOrCreateCompanyId();
+    if (companyId == null) {
+      throw Exception('ไม่พบบัญชีผู้ใช้ กรุณาออกจากระบบแล้วล็อกอินใหม่อีกครั้ง');
     }
+
+    final basePayload = <String, dynamic>{
+      'company_id': companyId,
+      'plate_number': plateNumber,
+      'vehicle_type': vehicleType,
+      'brand': brand,
+      'model': model,
+      'year': year,
+      'fuel_type': fuelType,
+      'status': 'active',
+    };
+
+    try {
+      final fullPayload = {
+        ...basePayload,
+        if (nickName != null && nickName.isNotEmpty) 'nick_name': nickName,
+        if (remark != null && remark.isNotEmpty) 'remark': remark,
+      };
+      await _supabase.client.from('vehicles').insert(fullPayload);
+    } catch (insertErr) {
+      final errStr = insertErr.toString();
+      if (errStr.contains('PGRST204') ||
+          errStr.contains('schema cache') ||
+          errStr.contains('Could not find')) {
+        await _supabase.client.from('vehicles').insert(basePayload);
+      } else {
+        rethrow;
+      }
+    }
+
+    await fetchVehicles();
   }
 
   Future<void> deleteVehicle(String vehicleId) async {
