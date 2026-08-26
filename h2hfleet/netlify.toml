@@ -1,9 +1,8 @@
 # ============================================================
-# Netlify deploy config — H2HFleet (Flutter Web)
+# Netlify deploy config — H2HFleet (Flutter Web - Subdirectory)
 # ============================================================
 
 [build]
-  base = "h2hfleet"
   publish = "build/web"
   command = """
     set -e
@@ -21,13 +20,11 @@
 [build.environment]
   GIT_LFS_SKIP_SMUDGE = "1"
 
-# ---- SPA routing: send all paths to index.html ----
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-# ---- Cache Control Headers ----
 [[headers]]
   for = "/*"
   [headers.values]
