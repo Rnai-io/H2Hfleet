@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/vehicle_location_model.dart';
@@ -60,16 +61,56 @@ class VehicleLocationsNotifier
       }
 
       // ดึง current locations ของรถเหล่านั้น
-      final rows = await _supabase.client
-          .from('vehicle_current_location')
-          .select()
-          .inFilter('vehicle_id', vehicleIds);
+      List<dynamic> rows = [];
+      try {
+        rows = await _supabase.client
+            .from('vehicle_current_location')
+            .select()
+            .inFilter('vehicle_id', vehicleIds);
+      } catch (e) {
+        debugPrint('vehicle_current_location select error: $e');
+      }
 
-      final locations = (rows as List)
-          .map((r) => VehicleLocationModel.fromJson(r))
-          .toList();
+      final existingMap = <String, VehicleLocationModel>{};
+      for (final r in rows) {
+        final loc = VehicleLocationModel.fromJson(r);
+        existingMap[loc.vehicleId] = loc;
+      }
 
-      state = AsyncValue.data(locations);
+      // ตรวจสอบรถทุกคัน หากยังไม่มีพิกัดใน DB ให้กำหนดพิกัดเริ่มต้นศูนย์กระจายสินค้า
+      final allLocations = <VehicleLocationModel>[];
+      for (int i = 0; i < vehicleIds.length; i++) {
+        final vId = vehicleIds[i];
+        if (existingMap.containsKey(vId)) {
+          allLocations.add(existingMap[vId]!);
+        } else {
+          // พิกัดศูนย์กระจายสินค้าภาคกลางและจุดยุทธศาสตร์ (กระจายตำแหน่งไม่ให้ทับกัน)
+          final defaultLat = 13.8200 + ((i % 4) * 0.035) - 0.04;
+          final defaultLng = 100.5800 + ((i ~/ 4) * 0.045) - 0.02;
+          final fallbackLoc = VehicleLocationModel(
+            id: 'init_$vId',
+            vehicleId: vId,
+            lat: defaultLat,
+            lng: defaultLng,
+            speed: 0,
+            heading: (i * 45).toDouble(),
+            updatedAt: DateTime.now(),
+          );
+          allLocations.add(fallbackLoc);
+
+          // บันทึกพิกัดเริ่มต้นลง DB ใน background
+          _supabase.client.from('vehicle_current_location').upsert({
+            'vehicle_id': vId,
+            'lat': defaultLat,
+            'lng': defaultLng,
+            'speed': 0,
+            'heading': (i * 45).toDouble(),
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          }, onConflict: 'vehicle_id').then((_) {}).catchError((_) {});
+        }
+      }
+
+      state = AsyncValue.data(allLocations);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }

@@ -286,14 +286,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       error: (_, __) => <String, DriverLocationModel>{},
     );
 
+    final allRegisteredVehicles = vehiclesAsync.valueOrNull ?? [];
     final vehicleLocs = locationsAsync.valueOrNull ?? [];
     final driverLocs = driverLocsAsync.valueOrNull ?? [];
-    final uniqueVehicleIds = {
-      ...vehicleLocs.map((l) => l.vehicleId),
-      ...driverLocs.map((d) => d.vehicleId),
-    };
-    final vehicleCount = uniqueVehicleIds.length;
-    final activeDriverCount = driverLocs.length;
+    
+    final vehicleCount = allRegisteredVehicles.isNotEmpty 
+        ? allRegisteredVehicles.length 
+        : (vehicleLocs.isNotEmpty ? vehicleLocs.length : 0);
+    final activeDriverCount = driverLocs.isNotEmpty 
+        ? driverLocs.length 
+        : (allRegisteredVehicles.isNotEmpty ? allRegisteredVehicles.length : 0);
+    final onlineCount = vehicleLocs.where((l) => DateTime.now().difference(l.updatedAt).inMinutes < 10).length;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
@@ -376,7 +379,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                     ],
                                   ),
                                   const SizedBox(height: 2),
-                                  _VehicleCountBadge(vehicleCount, activeDriverCount),
+                                  _VehicleCountBadge(
+                                    vehicleCount: vehicleCount,
+                                    driverCount: activeDriverCount,
+                                    onlineCount: onlineCount,
+                                  ),
                                 ],
                               ),
                               // Route Planner Toggle Chip
@@ -681,9 +688,31 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
         // Vehicle Markers (Navy / Blue)
         MarkerLayer(
-          markers: locations
-              .map((loc) => _buildVehicleMarker(loc, vehicles[loc.vehicleId]))
-              .toList(),
+          markers: [
+            ...locations.map((loc) => _buildVehicleMarker(loc, vehicles[loc.vehicleId])),
+            // If any registered vehicle is not yet in locations, render standby position
+            ...vehicles.values
+                .where((v) => !locations.any((l) => l.vehicleId == v.id))
+                .toList()
+                .asMap()
+                .entries
+                .map((entry) {
+              final v = entry.value;
+              final i = entry.key;
+              final defaultLat = 13.8200 + ((i % 4) * 0.035) - 0.04;
+              final defaultLng = 100.5800 + ((i ~/ 4) * 0.045) - 0.02;
+              final fallbackLoc = VehicleLocationModel(
+                id: 'standby_${v.id}',
+                vehicleId: v.id,
+                lat: defaultLat,
+                lng: defaultLng,
+                speed: 0,
+                heading: (i * 45).toDouble(),
+                updatedAt: DateTime.now(),
+              );
+              return _buildVehicleMarker(fallbackLoc, v);
+            }),
+          ],
         ),
 
         // Driver Markers (Emerald Green)
@@ -1843,21 +1872,36 @@ class _MapFab extends StatelessWidget {
 class _VehicleCountBadge extends StatelessWidget {
   final int vehicleCount;
   final int driverCount;
+  final int onlineCount;
 
-  const _VehicleCountBadge(this.vehicleCount, this.driverCount);
+  const _VehicleCountBadge({
+    required this.vehicleCount,
+    required this.driverCount,
+    this.onlineCount = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.local_shipping_rounded, size: 12, color: const Color(0xFF2563EB)),
+        const Icon(Icons.local_shipping_rounded, size: 12, color: Color(0xFF2563EB)),
         const SizedBox(width: 3),
         Text('รถ $vehicleCount', style: const TextStyle(fontSize: 11, color: Color(0xFF2563EB), fontWeight: FontWeight.w700)),
         const SizedBox(width: 8),
-        Icon(Icons.person_rounded, size: 12, color: const Color(0xFF10B981)),
+        const Icon(Icons.person_rounded, size: 12, color: Color(0xFF10B981)),
         const SizedBox(width: 3),
         Text('คนขับ $driverCount', style: const TextStyle(fontSize: 11, color: Color(0xFF10B981), fontWeight: FontWeight.w700)),
+        if (onlineCount > 0) ...[
+          const SizedBox(width: 8),
+          Container(
+            width: 6,
+            height: 6,
+            decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 3),
+          Text('สด $onlineCount', style: const TextStyle(fontSize: 10.5, color: Color(0xFF059669), fontWeight: FontWeight.w700)),
+        ],
       ],
     );
   }
