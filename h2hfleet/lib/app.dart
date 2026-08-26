@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
+import 'services/supabase_service.dart';
 import 'providers/auth_provider.dart';
 import 'providers/locale_provider.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
@@ -28,7 +29,10 @@ class H2HFleetApp extends ConsumerWidget {
       ],
       home: userAsync.when(
         data: (user) => user != null ? const DashboardScreen() : const LoginScreen(),
-        loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+        loading: () {
+          final currentUser = SupabaseService().getCurrentUser();
+          return currentUser != null ? const DashboardScreen() : const LoginScreen();
+        },
         error: (_, __) => const LoginScreen(),
       ),
     );

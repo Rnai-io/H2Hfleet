@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'part_categories.dart';
 
 /// ประเภทตัวถังที่ใช้วาด (blueprint side-profile)
 enum VehicleArchetype { sedan, suv, pickup, van, boxVan, bus, truck, mixer }
@@ -19,7 +18,9 @@ VehicleArchetype archetypeFromType(String? type) {
   if (t.contains('ห้องเย็น') || t.contains('ทึบ') || u.contains('BOX')) {
     return VehicleArchetype.boxVan;
   }
-  if (t.contains('บรรทุก') || u.contains('TRUCK')) return VehicleArchetype.truck;
+  if (t.contains('บรรทุก') || t.contains('สิบล้อ') || t.contains('หกล้อ') || u.contains('TRUCK')) {
+    return VehicleArchetype.truck;
+  }
   if (t.contains('บัส') || t.contains('บัซ') || u.contains('BUS')) {
     return VehicleArchetype.bus;
   }
@@ -33,38 +34,60 @@ VehicleArchetype archetypeFromType(String? type) {
 String archetypeLabelTh(VehicleArchetype a) {
   switch (a) {
     case VehicleArchetype.sedan:
-      return 'รถเก๋ง';
+      return 'รถเก๋ง (Sedan)';
     case VehicleArchetype.suv:
-      return 'SUV';
+      return 'รถอเนกประสงค์ (SUV / PPV)';
     case VehicleArchetype.pickup:
-      return 'รถกระบะ';
+      return 'รถกระบะ (Pickup Truck)';
     case VehicleArchetype.van:
-      return 'รถตู้';
+      return 'รถตู้ (Van / Minibus)';
     case VehicleArchetype.boxVan:
-      return 'รถตู้ทึบ / ห้องเย็น';
+      return 'รถตู้ทึบ / ห้องเย็น (Box Van)';
     case VehicleArchetype.bus:
-      return 'รถบัส';
+      return 'รถบัส (Bus / Coach)';
     case VehicleArchetype.truck:
-      return 'รถบรรทุก';
+      return 'รถบรรทุก 6-10 ล้อ (Heavy Truck)';
     case VehicleArchetype.mixer:
-      return 'รถมิกเซอร์ปูน';
+      return 'รถโม่ปูน (Concrete Mixer)';
   }
 }
 
-/// จุดกด (สัดส่วนของ w/h)
+String archetypeDimSpec(VehicleArchetype a) {
+  switch (a) {
+    case VehicleArchetype.sedan:
+      return 'L: 4,680mm · H: 1,435mm · W: 1,810mm';
+    case VehicleArchetype.suv:
+      return 'L: 4,890mm · H: 1,840mm · W: 1,890mm';
+    case VehicleArchetype.pickup:
+      return 'L: 5,325mm · H: 1,815mm · W: 1,855mm';
+    case VehicleArchetype.van:
+      return 'L: 5,265mm · H: 1,990mm · W: 1,950mm';
+    case VehicleArchetype.boxVan:
+      return 'L: 5,600mm · H: 2,650mm · W: 1,980mm';
+    case VehicleArchetype.bus:
+      return 'L: 12,000mm · H: 3,650mm · W: 2,500mm';
+    case VehicleArchetype.truck:
+      return 'L: 9,850mm · H: 3,250mm · W: 2,490mm';
+    case VehicleArchetype.mixer:
+      return 'L: 8,450mm · H: 3,750mm · W: 2,500mm';
+  }
+}
+
+/// จุดกดตรวจเช็ค (สัดส่วนของ w/h)
 class HotspotSpec {
   final double fx, fy, fw, fh;
   final String key;
-  const HotspotSpec(this.fx, this.fy, this.fw, this.fh, this.key);
+  final String label;
+  const HotspotSpec(this.fx, this.fy, this.fw, this.fh, this.key, [this.label = '']);
 }
 
-/// เรขาคณิตของรถแต่ละแบบ — ใช้ร่วมกันระหว่างตัววาดและจุดกด
+/// เรขาคณิตของรถแต่ละแบบ
 class VehicleGeometry {
-  final List<Offset> wheels; // ศูนย์กลางล้อ (สัดส่วน x ของ w, y ของ h)
-  final double wheelR; // รัศมีล้อ (สัดส่วนของ h)
-  final double topY; // จุดสูงสุดของหลังคา (สัดส่วน h) — ใช้ทำเส้นบอกขนาด
-  final double leftX; // หน้าสุด
-  final double rightX; // ท้ายสุด
+  final List<Offset> wheels;
+  final double wheelR;
+  final double topY;
+  final double leftX;
+  final double rightX;
   final List<HotspotSpec> hotspots;
 
   const VehicleGeometry({
@@ -77,268 +100,429 @@ class VehicleGeometry {
   });
 }
 
-List<HotspotSpec> _wheelHotspots(List<Offset> wheels) {
-  final out = <HotspotSpec>[];
-  for (final c in wheels) {
-    out.add(HotspotSpec(c.dx - 0.060, c.dy - 0.17, 0.120, 0.31, 'tire'));
-  }
-  for (int i = 0; i < wheels.length && i < 2; i++) {
-    final c = wheels[i];
-    out.add(HotspotSpec(c.dx - 0.040, c.dy - 0.105, 0.080, 0.11, 'brake'));
-  }
-  return out;
-}
-
 VehicleGeometry geometryFor(VehicleArchetype a) {
   switch (a) {
     case VehicleArchetype.sedan:
-      final wheels = [const Offset(0.255, 0.80), const Offset(0.745, 0.80)];
       return VehicleGeometry(
-        wheels: wheels,
+        wheels: const [Offset(0.24, 0.76), Offset(0.76, 0.76)],
         wheelR: 0.115,
-        topY: 0.355,
+        topY: 0.32,
         leftX: 0.05,
-        rightX: 0.945,
-        hotspots: [
-          const HotspotSpec(0.07, 0.55, 0.18, 0.14, 'engine'),
-          const HotspotSpec(0.07, 0.665, 0.10, 0.06, 'oil'),
-          const HotspotSpec(0.085, 0.50, 0.10, 0.06, 'battery'),
-          const HotspotSpec(0.34, 0.40, 0.12, 0.11, 'electrical'),
-          const HotspotSpec(0.41, 0.345, 0.16, 0.05, 'ac'),
-          const HotspotSpec(0.40, 0.50, 0.30, 0.16, 'body'),
-          const HotspotSpec(0.43, 0.665, 0.18, 0.05, 'transmission'),
-          const HotspotSpec(0.30, 0.70, 0.20, 0.05, 'suspension'),
-          const HotspotSpec(0.80, 0.62, 0.12, 0.08, 'exhaust'),
-          ..._wheelHotspots(wheels),
+        rightX: 0.95,
+        hotspots: const [
+          HotspotSpec(0.06, 0.50, 0.22, 0.24, 'engine', 'ห้องเครื่องยนต์'),
+          HotspotSpec(0.14, 0.60, 0.12, 0.15, 'oil', 'น้ำมันเครื่อง'),
+          HotspotSpec(0.08, 0.44, 0.10, 0.12, 'battery', 'แบตเตอรี่'),
+          HotspotSpec(0.18, 0.46, 0.12, 0.14, 'ac', 'ระบบแอร์'),
+          HotspotSpec(0.36, 0.58, 0.20, 0.16, 'transmission', 'ระบบเกียร์'),
+          HotspotSpec(0.20, 0.66, 0.10, 0.20, 'brake', 'เบรกหน้า'),
+          HotspotSpec(0.72, 0.66, 0.10, 0.20, 'brake', 'เบรกหลัง'),
+          HotspotSpec(0.18, 0.66, 0.12, 0.20, 'tire', 'ยางหน้า'),
+          HotspotSpec(0.70, 0.66, 0.12, 0.20, 'tire', 'ยางหลัง'),
+          HotspotSpec(0.18, 0.70, 0.14, 0.12, 'suspension', 'ช่วงล่างหน้า'),
+          HotspotSpec(0.70, 0.70, 0.14, 0.12, 'suspension', 'ช่วงล่างหลัง'),
+          HotspotSpec(0.86, 0.68, 0.10, 0.12, 'exhaust', 'ท่อไอเสีย'),
+          HotspotSpec(0.32, 0.35, 0.45, 0.32, 'body', 'ห้องโดยสาร/ตัวถัง'),
         ],
       );
+
     case VehicleArchetype.suv:
-      final wheels = [const Offset(0.265, 0.795), const Offset(0.745, 0.795)];
       return VehicleGeometry(
-        wheels: wheels,
-        wheelR: 0.135,
-        topY: 0.265,
-        leftX: 0.05,
-        rightX: 0.945,
-        hotspots: [
-          const HotspotSpec(0.06, 0.52, 0.18, 0.14, 'engine'),
-          const HotspotSpec(0.06, 0.64, 0.10, 0.06, 'oil'),
-          const HotspotSpec(0.08, 0.47, 0.10, 0.06, 'battery'),
-          const HotspotSpec(0.30, 0.34, 0.12, 0.12, 'electrical'),
-          const HotspotSpec(0.40, 0.26, 0.34, 0.05, 'ac'),
-          const HotspotSpec(0.40, 0.42, 0.32, 0.18, 'body'),
-          const HotspotSpec(0.44, 0.64, 0.18, 0.05, 'transmission'),
-          const HotspotSpec(0.31, 0.685, 0.20, 0.05, 'suspension'),
-          const HotspotSpec(0.81, 0.58, 0.12, 0.08, 'exhaust'),
-          ..._wheelHotspots(wheels),
-        ],
-      );
-    case VehicleArchetype.pickup:
-      final wheels = [const Offset(0.235, 0.795), const Offset(0.715, 0.795)];
-      return VehicleGeometry(
-        wheels: wheels,
+        wheels: const [Offset(0.25, 0.76), Offset(0.75, 0.76)],
         wheelR: 0.125,
-        topY: 0.255,
-        leftX: 0.045,
-        rightX: 0.945,
-        hotspots: [
-          const HotspotSpec(0.055, 0.52, 0.16, 0.14, 'engine'),
-          const HotspotSpec(0.055, 0.64, 0.10, 0.06, 'oil'),
-          const HotspotSpec(0.07, 0.47, 0.10, 0.06, 'battery'),
-          const HotspotSpec(0.27, 0.33, 0.12, 0.12, 'electrical'),
-          const HotspotSpec(0.35, 0.255, 0.16, 0.05, 'ac'),
-          const HotspotSpec(0.55, 0.42, 0.36, 0.18, 'body'),
-          const HotspotSpec(0.40, 0.64, 0.18, 0.05, 'transmission'),
-          const HotspotSpec(0.30, 0.685, 0.18, 0.05, 'suspension'),
-          const HotspotSpec(0.81, 0.60, 0.12, 0.08, 'exhaust'),
-          ..._wheelHotspots(wheels),
-        ],
-      );
-    case VehicleArchetype.van:
-      final wheels = [const Offset(0.215, 0.805), const Offset(0.79, 0.805)];
-      return VehicleGeometry(
-        wheels: wheels,
-        wheelR: 0.11,
         topY: 0.25,
         leftX: 0.05,
         rightX: 0.95,
-        hotspots: [
-          const HotspotSpec(0.05, 0.50, 0.10, 0.16, 'engine'),
-          const HotspotSpec(0.05, 0.66, 0.08, 0.06, 'oil'),
-          const HotspotSpec(0.055, 0.45, 0.08, 0.06, 'battery'),
-          const HotspotSpec(0.10, 0.34, 0.12, 0.12, 'electrical'),
-          const HotspotSpec(0.18, 0.25, 0.70, 0.05, 'ac'),
-          const HotspotSpec(0.30, 0.42, 0.55, 0.18, 'body'),
-          const HotspotSpec(0.42, 0.66, 0.20, 0.05, 'transmission'),
-          const HotspotSpec(0.32, 0.70, 0.22, 0.05, 'suspension'),
-          const HotspotSpec(0.85, 0.62, 0.10, 0.08, 'exhaust'),
-          ..._wheelHotspots(wheels),
+        hotspots: const [
+          HotspotSpec(0.06, 0.46, 0.22, 0.26, 'engine', 'เครื่องยนต์'),
+          HotspotSpec(0.12, 0.56, 0.12, 0.15, 'oil', 'น้ำมันเครื่อง'),
+          HotspotSpec(0.08, 0.40, 0.10, 0.12, 'battery', 'แบตเตอรี่'),
+          HotspotSpec(0.18, 0.42, 0.12, 0.14, 'ac', 'ระบบแอร์'),
+          HotspotSpec(0.38, 0.56, 0.22, 0.18, 'transmission', 'ระบบเกียร์ 4WD'),
+          HotspotSpec(0.20, 0.66, 0.11, 0.20, 'brake', 'เบรกหน้า'),
+          HotspotSpec(0.70, 0.66, 0.11, 0.20, 'brake', 'เบรกหลัง'),
+          HotspotSpec(0.19, 0.64, 0.13, 0.22, 'tire', 'ยางหน้า'),
+          HotspotSpec(0.69, 0.64, 0.13, 0.22, 'tire', 'ยางหลัง'),
+          HotspotSpec(0.19, 0.70, 0.14, 0.14, 'suspension', 'ช่วงล่างยกสูง'),
+          HotspotSpec(0.69, 0.70, 0.14, 0.14, 'suspension', 'ช่วงล่างหลัง'),
+          HotspotSpec(0.86, 0.68, 0.10, 0.12, 'exhaust', 'ท่อไอเสีย'),
+          HotspotSpec(0.30, 0.28, 0.55, 0.38, 'body', 'ตัวถัง SUV'),
         ],
       );
-    case VehicleArchetype.boxVan:
-      final wheels = [const Offset(0.205, 0.805), const Offset(0.78, 0.805)];
+
+    case VehicleArchetype.pickup:
       return VehicleGeometry(
-        wheels: wheels,
-        wheelR: 0.108,
-        topY: 0.27,
+        wheels: const [Offset(0.24, 0.76), Offset(0.76, 0.76)],
+        wheelR: 0.125,
+        topY: 0.26,
         leftX: 0.05,
         rightX: 0.95,
-        hotspots: [
-          const HotspotSpec(0.05, 0.50, 0.10, 0.16, 'engine'),
-          const HotspotSpec(0.05, 0.66, 0.08, 0.06, 'oil'),
-          const HotspotSpec(0.055, 0.45, 0.08, 0.06, 'battery'),
-          const HotspotSpec(0.10, 0.40, 0.12, 0.10, 'electrical'),
-          const HotspotSpec(0.24, 0.28, 0.66, 0.05, 'ac'),
-          const HotspotSpec(0.30, 0.40, 0.60, 0.22, 'body'),
-          const HotspotSpec(0.42, 0.66, 0.20, 0.05, 'transmission'),
-          const HotspotSpec(0.32, 0.70, 0.22, 0.05, 'suspension'),
-          const HotspotSpec(0.85, 0.62, 0.10, 0.08, 'exhaust'),
-          ..._wheelHotspots(wheels),
+        hotspots: const [
+          HotspotSpec(0.06, 0.46, 0.22, 0.26, 'engine', 'เครื่องยนต์ดีเซล'),
+          HotspotSpec(0.12, 0.56, 0.12, 0.15, 'oil', 'น้ำมันเครื่อง'),
+          HotspotSpec(0.08, 0.40, 0.10, 0.12, 'battery', 'แบตเตอรี่'),
+          HotspotSpec(0.18, 0.42, 0.12, 0.14, 'ac', 'ระบบแอร์'),
+          HotspotSpec(0.36, 0.56, 0.24, 0.18, 'transmission', 'เกียร์/เพลากลาง'),
+          HotspotSpec(0.19, 0.64, 0.11, 0.20, 'brake', 'เบรกหน้า'),
+          HotspotSpec(0.71, 0.64, 0.11, 0.20, 'brake', 'เบรกหลัง'),
+          HotspotSpec(0.18, 0.64, 0.13, 0.22, 'tire', 'ยางหน้า'),
+          HotspotSpec(0.70, 0.64, 0.13, 0.22, 'tire', 'ยางหลัง'),
+          HotspotSpec(0.18, 0.70, 0.14, 0.14, 'suspension', 'สปริงหน้า'),
+          HotspotSpec(0.70, 0.70, 0.14, 0.14, 'suspension', 'แหนบหลัง'),
+          HotspotSpec(0.86, 0.68, 0.10, 0.12, 'exhaust', 'ท่อไอเสีย'),
+          HotspotSpec(0.55, 0.38, 0.38, 0.32, 'body', 'กระบะบรรทุก'),
         ],
       );
-    case VehicleArchetype.bus:
-      final wheels = [const Offset(0.16, 0.815), const Offset(0.84, 0.815)];
+
+    case VehicleArchetype.van:
       return VehicleGeometry(
-        wheels: wheels,
-        wheelR: 0.10,
-        topY: 0.275,
-        leftX: 0.04,
-        rightX: 0.958,
-        hotspots: [
-          const HotspotSpec(0.86, 0.46, 0.10, 0.16, 'engine'),
-          const HotspotSpec(0.88, 0.62, 0.08, 0.06, 'oil'),
-          const HotspotSpec(0.05, 0.42, 0.10, 0.10, 'electrical'),
-          const HotspotSpec(0.13, 0.275, 0.74, 0.05, 'ac'),
-          const HotspotSpec(0.20, 0.42, 0.62, 0.18, 'body'),
-          const HotspotSpec(0.45, 0.66, 0.20, 0.05, 'transmission'),
-          const HotspotSpec(0.30, 0.70, 0.26, 0.05, 'suspension'),
-          const HotspotSpec(0.05, 0.50, 0.07, 0.06, 'battery'),
-          const HotspotSpec(0.88, 0.66, 0.08, 0.07, 'exhaust'),
-          ..._wheelHotspots(wheels),
-        ],
-      );
-    case VehicleArchetype.truck:
-      final wheels = [
-        const Offset(0.155, 0.82),
-        const Offset(0.70, 0.82),
-        const Offset(0.80, 0.82),
-      ];
-      return VehicleGeometry(
-        wheels: wheels,
-        wheelR: 0.105,
-        topY: 0.27,
-        leftX: 0.04,
-        rightX: 0.95,
-        hotspots: [
-          const HotspotSpec(0.045, 0.52, 0.12, 0.14, 'engine'),
-          const HotspotSpec(0.05, 0.65, 0.09, 0.06, 'oil'),
-          const HotspotSpec(0.05, 0.47, 0.08, 0.06, 'battery'),
-          const HotspotSpec(0.085, 0.34, 0.11, 0.12, 'electrical'),
-          const HotspotSpec(0.09, 0.30, 0.11, 0.04, 'ac'),
-          const HotspotSpec(0.30, 0.30, 0.62, 0.26, 'body'),
-          const HotspotSpec(0.36, 0.65, 0.20, 0.05, 'transmission'),
-          const HotspotSpec(0.26, 0.70, 0.20, 0.05, 'suspension'),
-          const HotspotSpec(0.24, 0.62, 0.06, 0.10, 'exhaust'),
-          ..._wheelHotspots(wheels),
-        ],
-      );
-    case VehicleArchetype.mixer:
-      final wheels = [
-        const Offset(0.15, 0.82),
-        const Offset(0.72, 0.82),
-        const Offset(0.82, 0.82),
-      ];
-      return VehicleGeometry(
-        wheels: wheels,
-        wheelR: 0.105,
+        wheels: const [Offset(0.22, 0.76), Offset(0.78, 0.76)],
+        wheelR: 0.12,
         topY: 0.20,
+        leftX: 0.06,
+        rightX: 0.94,
+        hotspots: const [
+          HotspotSpec(0.08, 0.48, 0.20, 0.24, 'engine', 'เครื่องยนต์'),
+          HotspotSpec(0.12, 0.58, 0.12, 0.14, 'oil', 'น้ำมันเครื่อง'),
+          HotspotSpec(0.08, 0.40, 0.10, 0.12, 'battery', 'แบตเตอรี่'),
+          HotspotSpec(0.24, 0.24, 0.45, 0.16, 'ac', 'แอร์ตอนหลัง'),
+          HotspotSpec(0.36, 0.58, 0.22, 0.16, 'transmission', 'ระบบเกียร์'),
+          HotspotSpec(0.18, 0.66, 0.10, 0.18, 'brake', 'เบรกหน้า'),
+          HotspotSpec(0.74, 0.66, 0.10, 0.18, 'brake', 'เบรกหลัง'),
+          HotspotSpec(0.16, 0.64, 0.13, 0.22, 'tire', 'ยางหน้า'),
+          HotspotSpec(0.72, 0.64, 0.13, 0.22, 'tire', 'ยางหลัง'),
+          HotspotSpec(0.16, 0.70, 0.14, 0.12, 'suspension', 'ช่วงล่างหน้า'),
+          HotspotSpec(0.72, 0.70, 0.14, 0.12, 'suspension', 'ช่วงล่างหลัง'),
+          HotspotSpec(0.85, 0.70, 0.10, 0.12, 'exhaust', 'ท่อไอเสีย'),
+          HotspotSpec(0.30, 0.24, 0.58, 0.45, 'body', 'ห้องโดยสาร VIP'),
+        ],
+      );
+
+    case VehicleArchetype.boxVan:
+      return VehicleGeometry(
+        wheels: const [Offset(0.22, 0.78), Offset(0.74, 0.78), Offset(0.84, 0.78)],
+        wheelR: 0.11,
+        topY: 0.14,
+        leftX: 0.05,
+        rightX: 0.95,
+        hotspots: const [
+          HotspotSpec(0.06, 0.50, 0.18, 0.25, 'engine', 'เครื่องยนต์'),
+          HotspotSpec(0.10, 0.60, 0.10, 0.14, 'oil', 'น้ำมันเครื่อง'),
+          HotspotSpec(0.07, 0.44, 0.09, 0.12, 'battery', 'แบตเตอรี่'),
+          HotspotSpec(0.28, 0.16, 0.20, 0.18, 'ac', 'ชุดทำความเย็น/แอร์'),
+          HotspotSpec(0.32, 0.62, 0.24, 0.16, 'transmission', 'ระบบเกียร์'),
+          HotspotSpec(0.17, 0.68, 0.10, 0.18, 'brake', 'เบรกหน้า'),
+          HotspotSpec(0.73, 0.68, 0.18, 0.18, 'brake', 'เบรกหลังคู่'),
+          HotspotSpec(0.16, 0.66, 0.12, 0.20, 'tire', 'ยางหน้า'),
+          HotspotSpec(0.70, 0.66, 0.20, 0.20, 'tire', 'ยางหลังคู่'),
+          HotspotSpec(0.70, 0.72, 0.20, 0.12, 'suspension', 'แหนบบรรทุกหนัก'),
+          HotspotSpec(0.30, 0.16, 0.62, 0.54, 'body', 'ตู้ทึบ/ห้องเย็น'),
+        ],
+      );
+
+    case VehicleArchetype.bus:
+      return VehicleGeometry(
+        wheels: const [Offset(0.18, 0.78), Offset(0.76, 0.78), Offset(0.86, 0.78)],
+        wheelR: 0.115,
+        topY: 0.12,
         leftX: 0.04,
         rightX: 0.96,
-        hotspots: [
-          const HotspotSpec(0.045, 0.52, 0.12, 0.14, 'engine'),
-          const HotspotSpec(0.05, 0.65, 0.09, 0.06, 'oil'),
-          const HotspotSpec(0.05, 0.47, 0.08, 0.06, 'battery'),
-          const HotspotSpec(0.085, 0.34, 0.11, 0.12, 'electrical'),
-          const HotspotSpec(0.30, 0.26, 0.55, 0.30, 'body'),
-          const HotspotSpec(0.36, 0.65, 0.20, 0.05, 'transmission'),
-          const HotspotSpec(0.26, 0.70, 0.18, 0.05, 'suspension'),
-          const HotspotSpec(0.24, 0.62, 0.06, 0.10, 'exhaust'),
-          ..._wheelHotspots(wheels),
+        hotspots: const [
+          HotspotSpec(0.78, 0.48, 0.16, 0.26, 'engine', 'เครื่องยนต์ท้ายบัส'),
+          HotspotSpec(0.82, 0.58, 0.10, 0.14, 'oil', 'น้ำมันเครื่อง'),
+          HotspotSpec(0.12, 0.60, 0.10, 0.12, 'battery', 'แบตเตอรี่ระบบไฟ'),
+          HotspotSpec(0.40, 0.12, 0.28, 0.14, 'ac', 'ชุดแอร์บนหลังคา'),
+          HotspotSpec(0.66, 0.62, 0.18, 0.16, 'transmission', 'เกียร์/รีทาร์เดอร์'),
+          HotspotSpec(0.13, 0.68, 0.10, 0.18, 'brake', 'เบรกลมหน้า'),
+          HotspotSpec(0.74, 0.68, 0.18, 0.18, 'brake', 'เบรกลมหลังคู่'),
+          HotspotSpec(0.12, 0.66, 0.12, 0.20, 'tire', 'ยางหน้า'),
+          HotspotSpec(0.72, 0.66, 0.20, 0.20, 'tire', 'ยางหลังคู่'),
+          HotspotSpec(0.12, 0.72, 0.12, 0.12, 'suspension', 'ถุงลมช่วงล่าง'),
+          HotspotSpec(0.72, 0.72, 0.20, 0.12, 'suspension', 'ถุงลมหลังคู่'),
+          HotspotSpec(0.06, 0.14, 0.88, 0.52, 'body', 'ตัวถังและที่นั่งบัส'),
+        ],
+      );
+
+    case VehicleArchetype.truck:
+      return VehicleGeometry(
+        wheels: const [Offset(0.18, 0.78), Offset(0.72, 0.78), Offset(0.84, 0.78)],
+        wheelR: 0.12,
+        topY: 0.18,
+        leftX: 0.04,
+        rightX: 0.96,
+        hotspots: const [
+          HotspotSpec(0.06, 0.44, 0.20, 0.28, 'engine', 'เครื่องยนต์ดีเซล 6 สูบ'),
+          HotspotSpec(0.12, 0.58, 0.10, 0.14, 'oil', 'น้ำมันเครื่อง'),
+          HotspotSpec(0.24, 0.58, 0.10, 0.14, 'battery', 'แบตเตอรี่ 24V'),
+          HotspotSpec(0.14, 0.32, 0.12, 0.14, 'ac', 'ระบบแอร์หัวเก๋ง'),
+          HotspotSpec(0.36, 0.60, 0.28, 0.16, 'transmission', 'เกียร์/เพลากลางสิบล้อ'),
+          HotspotSpec(0.13, 0.68, 0.10, 0.18, 'brake', 'เบรกลม Air Brake'),
+          HotspotSpec(0.70, 0.68, 0.20, 0.18, 'brake', 'เบรกลมเพลาคู่'),
+          HotspotSpec(0.12, 0.66, 0.12, 0.22, 'tire', 'ยางหน้า'),
+          HotspotSpec(0.68, 0.66, 0.22, 0.22, 'tire', 'ยางเพลาคู่'),
+          HotspotSpec(0.68, 0.72, 0.22, 0.14, 'suspension', 'แหนบสิบล้อคู่'),
+          HotspotSpec(0.28, 0.24, 0.66, 0.46, 'body', 'กระบะบรรทุกหนัก'),
+        ],
+      );
+
+    case VehicleArchetype.mixer:
+      return VehicleGeometry(
+        wheels: const [Offset(0.18, 0.78), Offset(0.70, 0.78), Offset(0.82, 0.78)],
+        wheelR: 0.12,
+        topY: 0.12,
+        leftX: 0.04,
+        rightX: 0.96,
+        hotspots: const [
+          HotspotSpec(0.06, 0.44, 0.20, 0.28, 'engine', 'เครื่องยนต์โม่ปูน'),
+          HotspotSpec(0.12, 0.58, 0.10, 0.14, 'oil', 'น้ำมันเครื่อง'),
+          HotspotSpec(0.24, 0.58, 0.10, 0.14, 'battery', 'แบตเตอรี่ 24V'),
+          HotspotSpec(0.14, 0.32, 0.12, 0.14, 'ac', 'ระบบแอร์'),
+          HotspotSpec(0.34, 0.60, 0.26, 0.16, 'transmission', 'ระบบขับโม่/ปั๊มไฮดรอลิก'),
+          HotspotSpec(0.13, 0.68, 0.10, 0.18, 'brake', 'เบรกลม'),
+          HotspotSpec(0.68, 0.68, 0.20, 0.18, 'brake', 'เบรกลมหลังคู่'),
+          HotspotSpec(0.12, 0.66, 0.12, 0.22, 'tire', 'ยางหน้า'),
+          HotspotSpec(0.66, 0.66, 0.22, 0.22, 'tire', 'ยางเพลาคู่'),
+          HotspotSpec(0.66, 0.72, 0.22, 0.14, 'suspension', 'แหนบรับน้ำหนักโม่'),
+          HotspotSpec(0.28, 0.16, 0.66, 0.50, 'body', 'ถังโม่ปูน/โครงสร้าง'),
         ],
       );
   }
 }
 
-/// แผนผังรถสไตล์ blueprint (เส้นเทคนิค) — เปลี่ยนรูปตามประเภทรถ
-/// กดที่โซนต่างๆ เพื่อกรองรายการซ่อมบำรุงตามหมวดอะไหล่
-class VehicleDiagram extends StatelessWidget {
-  final String? vehicleType;
-  final String? label; // ป้ายทะเบียน/ชื่อรุ่นที่จะแสดงมุมบนซ้าย
+/// Widget แสดงภาพพิมพ์เขียว Engineering Diagnostic View แบบ Interactive
+class VehicleDiagram extends StatefulWidget {
+  final VehicleArchetype archetype;
   final String? selectedCategory;
-  final ValueChanged<String?> onCategorySelected;
+  final ValueChanged<String>? onCategorySelected;
+  final String? customHeaderTitle;
 
   const VehicleDiagram({
     super.key,
-    this.vehicleType,
-    this.label,
-    required this.selectedCategory,
-    required this.onCategorySelected,
+    required this.archetype,
+    this.selectedCategory,
+    this.onCategorySelected,
+    this.customHeaderTitle,
   });
 
   @override
+  State<VehicleDiagram> createState() => _VehicleDiagramState();
+}
+
+class _VehicleDiagramState extends State<VehicleDiagram> with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  void _handleTap(TapUpDetails details, Size size) {
+    final geo = geometryFor(widget.archetype);
+    final px = details.localPosition.dx / size.width;
+    final py = details.localPosition.dy / size.height;
+
+    for (final spot in geo.hotspots.reversed) {
+      if (px >= spot.fx && px <= spot.fx + spot.fw && py >= spot.fy && py <= spot.fy + spot.fh) {
+        widget.onCategorySelected?.call(spot.key);
+        return;
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final archetype = archetypeFromType(vehicleType);
-    final geo = geometryFor(archetype);
-    final titleLabel =
-        (label != null && label!.trim().isNotEmpty) ? label! : archetypeLabelTh(archetype);
+    final geo = geometryFor(widget.archetype);
+    final activeSpot = widget.selectedCategory != null
+        ? geo.hotspots.firstWhere(
+            (s) => s.key == widget.selectedCategory,
+            orElse: () => const HotspotSpec(0, 0, 0, 0, ''),
+          )
+        : null;
 
     return AspectRatio(
-      aspectRatio: 16 / 8.5,
-      child: LayoutBuilder(
-        builder: (context, size) {
-          final w = size.maxWidth;
-          final h = size.maxHeight;
-          return Stack(
+      aspectRatio: 16 / 9.6,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF070D1E),
+              Color(0xFF0B1736),
+              Color(0xFF0F1E4A),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.4), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0284C7).withValues(alpha: 0.2),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(19),
+          child: Stack(
+            fit: StackFit.expand,
             children: [
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _BlueprintPainter(
-                    archetype: archetype,
-                    geo: geo,
-                    label: titleLabel,
+              // Custom Animated Blueprint Painter
+              AnimatedBuilder(
+                animation: _pulseController,
+                builder: (context, _) {
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      return GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTapUp: (details) => _handleTap(
+                          details,
+                          Size(constraints.maxWidth, constraints.maxHeight),
+                        ),
+                        child: CustomPaint(
+                          painter: _HighTechBlueprintPainter(
+                            archetype: widget.archetype,
+                            selectedCategory: widget.selectedCategory,
+                            pulseValue: _pulseController.value,
+                          ),
+                          size: Size(constraints.maxWidth, constraints.maxHeight),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+
+              // Technical Header Overlay
+              Positioned(
+                top: 12,
+                left: 14,
+                right: 14,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.6)),
+                              ),
+                              child: const Text(
+                                'CAD DIAGNOSTIC HUD',
+                                style: TextStyle(
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF38BDF8),
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              widget.customHeaderTitle ?? archetypeLabelTh(widget.archetype),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          archetypeDimSpec(widget.archetype),
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white.withValues(alpha: 0.5),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Active Inspection Badge
+                    if (widget.selectedCategory != null && activeSpot != null && activeSpot.key.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.8)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFEF4444),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              activeSpot.label.isNotEmpty ? activeSpot.label : widget.selectedCategory!,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              // Interactive Tap Hint Footnote
+              Positioned(
+                bottom: 10,
+                right: 14,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.touch_app_rounded, color: Color(0xFF38BDF8), size: 12),
+                      const SizedBox(width: 4),
+                      Text(
+                        'แตะชิ้นส่วนบนภาพเพื่อกรองอะไหล่',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white.withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              for (final spot in geo.hotspots)
-                _hotspot(w, h, spot),
             ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _hotspot(double w, double h, HotspotSpec spot) {
-    final cat = partCategoryByKey(spot.key);
-    final selected = selectedCategory == spot.key;
-    return Positioned(
-      left: spot.fx * w,
-      top: spot.fy * h,
-      width: spot.fw * w,
-      height: spot.fh * h,
-      child: Tooltip(
-        message: cat.labelTh,
-        waitDuration: const Duration(milliseconds: 300),
-        child: GestureDetector(
-          onTap: () => onCategorySelected(selected ? null : spot.key),
-          child: Container(
-            decoration: BoxDecoration(
-              color: selected ? cat.color.withValues(alpha: 0.30) : Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
-              border: selected
-                  ? Border.all(color: Colors.white.withValues(alpha: 0.9), width: 2)
-                  : null,
-            ),
           ),
         ),
       ),
@@ -346,726 +530,545 @@ class VehicleDiagram extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-//  PAINTER
-// ---------------------------------------------------------------------------
-
-class _Bp {
-  final Paint line; // เส้นหลัก
-  final Paint bold; // เส้นขอบหนา
-  final Paint soft; // เส้นรายละเอียดบาง
-  final Paint glass; // กระจก
-  final Paint fill; // เติมตัวถังจางๆ
-  final Paint dim; // เส้นบอกขนาด
-  final double sw;
-  _Bp(this.line, this.bold, this.soft, this.glass, this.fill, this.dim, this.sw);
-}
-
-class _BlueprintPainter extends CustomPainter {
+/// Painter ที่วาดลายเส้นพิมพ์เขียวสไตล์ High-Tech Telematics
+class _HighTechBlueprintPainter extends CustomPainter {
   final VehicleArchetype archetype;
-  final VehicleGeometry geo;
-  final String label;
+  final String? selectedCategory;
+  final double pulseValue;
 
-  _BlueprintPainter({
+  _HighTechBlueprintPainter({
     required this.archetype,
-    required this.geo,
-    required this.label,
+    required this.selectedCategory,
+    required this.pulseValue,
   });
-
-  static const _lineColor = Color(0xFFE6EEFF);
-  static const _softColor = Color(0xFFAEC4F2);
-  static const _dimColor = Color(0xFF8FB0EC);
 
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final sw = math.max(1.4, h * 0.011);
 
-    final p = _Bp(
-      Paint()
-        ..color = _lineColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = sw
-        ..strokeJoin = StrokeJoin.round
-        ..strokeCap = StrokeCap.round,
-      Paint()
-        ..color = _lineColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = sw * 1.7
-        ..strokeJoin = StrokeJoin.round
-        ..strokeCap = StrokeCap.round,
-      Paint()
-        ..color = _softColor.withValues(alpha: 0.7)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = sw * 0.7
-        ..strokeCap = StrokeCap.round,
-      Paint()
-        ..color = const Color(0xFF8FB6F0).withValues(alpha: 0.20)
-        ..style = PaintingStyle.fill,
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.04)
-        ..style = PaintingStyle.fill,
-      Paint()
-        ..color = _dimColor.withValues(alpha: 0.55)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = sw * 0.6,
-      sw,
-    );
-
-    _drawBackground(canvas, w, h);
-    _drawGrid(canvas, w, h);
-    _drawFrame(canvas, w, h, sw);
-    _drawDimensions(canvas, w, h, p);
-    _drawBody(canvas, w, h, p);
-    for (final c in geo.wheels) {
-      _drawWheel(canvas, Offset(c.dx * w, c.dy * h), geo.wheelR * h, p);
-    }
-    _drawLabels(canvas, w, h);
+    _drawEngineeringGrid(canvas, w, h);
+    _drawDimensionLines(canvas, w, h);
+    _drawVehicleArchetypeBody(canvas, w, h);
+    _drawHotspotHighlights(canvas, w, h);
   }
 
-  // ---- backdrop -----------------------------------------------------------
-
-  void _drawBackground(Canvas canvas, double w, double h) {
-    final rect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, w, h), const Radius.circular(14));
-    canvas.drawRRect(
-      rect,
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1B47A6), Color(0xFF112E73), Color(0xFF0B2050)],
-          stops: [0.0, 0.55, 1.0],
-        ).createShader(Rect.fromLTWH(0, 0, w, h)),
-    );
-  }
-
-  void _drawGrid(Canvas canvas, double w, double h) {
-    canvas.save();
-    canvas.clipRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, w, h), const Radius.circular(14)));
-    final grid = Paint()
-      ..color = Colors.white.withValues(alpha: 0.05)
+  // 1. ตาราง CAD และเส้นตัด Crosshair
+  void _drawEngineeringGrid(Canvas canvas, double w, double h) {
+    final gridPaint = Paint()
+      ..color = const Color(0xFF38BDF8).withValues(alpha: 0.05)
       ..strokeWidth = 0.8;
-    const step = 0.05;
-    for (double fx = step; fx < 1; fx += step) {
-      canvas.drawLine(Offset(fx * w, 0), Offset(fx * w, h), grid);
+
+    const step = 24.0;
+    for (double x = 0; x < w; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, h), gridPaint);
     }
-    for (double fy = step * 1.6; fy < 1; fy += step * 1.6) {
-      canvas.drawLine(Offset(0, fy * h), Offset(w, fy * h), grid);
+    for (double y = 0; y < h; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(w, y), gridPaint);
     }
-    canvas.restore();
+
+    // Corner Calibration Marks
+    final cornerPaint = Paint()
+      ..color = const Color(0xFF38BDF8).withValues(alpha: 0.3)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    const cLen = 14.0;
+    // Top-Left
+    canvas.drawLine(const Offset(8, 8), const Offset(8 + cLen, 8), cornerPaint);
+    canvas.drawLine(const Offset(8, 8), const Offset(8, 8 + cLen), cornerPaint);
+    // Top-Right
+    canvas.drawLine(Offset(w - 8, 8), Offset(w - 8 - cLen, 8), cornerPaint);
+    canvas.drawLine(Offset(w - 8, 8), Offset(w - 8, 8 + cLen), cornerPaint);
+    // Bottom-Left
+    canvas.drawLine(Offset(8, h - 8), Offset(8 + cLen, h - 8), cornerPaint);
+    canvas.drawLine(Offset(8, h - 8), Offset(8, h - 8 - cLen), cornerPaint);
+    // Bottom-Right
+    canvas.drawLine(Offset(w - 8, h - 8), Offset(w - 8 - cLen, h - 8), cornerPaint);
+    canvas.drawLine(Offset(w - 8, h - 8), Offset(w - 8, h - 8 - cLen), cornerPaint);
   }
 
-  void _drawFrame(Canvas canvas, double w, double h, double sw) {
-    final frame = RRect.fromRectAndRadius(
-        Rect.fromLTWH(sw, sw, w - 2 * sw, h - 2 * sw),
-        const Radius.circular(12));
-    canvas.drawRRect(
-      frame,
-      Paint()
-        ..color = _softColor.withValues(alpha: 0.45)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = sw,
-    );
-    // corner ticks
-    final tick = Paint()
-      ..color = _lineColor.withValues(alpha: 0.8)
-      ..strokeWidth = sw;
-    const m = 0.045;
-    final len = 0.03 * w;
-    final corners = [
-      Offset(m * w, m * h),
-      Offset((1 - m) * w, m * h),
-      Offset(m * w, (1 - m) * h),
-      Offset((1 - m) * w, (1 - m) * h),
-    ];
-    for (final c in corners) {
-      canvas.drawLine(c.translate(-len / 2, 0), c.translate(len / 2, 0), tick);
-      canvas.drawLine(c.translate(0, -len / 2), c.translate(0, len / 2), tick);
-    }
+  // 2. เส้นแสดงมิติ Dimension CAD
+  void _drawDimensionLines(Canvas canvas, double w, double h) {
+    final dimPaint = Paint()
+      ..color = const Color(0xFF38BDF8).withValues(alpha: 0.25)
+      ..strokeWidth = 1.0;
+
+    // Ground datum line
+    final groundPaint = Paint()
+      ..color = const Color(0xFF38BDF8).withValues(alpha: 0.35)
+      ..strokeWidth = 1.2;
+    canvas.drawLine(Offset(w * 0.04, h * 0.88), Offset(w * 0.96, h * 0.88), groundPaint);
+    // Wheelbase extension ticks
+    canvas.drawLine(Offset(w * 0.04, h * 0.86), Offset(w * 0.04, h * 0.90), dimPaint);
+    canvas.drawLine(Offset(w * 0.96, h * 0.86), Offset(w * 0.96, h * 0.90), dimPaint);
   }
 
-  // ---- dimension annotations ---------------------------------------------
+  // 3. วาดรูปร่างตัวถังตาม Archetype
+  void _drawVehicleArchetypeBody(Canvas canvas, double w, double h) {
+    final bodyStroke = Paint()
+      ..color = const Color(0xFFE0F2FE)
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
 
-  void _drawDimensions(Canvas canvas, double w, double h, _Bp p) {
-    double groundY = 0;
-    for (final c in geo.wheels) {
-      groundY = math.max(groundY, c.dy + geo.wheelR);
-    }
-    // overall length dimension (bottom)
-    final yDim = (groundY + 0.05).clamp(0.0, 0.97).toDouble() * h;
-    final x1 = geo.leftX * w;
-    final x2 = geo.rightX * w;
-    canvas.drawLine(Offset(x1, yDim), Offset(x2, yDim), p.dim);
-    _arrow(canvas, Offset(x1, yDim), true, p.dim);
-    _arrow(canvas, Offset(x2, yDim), false, p.dim);
-    // extension ticks
-    canvas.drawLine(Offset(x1, geo.topY * h), Offset(x1, yDim + 0.02 * h), p.dim);
-    canvas.drawLine(Offset(x2, geo.topY * h), Offset(x2, yDim + 0.02 * h), p.dim);
+    final bodyFill = Paint()
+      ..color = const Color(0xFF0284C7).withValues(alpha: 0.12)
+      ..style = PaintingStyle.fill;
 
-    // overall height dimension (right side)
-    final xDim = (geo.rightX + 0.03).clamp(0.0, 0.985).toDouble() * w;
-    final yTop = geo.topY * h;
-    final yBot = groundY * h;
-    canvas.drawLine(Offset(xDim, yTop), Offset(xDim, yBot), p.dim);
-    _arrowV(canvas, Offset(xDim, yTop), true, p.dim);
-    _arrowV(canvas, Offset(xDim, yBot), false, p.dim);
-  }
+    final glassFill = Paint()
+      ..color = const Color(0xFF38BDF8).withValues(alpha: 0.25)
+      ..style = PaintingStyle.fill;
 
-  void _arrow(Canvas canvas, Offset tip, bool pointLeft, Paint paint) {
-    final dir = pointLeft ? 1.0 : -1.0;
-    const a = 7.0;
-    final path = Path()
-      ..moveTo(tip.dx, tip.dy)
-      ..lineTo(tip.dx + dir * a, tip.dy - a * 0.55)
-      ..moveTo(tip.dx, tip.dy)
-      ..lineTo(tip.dx + dir * a, tip.dy + a * 0.55);
-    canvas.drawPath(path, paint);
-  }
+    final detailStroke = Paint()
+      ..color = const Color(0xFF38BDF8).withValues(alpha: 0.6)
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
 
-  void _arrowV(Canvas canvas, Offset tip, bool pointUp, Paint paint) {
-    final dir = pointUp ? 1.0 : -1.0;
-    const a = 7.0;
-    final path = Path()
-      ..moveTo(tip.dx, tip.dy)
-      ..lineTo(tip.dx - a, tip.dy + dir * a)
-      ..moveTo(tip.dx, tip.dy)
-      ..lineTo(tip.dx + a, tip.dy + dir * a);
-    canvas.drawPath(path, paint);
-  }
+    final geo = geometryFor(archetype);
 
-  // ---- body switch --------------------------------------------------------
-
-  void _drawBody(Canvas canvas, double w, double h, _Bp p) {
+    // Draw Archetype Silhouette
     switch (archetype) {
       case VehicleArchetype.sedan:
-        _sedan(canvas, w, h, p);
+        _drawSedan(canvas, w, h, bodyStroke, bodyFill, glassFill, detailStroke);
         break;
       case VehicleArchetype.suv:
-        _suv(canvas, w, h, p);
+        _drawSuv(canvas, w, h, bodyStroke, bodyFill, glassFill, detailStroke);
         break;
       case VehicleArchetype.pickup:
-        _pickup(canvas, w, h, p);
+        _drawPickup(canvas, w, h, bodyStroke, bodyFill, glassFill, detailStroke);
         break;
       case VehicleArchetype.van:
-        _van(canvas, w, h, p);
+        _drawVan(canvas, w, h, bodyStroke, bodyFill, glassFill, detailStroke);
         break;
       case VehicleArchetype.boxVan:
-        _boxVan(canvas, w, h, p);
+        _drawBoxVan(canvas, w, h, bodyStroke, bodyFill, glassFill, detailStroke);
         break;
       case VehicleArchetype.bus:
-        _bus(canvas, w, h, p);
+        _drawBus(canvas, w, h, bodyStroke, bodyFill, glassFill, detailStroke);
         break;
       case VehicleArchetype.truck:
-        _truck(canvas, w, h, p);
+        _drawTruck(canvas, w, h, bodyStroke, bodyFill, glassFill, detailStroke);
         break;
       case VehicleArchetype.mixer:
-        _mixer(canvas, w, h, p);
+        _drawMixer(canvas, w, h, bodyStroke, bodyFill, glassFill, detailStroke);
         break;
     }
+
+    // Draw Modern Alloy Wheels & Brake Calipers
+    for (final wheel in geo.wheels) {
+      final center = Offset(wheel.dx * w, wheel.dy * h);
+      final r = geo.wheelR * h;
+
+      // Tire Outer Rim
+      final tirePaint = Paint()
+        ..color = const Color(0xFF0F172A)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(center, r, tirePaint);
+
+      final tireStroke = Paint()
+        ..color = const Color(0xFF38BDF8)
+        ..strokeWidth = 2.0
+        ..style = PaintingStyle.stroke;
+      canvas.drawCircle(center, r, tireStroke);
+
+      // Inner Alloy Rim
+      final rimStroke = Paint()
+        ..color = const Color(0xFFBAE6FD)
+        ..strokeWidth = 1.5
+        ..style = PaintingStyle.stroke;
+      canvas.drawCircle(center, r * 0.65, rimStroke);
+
+      // Brake Disc Rotor & Caliper
+      final brakePaint = Paint()
+        ..color = const Color(0xFFEF4444).withValues(alpha: 0.8)
+        ..style = PaintingStyle.fill;
+      canvas.drawRect(
+        Rect.fromCenter(center: Offset(center.dx - r * 0.35, center.dy), width: r * 0.25, height: r * 0.45),
+        brakePaint,
+      );
+
+      // Multi-spoke lines
+      for (int i = 0; i < 6; i++) {
+        final angle = i * math.pi / 3;
+        canvas.drawLine(
+          center,
+          Offset(center.dx + r * 0.65 * math.cos(angle), center.dy + r * 0.65 * math.sin(angle)),
+          rimStroke,
+        );
+      }
+
+      // Center Hub
+      canvas.drawCircle(center, r * 0.2, tirePaint);
+      canvas.drawCircle(center, r * 0.2, rimStroke);
+    }
   }
 
-  // helpers to make path with fractional coords
-  Path _path(double w, double h, void Function(Path, _PT) build) {
-    final path = Path();
-    build(path, _PT(w, h));
-    return path;
+  // --- Profile Drawings -----------------------------------------------------
+  void _drawPickup(Canvas c, double w, double h, Paint stroke, Paint fill, Paint glass, Paint detail) {
+    final path = Path()
+      ..moveTo(w * 0.06, h * 0.74)
+      ..lineTo(w * 0.05, h * 0.56)
+      ..quadraticBezierTo(w * 0.06, h * 0.50, w * 0.12, h * 0.48)
+      ..lineTo(w * 0.24, h * 0.46)
+      ..lineTo(w * 0.34, h * 0.28)
+      ..lineTo(w * 0.54, h * 0.28)
+      ..lineTo(w * 0.56, h * 0.42)
+      ..lineTo(w * 0.92, h * 0.42)
+      ..lineTo(w * 0.94, h * 0.45)
+      ..lineTo(w * 0.94, h * 0.74)
+      ..lineTo(w * 0.84, h * 0.74)
+      ..arcToPoint(Offset(w * 0.68, h * 0.74), radius: Radius.circular(w * 0.08), clockwise: false)
+      ..lineTo(w * 0.32, h * 0.74)
+      ..arcToPoint(Offset(w * 0.16, h * 0.74), radius: Radius.circular(w * 0.08), clockwise: false)
+      ..close();
+
+    c.drawPath(path, fill);
+    c.drawPath(path, stroke);
+
+    // Cab Window Glass
+    final glassPath = Path()
+      ..moveTo(w * 0.27, h * 0.46)
+      ..lineTo(w * 0.35, h * 0.31)
+      ..lineTo(w * 0.52, h * 0.31)
+      ..lineTo(w * 0.53, h * 0.46)
+      ..close();
+    c.drawPath(glassPath, glass);
+    c.drawPath(glassPath, detail);
+
+    // Door line & bed line
+    c.drawLine(Offset(w * 0.41, h * 0.31), Offset(w * 0.41, h * 0.72), detail);
+    c.drawLine(Offset(w * 0.56, h * 0.42), Offset(w * 0.56, h * 0.72), detail);
+    // Headlight & Taillight
+    c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(w * 0.05, h * 0.52, w * 0.04, h * 0.06), const Radius.circular(2)), detail);
+    c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(w * 0.92, h * 0.45, w * 0.02, h * 0.08), const Radius.circular(2)), detail);
   }
 
-  void _stroke(Canvas c, Path path, _Bp p, {bool bold = true, bool fill = true}) {
-    if (fill) c.drawPath(path, p.fill);
-    c.drawPath(path, bold ? p.bold : p.line);
+  void _drawSedan(Canvas c, double w, double h, Paint stroke, Paint fill, Paint glass, Paint detail) {
+    final path = Path()
+      ..moveTo(w * 0.06, h * 0.74)
+      ..lineTo(w * 0.05, h * 0.62)
+      ..quadraticBezierTo(w * 0.06, h * 0.54, w * 0.14, h * 0.52)
+      ..lineTo(w * 0.30, h * 0.50)
+      ..lineTo(w * 0.42, h * 0.34)
+      ..lineTo(w * 0.62, h * 0.34)
+      ..lineTo(w * 0.76, h * 0.50)
+      ..lineTo(w * 0.90, h * 0.52)
+      ..quadraticBezierTo(w * 0.94, h * 0.54, w * 0.94, h * 0.64)
+      ..lineTo(w * 0.94, h * 0.74)
+      ..lineTo(w * 0.84, h * 0.74)
+      ..arcToPoint(Offset(w * 0.68, h * 0.74), radius: Radius.circular(w * 0.08), clockwise: false)
+      ..lineTo(w * 0.32, h * 0.74)
+      ..arcToPoint(Offset(w * 0.16, h * 0.74), radius: Radius.circular(w * 0.08), clockwise: false)
+      ..close();
+
+    c.drawPath(path, fill);
+    c.drawPath(path, stroke);
+
+    final glassPath = Path()
+      ..moveTo(w * 0.33, h * 0.48)
+      ..lineTo(w * 0.43, h * 0.36)
+      ..lineTo(w * 0.61, h * 0.36)
+      ..lineTo(w * 0.73, h * 0.48)
+      ..close();
+    c.drawPath(glassPath, glass);
+    c.drawPath(glassPath, detail);
+    c.drawLine(Offset(w * 0.51, h * 0.36), Offset(w * 0.51, h * 0.72), detail);
   }
 
-  void _line(Canvas c, double w, double h, double x1, double y1, double x2,
-      double y2, Paint paint) {
-    c.drawLine(Offset(x1 * w, y1 * h), Offset(x2 * w, y2 * h), paint);
+  void _drawSuv(Canvas c, double w, double h, Paint stroke, Paint fill, Paint glass, Paint detail) {
+    final path = Path()
+      ..moveTo(w * 0.06, h * 0.74)
+      ..lineTo(w * 0.05, h * 0.55)
+      ..quadraticBezierTo(w * 0.06, h * 0.48, w * 0.14, h * 0.46)
+      ..lineTo(w * 0.28, h * 0.44)
+      ..lineTo(w * 0.38, h * 0.27)
+      ..lineTo(w * 0.78, h * 0.27)
+      ..lineTo(w * 0.88, h * 0.44)
+      ..lineTo(w * 0.94, h * 0.50)
+      ..lineTo(w * 0.94, h * 0.74)
+      ..lineTo(w * 0.83, h * 0.74)
+      ..arcToPoint(Offset(w * 0.67, h * 0.74), radius: Radius.circular(w * 0.08), clockwise: false)
+      ..lineTo(w * 0.33, h * 0.74)
+      ..arcToPoint(Offset(w * 0.17, h * 0.74), radius: Radius.circular(w * 0.08), clockwise: false)
+      ..close();
+
+    c.drawPath(path, fill);
+    c.drawPath(path, stroke);
+
+    final glassPath = Path()
+      ..moveTo(w * 0.31, h * 0.44)
+      ..lineTo(w * 0.39, h * 0.30)
+      ..lineTo(w * 0.76, h * 0.30)
+      ..lineTo(w * 0.85, h * 0.44)
+      ..close();
+    c.drawPath(glassPath, glass);
+    c.drawPath(glassPath, detail);
+
+    // Roof rack
+    c.drawLine(Offset(w * 0.40, h * 0.24), Offset(w * 0.76, h * 0.24), detail);
   }
 
-  // ---- SEDAN --------------------------------------------------------------
-  void _sedan(Canvas c, double w, double h, _Bp p) {
-    final body = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.055), t.y(0.72));
-      path.lineTo(t.x(0.052), t.y(0.63));
-      path.quadraticBezierTo(t.x(0.05), t.y(0.585), t.x(0.105), t.y(0.565));
-      path.lineTo(t.x(0.30), t.y(0.545));
-      path.quadraticBezierTo(t.x(0.345), t.y(0.40), t.x(0.43), t.y(0.355));
-      path.lineTo(t.x(0.595), t.y(0.355));
-      path.quadraticBezierTo(t.x(0.70), t.y(0.36), t.x(0.755), t.y(0.55));
-      path.lineTo(t.x(0.90), t.y(0.565));
-      path.quadraticBezierTo(t.x(0.945), t.y(0.575), t.x(0.945), t.y(0.66));
-      path.lineTo(t.x(0.945), t.y(0.72));
-      path.lineTo(t.x(0.805), t.y(0.72));
-      path.quadraticBezierTo(t.x(0.745), t.y(0.60), t.x(0.685), t.y(0.72));
-      path.lineTo(t.x(0.315), t.y(0.72));
-      path.quadraticBezierTo(t.x(0.255), t.y(0.60), t.x(0.195), t.y(0.72));
-      path.close();
-    });
-    _stroke(c, body, p);
+  void _drawVan(Canvas c, double w, double h, Paint stroke, Paint fill, Paint glass, Paint detail) {
+    final path = Path()
+      ..moveTo(w * 0.07, h * 0.74)
+      ..lineTo(w * 0.06, h * 0.48)
+      ..quadraticBezierTo(w * 0.08, h * 0.26, w * 0.22, h * 0.22)
+      ..lineTo(w * 0.88, h * 0.22)
+      ..quadraticBezierTo(w * 0.94, h * 0.24, w * 0.94, h * 0.36)
+      ..lineTo(w * 0.94, h * 0.74)
+      ..lineTo(w * 0.85, h * 0.74)
+      ..arcToPoint(Offset(w * 0.71, h * 0.74), radius: Radius.circular(w * 0.07), clockwise: false)
+      ..lineTo(w * 0.29, h * 0.74)
+      ..arcToPoint(Offset(w * 0.15, h * 0.74), radius: Radius.circular(w * 0.07), clockwise: false)
+      ..close();
 
-    // greenhouse glass
-    final glass = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.345), t.y(0.50));
-      path.lineTo(t.x(0.435), t.y(0.375));
-      path.lineTo(t.x(0.60), t.y(0.375));
-      path.lineTo(t.x(0.72), t.y(0.50));
-      path.close();
-    });
-    c.drawPath(glass, p.glass);
-    c.drawPath(glass, p.line);
-    // B-pillar + beltline + door
-    _line(c, w, h, 0.515, 0.378, 0.515, 0.50, p.line);
-    _line(c, w, h, 0.30, 0.50, 0.78, 0.50, p.soft);
-    _line(c, w, h, 0.515, 0.50, 0.515, 0.71, p.soft);
-    // door handle
-    c.drawRRect(
-        RRect.fromRectAndRadius(
-            Rect.fromLTWH(0.45 * w, 0.535 * h, 0.045 * w, 0.012 * h),
-            const Radius.circular(2)),
-        p.soft);
-    _headlight(c, w, h, 0.075, 0.585, p);
-    _grille(c, w, h, 0.052, 0.61, 0.045, 0.07, p);
-    _taillight(c, w, h, 0.918, 0.585, p);
-    _mirror(c, w, h, 0.335, 0.46, p);
+    c.drawPath(path, fill);
+    c.drawPath(path, stroke);
+
+    // Panoramic VIP windows
+    final glassPath = Path()
+      ..moveTo(w * 0.16, h * 0.44)
+      ..lineTo(w * 0.24, h * 0.27)
+      ..lineTo(w * 0.88, h * 0.27)
+      ..lineTo(w * 0.88, h * 0.44)
+      ..close();
+    c.drawPath(glassPath, glass);
+    c.drawPath(glassPath, detail);
   }
 
-  // ---- SUV ----------------------------------------------------------------
-  void _suv(Canvas c, double w, double h, _Bp p) {
-    final body = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.055), t.y(0.72));
-      path.lineTo(t.x(0.05), t.y(0.56));
-      path.quadraticBezierTo(t.x(0.05), t.y(0.52), t.x(0.10), t.y(0.50));
-      path.lineTo(t.x(0.255), t.y(0.485));
-      path.quadraticBezierTo(t.x(0.30), t.y(0.35), t.x(0.355), t.y(0.31));
-      path.lineTo(t.x(0.41), t.y(0.27));
-      path.lineTo(t.x(0.74), t.y(0.27));
-      path.lineTo(t.x(0.80), t.y(0.305));
-      path.quadraticBezierTo(t.x(0.875), t.y(0.34), t.x(0.905), t.y(0.42));
-      path.lineTo(t.x(0.94), t.y(0.55));
-      path.quadraticBezierTo(t.x(0.95), t.y(0.60), t.x(0.95), t.y(0.66));
-      path.lineTo(t.x(0.95), t.y(0.72));
-      path.lineTo(t.x(0.81), t.y(0.72));
-      path.quadraticBezierTo(t.x(0.745), t.y(0.585), t.x(0.68), t.y(0.72));
-      path.lineTo(t.x(0.33), t.y(0.72));
-      path.quadraticBezierTo(t.x(0.265), t.y(0.585), t.x(0.20), t.y(0.72));
-      path.close();
-    });
-    _stroke(c, body, p);
-    final glass = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.33), t.y(0.47));
-      path.lineTo(t.x(0.385), t.y(0.30));
-      path.lineTo(t.x(0.745), t.y(0.30));
-      path.lineTo(t.x(0.80), t.y(0.47));
-      path.close();
-    });
-    c.drawPath(glass, p.glass);
-    c.drawPath(glass, p.line);
-    _line(c, w, h, 0.50, 0.305, 0.50, 0.47, p.line);
-    _line(c, w, h, 0.645, 0.305, 0.645, 0.47, p.line);
-    _line(c, w, h, 0.27, 0.49, 0.86, 0.49, p.soft);
-    _line(c, w, h, 0.50, 0.49, 0.50, 0.71, p.soft);
-    // roof rails
-    _line(c, w, h, 0.42, 0.262, 0.73, 0.262, p.soft);
-    c.drawRRect(
-        RRect.fromRectAndRadius(
-            Rect.fromLTWH(0.44 * w, 0.525 * h, 0.045 * w, 0.012 * h),
-            const Radius.circular(2)),
-        p.soft);
-    _headlight(c, w, h, 0.075, 0.52, p);
-    _grille(c, w, h, 0.05, 0.55, 0.05, 0.10, p);
-    _taillight(c, w, h, 0.922, 0.50, p);
-    _mirror(c, w, h, 0.32, 0.42, p);
+  void _drawBoxVan(Canvas c, double w, double h, Paint stroke, Paint fill, Paint glass, Paint detail) {
+    // Cab
+    final cabPath = Path()
+      ..moveTo(w * 0.06, h * 0.74)
+      ..lineTo(w * 0.05, h * 0.52)
+      ..quadraticBezierTo(w * 0.08, h * 0.36, w * 0.18, h * 0.34)
+      ..lineTo(w * 0.28, h * 0.34)
+      ..lineTo(w * 0.28, h * 0.74)
+      ..lineTo(w * 0.24, h * 0.74)
+      ..arcToPoint(Offset(w * 0.12, h * 0.74), radius: Radius.circular(w * 0.06), clockwise: false)
+      ..close();
+    c.drawPath(cabPath, fill);
+    c.drawPath(cabPath, stroke);
+
+    // Cargo Box
+    final boxRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(w * 0.28, h * 0.16, w * 0.66, h * 0.58),
+      const Radius.circular(6),
+    );
+    c.drawRRect(boxRect, fill);
+    c.drawRRect(boxRect, stroke);
+
+    // Aerodynamic Wind Deflector
+    final deflector = Path()
+      ..moveTo(w * 0.16, h * 0.34)
+      ..quadraticBezierTo(w * 0.24, h * 0.18, w * 0.28, h * 0.16)
+      ..lineTo(w * 0.28, h * 0.34)
+      ..close();
+    c.drawPath(deflector, glass);
+    c.drawPath(deflector, detail);
   }
 
-  // ---- PICKUP -------------------------------------------------------------
-  void _pickup(Canvas c, double w, double h, _Bp p) {
-    final body = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.048), t.y(0.72));
-      path.lineTo(t.x(0.045), t.y(0.555));
-      path.quadraticBezierTo(t.x(0.045), t.y(0.52), t.x(0.095), t.y(0.50));
-      path.lineTo(t.x(0.215), t.y(0.485));
-      path.quadraticBezierTo(t.x(0.255), t.y(0.345), t.x(0.315), t.y(0.295));
-      path.lineTo(t.x(0.355), t.y(0.258));
-      path.lineTo(t.x(0.495), t.y(0.258));
-      path.lineTo(t.x(0.515), t.y(0.35));
-      path.lineTo(t.x(0.525), t.y(0.42)); // back of cab to bed
-      path.lineTo(t.x(0.555), t.y(0.42));
-      path.lineTo(t.x(0.555), t.y(0.40));
-      path.lineTo(t.x(0.925), t.y(0.40)); // bed top rail
-      path.lineTo(t.x(0.945), t.y(0.45));
-      path.lineTo(t.x(0.945), t.y(0.72));
-      path.lineTo(t.x(0.78), t.y(0.72));
-      path.quadraticBezierTo(t.x(0.715), t.y(0.59), t.x(0.65), t.y(0.72));
-      path.lineTo(t.x(0.30), t.y(0.72));
-      path.quadraticBezierTo(t.x(0.235), t.y(0.59), t.x(0.17), t.y(0.72));
-      path.close();
-    });
-    _stroke(c, body, p);
-    // cab glass
-    final glass = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.245), t.y(0.475));
-      path.lineTo(t.x(0.32), t.y(0.30));
-      path.lineTo(t.x(0.495), t.y(0.30));
-      path.lineTo(t.x(0.495), t.y(0.475));
-      path.close();
-    });
-    c.drawPath(glass, p.glass);
-    c.drawPath(glass, p.line);
-    _line(c, w, h, 0.375, 0.302, 0.375, 0.475, p.line);
-    _line(c, w, h, 0.25, 0.49, 0.50, 0.49, p.soft);
-    // bed inner line
-    _line(c, w, h, 0.555, 0.425, 0.925, 0.425, p.soft);
-    _line(c, w, h, 0.555, 0.40, 0.555, 0.72, p.soft);
-    _headlight(c, w, h, 0.072, 0.52, p);
-    _grille(c, w, h, 0.05, 0.55, 0.05, 0.10, p);
-    _taillight(c, w, h, 0.918, 0.46, p);
-    _mirror(c, w, h, 0.235, 0.42, p);
-  }
+  void _drawBus(Canvas c, double w, double h, Paint stroke, Paint fill, Paint glass, Paint detail) {
+    final path = Path()
+      ..moveTo(w * 0.05, h * 0.74)
+      ..lineTo(w * 0.04, h * 0.22)
+      ..quadraticBezierTo(w * 0.06, h * 0.14, w * 0.14, h * 0.14)
+      ..lineTo(w * 0.94, h * 0.14)
+      ..quadraticBezierTo(w * 0.96, h * 0.16, w * 0.96, h * 0.26)
+      ..lineTo(w * 0.96, h * 0.74)
+      ..lineTo(w * 0.92, h * 0.74)
+      ..arcToPoint(Offset(w * 0.70, h * 0.74), radius: Radius.circular(w * 0.11), clockwise: false)
+      ..lineTo(w * 0.24, h * 0.74)
+      ..arcToPoint(Offset(w * 0.12, h * 0.74), radius: Radius.circular(w * 0.06), clockwise: false)
+      ..close();
 
-  // ---- VAN ----------------------------------------------------------------
-  void _van(Canvas c, double w, double h, _Bp p) {
-    final body = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.05), t.y(0.73));
-      path.lineTo(t.x(0.05), t.y(0.46));
-      path.quadraticBezierTo(t.x(0.05), t.y(0.40), t.x(0.085), t.y(0.355));
-      path.lineTo(t.x(0.115), t.y(0.30));
-      path.quadraticBezierTo(t.x(0.135), t.y(0.252), t.x(0.185), t.y(0.25));
-      path.lineTo(t.x(0.90), t.y(0.25));
-      path.quadraticBezierTo(t.x(0.945), t.y(0.25), t.x(0.95), t.y(0.32));
-      path.lineTo(t.x(0.95), t.y(0.73));
-      path.lineTo(t.x(0.855), t.y(0.73));
-      path.quadraticBezierTo(t.x(0.79), t.y(0.605), t.x(0.725), t.y(0.73));
-      path.lineTo(t.x(0.28), t.y(0.73));
-      path.quadraticBezierTo(t.x(0.215), t.y(0.605), t.x(0.15), t.y(0.73));
-      path.close();
-    });
-    _stroke(c, body, p);
-    // windshield
-    final ws = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.06), t.y(0.44));
-      path.lineTo(t.x(0.115), t.y(0.30));
-      path.lineTo(t.x(0.165), t.y(0.30));
-      path.lineTo(t.x(0.165), t.y(0.44));
-      path.close();
-    });
-    c.drawPath(ws, p.glass);
-    c.drawPath(ws, p.line);
-    // side windows row
+    c.drawPath(path, fill);
+    c.drawPath(path, stroke);
+
+    // Panoramic bus windows
+    final glassPath = Path()
+      ..moveTo(w * 0.06, h * 0.42)
+      ..lineTo(w * 0.06, h * 0.20)
+      ..lineTo(w * 0.92, h * 0.20)
+      ..lineTo(w * 0.92, h * 0.42)
+      ..close();
+    c.drawPath(glassPath, glass);
+    c.drawPath(glassPath, detail);
+
+    // Luggage doors
     for (int i = 0; i < 4; i++) {
-      final x = 0.22 + i * 0.16;
-      final r = Rect.fromLTWH(x * w, 0.30 * h, 0.135 * w, 0.13 * h);
-      c.drawRRect(RRect.fromRectAndRadius(r, const Radius.circular(3)), p.glass);
-      c.drawRRect(RRect.fromRectAndRadius(r, const Radius.circular(3)), p.line);
-    }
-    _line(c, w, h, 0.18, 0.46, 0.92, 0.46, p.soft);
-    // sliding door line
-    _line(c, w, h, 0.55, 0.46, 0.55, 0.73, p.soft);
-    c.drawRRect(
+      c.drawRRect(
         RRect.fromRectAndRadius(
-            Rect.fromLTWH(0.50 * w, 0.555 * h, 0.04 * w, 0.012 * h),
-            const Radius.circular(2)),
-        p.soft);
-    _headlight(c, w, h, 0.072, 0.52, p);
-    _taillight(c, w, h, 0.922, 0.50, p);
-    _mirror(c, w, h, 0.165, 0.40, p);
-  }
-
-  // ---- BOX VAN / FRIDGE ---------------------------------------------------
-  void _boxVan(Canvas c, double w, double h, _Bp p) {
-    // cab
-    final cab = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.05), t.y(0.73));
-      path.lineTo(t.x(0.05), t.y(0.46));
-      path.quadraticBezierTo(t.x(0.05), t.y(0.40), t.x(0.085), t.y(0.37));
-      path.lineTo(t.x(0.13), t.y(0.36));
-      path.lineTo(t.x(0.235), t.y(0.36));
-      path.lineTo(t.x(0.235), t.y(0.73));
-      path.close();
-    });
-    _stroke(c, cab, p);
-    // box body (taller than cab)
-    final box = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.235), t.y(0.73));
-      path.lineTo(t.x(0.235), t.y(0.275));
-      path.lineTo(t.x(0.95), t.y(0.275));
-      path.lineTo(t.x(0.95), t.y(0.73));
-      path.close();
-    });
-    _stroke(c, box, p);
-    // bottom arches over box body (cut visually with soft arcs)
-    _line(c, w, h, 0.30, 0.73, 0.95, 0.73, p.line);
-    // cab windshield
-    final ws = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.06), t.y(0.45));
-      path.lineTo(t.x(0.10), t.y(0.37));
-      path.lineTo(t.x(0.165), t.y(0.37));
-      path.lineTo(t.x(0.165), t.y(0.45));
-      path.close();
-    });
-    c.drawPath(ws, p.glass);
-    c.drawPath(ws, p.line);
-    // box panel lines
-    for (int i = 1; i <= 3; i++) {
-      final y = 0.275 + i * 0.11;
-      _line(c, w, h, 0.245, y, 0.94, y, p.soft);
-    }
-    // refrigeration unit on box front-top
-    final fridge = Rect.fromLTWH(0.245 * w, 0.225 * h, 0.10 * w, 0.05 * h);
-    c.drawRRect(RRect.fromRectAndRadius(fridge, const Radius.circular(3)), p.fill);
-    c.drawRRect(RRect.fromRectAndRadius(fridge, const Radius.circular(3)), p.soft);
-    _headlight(c, w, h, 0.072, 0.52, p);
-    _mirror(c, w, h, 0.165, 0.42, p);
-  }
-
-  // ---- BUS ----------------------------------------------------------------
-  void _bus(Canvas c, double w, double h, _Bp p) {
-    final body = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.045), t.y(0.74));
-      path.lineTo(t.x(0.042), t.y(0.42));
-      path.quadraticBezierTo(t.x(0.045), t.y(0.32), t.x(0.085), t.y(0.30));
-      path.quadraticBezierTo(t.x(0.11), t.y(0.275), t.x(0.16), t.y(0.275));
-      path.lineTo(t.x(0.91), t.y(0.275));
-      path.quadraticBezierTo(t.x(0.955), t.y(0.28), t.x(0.957), t.y(0.40));
-      path.lineTo(t.x(0.958), t.y(0.74));
-      path.lineTo(t.x(0.905), t.y(0.74));
-      path.quadraticBezierTo(t.x(0.84), t.y(0.62), t.x(0.775), t.y(0.74));
-      path.lineTo(t.x(0.225), t.y(0.74));
-      path.quadraticBezierTo(t.x(0.16), t.y(0.62), t.x(0.095), t.y(0.74));
-      path.close();
-    });
-    _stroke(c, body, p);
-    // windshield
-    final ws = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.05), t.y(0.45));
-      path.lineTo(t.x(0.075), t.y(0.32));
-      path.lineTo(t.x(0.145), t.y(0.32));
-      path.lineTo(t.x(0.145), t.y(0.45));
-      path.close();
-    });
-    c.drawPath(ws, p.glass);
-    c.drawPath(ws, p.line);
-    // window row
-    for (int i = 0; i < 6; i++) {
-      final x = 0.18 + i * 0.125;
-      final r = Rect.fromLTWH(x * w, 0.32 * h, 0.105 * w, 0.13 * h);
-      c.drawRRect(RRect.fromRectAndRadius(r, const Radius.circular(3)), p.glass);
-      c.drawRRect(RRect.fromRectAndRadius(r, const Radius.circular(3)), p.line);
-    }
-    _line(c, w, h, 0.05, 0.49, 0.95, 0.49, p.soft);
-    // door
-    final door = Rect.fromLTWH(0.155 * w, 0.49 * h, 0.05 * w, 0.245 * h);
-    c.drawRRect(RRect.fromRectAndRadius(door, const Radius.circular(3)), p.soft);
-    _headlight(c, w, h, 0.07, 0.55, p);
-    _taillight(c, w, h, 0.93, 0.55, p);
-    _mirror(c, w, h, 0.155, 0.40, p);
-  }
-
-  // ---- TRUCK (6-wheel cab + cargo) ---------------------------------------
-  void _truck(Canvas c, double w, double h, _Bp p) {
-    // cab
-    final cab = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.042), t.y(0.73));
-      path.lineTo(t.x(0.04), t.y(0.42));
-      path.quadraticBezierTo(t.x(0.04), t.y(0.34), t.x(0.075), t.y(0.31));
-      path.lineTo(t.x(0.095), t.y(0.30));
-      path.lineTo(t.x(0.20), t.y(0.30));
-      path.lineTo(t.x(0.20), t.y(0.73));
-      path.close();
-    });
-    _stroke(c, cab, p);
-    // chassis line
-    _line(c, w, h, 0.20, 0.60, 0.95, 0.60, p.line);
-    // cargo box
-    final cargo = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.255), t.y(0.60));
-      path.lineTo(t.x(0.255), t.y(0.285));
-      path.lineTo(t.x(0.95), t.y(0.285));
-      path.lineTo(t.x(0.95), t.y(0.60));
-      path.close();
-    });
-    _stroke(c, cargo, p);
-    // windshield
-    final ws = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.05), t.y(0.41));
-      path.lineTo(t.x(0.082), t.y(0.31));
-      path.lineTo(t.x(0.155), t.y(0.31));
-      path.lineTo(t.x(0.155), t.y(0.41));
-      path.close();
-    });
-    c.drawPath(ws, p.glass);
-    c.drawPath(ws, p.line);
-    // cargo slats
-    for (int i = 1; i <= 3; i++) {
-      final y = 0.285 + i * 0.078;
-      _line(c, w, h, 0.262, y, 0.945, y, p.soft);
-    }
-    _headlight(c, w, h, 0.062, 0.52, p);
-    _grille(c, w, h, 0.045, 0.55, 0.045, 0.10, p);
-    _mirror(c, w, h, 0.155, 0.40, p);
-  }
-
-  // ---- MIXER (cement) -----------------------------------------------------
-  void _mixer(Canvas c, double w, double h, _Bp p) {
-    // cab
-    final cab = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.042), t.y(0.73));
-      path.lineTo(t.x(0.04), t.y(0.42));
-      path.quadraticBezierTo(t.x(0.04), t.y(0.34), t.x(0.075), t.y(0.31));
-      path.lineTo(t.x(0.095), t.y(0.30));
-      path.lineTo(t.x(0.20), t.y(0.30));
-      path.lineTo(t.x(0.20), t.y(0.73));
-      path.close();
-    });
-    _stroke(c, cab, p);
-    _line(c, w, h, 0.20, 0.62, 0.96, 0.62, p.line);
-    // windshield
-    final ws = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.05), t.y(0.41));
-      path.lineTo(t.x(0.082), t.y(0.31));
-      path.lineTo(t.x(0.155), t.y(0.31));
-      path.lineTo(t.x(0.155), t.y(0.41));
-      path.close();
-    });
-    c.drawPath(ws, p.glass);
-    c.drawPath(ws, p.line);
-    // mixer drum (big tilted barrel)
-    final drum = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.255), t.y(0.60));
-      path.quadraticBezierTo(t.x(0.27), t.y(0.40), t.x(0.40), t.y(0.30));
-      path.quadraticBezierTo(t.x(0.62), t.y(0.18), t.x(0.85), t.y(0.30));
-      path.quadraticBezierTo(t.x(0.93), t.y(0.355), t.x(0.92), t.y(0.45));
-      path.quadraticBezierTo(t.x(0.915), t.y(0.55), t.x(0.86), t.y(0.60));
-      path.close();
-    });
-    _stroke(c, drum, p);
-    // drum spiral ribs
-    final rib = Paint()
-      ..color = _softColor.withValues(alpha: 0.6)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = p.sw * 0.7;
-    for (int i = 0; i < 5; i++) {
-      final fx = 0.34 + i * 0.12;
-      c.drawLine(Offset(fx * w, 0.34 * h), Offset((fx - 0.05) * w, 0.58 * h), rib);
-    }
-    // feed funnel (top rear)
-    final funnel = _path(w, h, (path, t) {
-      path.moveTo(t.x(0.86), t.y(0.30));
-      path.lineTo(t.x(0.91), t.y(0.205));
-      path.lineTo(t.x(0.965), t.y(0.205));
-      path.lineTo(t.x(0.93), t.y(0.33));
-      path.close();
-    });
-    _stroke(c, funnel, p, bold: false);
-    // chute
-    _line(c, w, h, 0.92, 0.50, 0.975, 0.62, p.line);
-    _headlight(c, w, h, 0.062, 0.52, p);
-    _grille(c, w, h, 0.045, 0.55, 0.045, 0.10, p);
-    _mirror(c, w, h, 0.155, 0.40, p);
-  }
-
-  // ---- shared small details ----------------------------------------------
-
-  void _headlight(Canvas c, double w, double h, double fx, double fy, _Bp p) {
-    final r = 0.022 * h;
-    c.drawCircle(Offset(fx * w, fy * h), r, p.line);
-    c.drawCircle(Offset(fx * w, fy * h), r * 0.45, p.soft);
-  }
-
-  void _taillight(Canvas c, double w, double h, double fx, double fy, _Bp p) {
-    final rect = Rect.fromCenter(
-        center: Offset(fx * w, fy * h), width: 0.018 * w, height: 0.055 * h);
-    c.drawRRect(
-        RRect.fromRectAndRadius(rect, const Radius.circular(2)), p.line);
-  }
-
-  void _grille(Canvas c, double w, double h, double fx, double fy, double fw,
-      double fh, _Bp p) {
-    final rect = Rect.fromLTWH(fx * w, fy * h, fw * w, fh * h);
-    c.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(2)), p.soft);
-    const n = 3;
-    for (int i = 1; i <= n; i++) {
-      final y = rect.top + rect.height * i / (n + 1);
-      c.drawLine(Offset(rect.left + 1, y), Offset(rect.right - 1, y), p.soft);
-    }
-  }
-
-  void _mirror(Canvas c, double w, double h, double fx, double fy, _Bp p) {
-    final rect = Rect.fromLTWH(fx * w, fy * h, 0.02 * w, 0.045 * h);
-    c.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(3)), p.line);
-    c.drawLine(Offset(fx * w, (fy + 0.045) * h),
-        Offset((fx + 0.02) * w, (fy + 0.07) * h), p.soft);
-  }
-
-  void _drawWheel(Canvas c, Offset center, double r, _Bp p) {
-    // tire (outer)
-    c.drawCircle(center, r, p.bold);
-    // tread ring
-    c.drawCircle(center, r * 0.86,
-        Paint()
-          ..color = _softColor.withValues(alpha: 0.5)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = p.sw * 0.6);
-    // rim
-    c.drawCircle(center, r * 0.55, p.line);
-    // spokes
-    final spoke = Paint()
-      ..color = _softColor.withValues(alpha: 0.8)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = p.sw * 0.8
-      ..strokeCap = StrokeCap.round;
-    for (int i = 0; i < 6; i++) {
-      final ang = i * math.pi / 3;
-      c.drawLine(
-        center,
-        center.translate(r * 0.5 * math.cos(ang), r * 0.5 * math.sin(ang)),
-        spoke,
+          Rect.fromLTWH(w * (0.26 + i * 0.11), h * 0.54, w * 0.09, h * 0.16),
+          const Radius.circular(3),
+        ),
+        detail,
       );
     }
-    // hub
-    c.drawCircle(center, r * 0.16, p.line);
   }
 
-  // ---- labels -------------------------------------------------------------
+  void _drawTruck(Canvas c, double w, double h, Paint stroke, Paint fill, Paint glass, Paint detail) {
+    // Heavy duty cab
+    final cab = Path()
+      ..moveTo(w * 0.05, h * 0.74)
+      ..lineTo(w * 0.04, h * 0.32)
+      ..lineTo(w * 0.12, h * 0.22)
+      ..lineTo(w * 0.26, h * 0.22)
+      ..lineTo(w * 0.26, h * 0.74)
+      ..lineTo(w * 0.22, h * 0.74)
+      ..arcToPoint(Offset(w * 0.12, h * 0.74), radius: Radius.circular(w * 0.05), clockwise: false)
+      ..close();
+    c.drawPath(cab, fill);
+    c.drawPath(cab, stroke);
 
-  void _drawLabels(Canvas canvas, double w, double h) {
-    _text(canvas, label, Offset(0.075 * w, 0.075 * h),
-        fontSize: h * 0.072, weight: FontWeight.w700, alpha: 0.95);
-    _text(canvas, 'H2HFLEET · ENGINEERING VIEW',
-        Offset(0.075 * w, 0.155 * h),
-        fontSize: h * 0.046, weight: FontWeight.w500, alpha: 0.55, letter: 1.2);
+    // Cargo Bed / Container
+    final bedRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(w * 0.28, h * 0.26, w * 0.67, h * 0.48),
+      const Radius.circular(4),
+    );
+    c.drawRRect(bedRect, fill);
+    c.drawRRect(bedRect, stroke);
+
+    // Chassis rail
+    c.drawLine(Offset(w * 0.05, h * 0.70), Offset(w * 0.95, h * 0.70), detail);
   }
 
-  void _text(Canvas canvas, String s, Offset at,
-      {required double fontSize,
-      FontWeight weight = FontWeight.w500,
-      double alpha = 1,
-      double letter = 0}) {
-    final tp = TextPainter(
-      text: TextSpan(
-        text: s,
-        style: TextStyle(
-          color: _lineColor.withValues(alpha: alpha),
-          fontSize: fontSize,
-          fontWeight: weight,
-          letterSpacing: letter,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout(maxWidth: 0.7 * 9999);
-    tp.paint(canvas, at);
+  void _drawMixer(Canvas c, double w, double h, Paint stroke, Paint fill, Paint glass, Paint detail) {
+    // Heavy truck cab
+    final cab = Path()
+      ..moveTo(w * 0.05, h * 0.74)
+      ..lineTo(w * 0.04, h * 0.34)
+      ..lineTo(w * 0.12, h * 0.24)
+      ..lineTo(w * 0.26, h * 0.24)
+      ..lineTo(w * 0.26, h * 0.74)
+      ..lineTo(w * 0.22, h * 0.74)
+      ..arcToPoint(Offset(w * 0.12, h * 0.74), radius: Radius.circular(w * 0.05), clockwise: false)
+      ..close();
+    c.drawPath(cab, fill);
+    c.drawPath(cab, stroke);
+
+    // Angled Concrete Mixing Drum
+    final drumPath = Path()
+      ..moveTo(w * 0.28, h * 0.58)
+      ..lineTo(w * 0.44, h * 0.20)
+      ..lineTo(w * 0.74, h * 0.24)
+      ..lineTo(w * 0.88, h * 0.48)
+      ..lineTo(w * 0.78, h * 0.68)
+      ..lineTo(w * 0.38, h * 0.68)
+      ..close();
+    c.drawPath(drumPath, fill);
+    c.drawPath(drumPath, stroke);
+
+    // Drum spiral spiral blades
+    c.drawLine(Offset(w * 0.44, h * 0.24), Offset(w * 0.58, h * 0.68), detail);
+    c.drawLine(Offset(w * 0.58, h * 0.22), Offset(w * 0.72, h * 0.68), detail);
+  }
+
+  // 4. วาดจุดตรวจเช็คเรืองแสง (Diagnostic Hotspots & Glowing Aura)
+  void _drawHotspotHighlights(Canvas canvas, double w, double h) {
+    final geo = geometryFor(archetype);
+
+    for (final spot in geo.hotspots) {
+      final isSelected = selectedCategory != null && spot.key == selectedCategory;
+      final center = Offset((spot.fx + spot.fw / 2) * w, (spot.fy + spot.fh / 2) * h);
+      final spotColor = _getPartCategoryColor(spot.key);
+
+      if (isSelected) {
+        // Glowing Neon Pulse Aura
+        final auraRadius = (16.0 + pulseValue * 10.0);
+        final glowPaint = Paint()
+          ..color = spotColor.withValues(alpha: 0.35 * (1.0 - pulseValue * 0.4))
+          ..style = PaintingStyle.fill;
+        canvas.drawCircle(center, auraRadius, glowPaint);
+
+        // Active Target Ring
+        final ringPaint = Paint()
+          ..color = spotColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.0;
+        canvas.drawCircle(center, 12.0, ringPaint);
+
+        // Core Pulse
+        final corePaint = Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.fill;
+        canvas.drawCircle(center, 4.5, corePaint);
+
+        // Floating Component Pin Label
+        final labelBg = Paint()
+          ..color = spotColor
+          ..style = PaintingStyle.fill;
+        final tagRect = RRect.fromRectAndRadius(
+          Rect.fromCenter(center: Offset(center.dx, center.dy - 22), width: 70, height: 18),
+          const Radius.circular(5),
+        );
+        canvas.drawRRect(tagRect, labelBg);
+
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text: spot.label.isNotEmpty ? spot.label : spot.key.toUpperCase(),
+            style: const TextStyle(
+              fontSize: 8.5,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout(maxWidth: 70);
+        textPainter.paint(
+          canvas,
+          Offset(center.dx - textPainter.width / 2, center.dy - 22 - textPainter.height / 2),
+        );
+      } else {
+        // Subtle Dormant Inspection Node
+        final nodeBg = Paint()
+          ..color = const Color(0xFF0F172A).withValues(alpha: 0.8)
+          ..style = PaintingStyle.fill;
+        final nodeStroke = Paint()
+          ..color = spotColor.withValues(alpha: 0.5)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2;
+
+        canvas.drawCircle(center, 5.5, nodeBg);
+        canvas.drawCircle(center, 5.5, nodeStroke);
+        canvas.drawCircle(center, 2.0, Paint()..color = spotColor);
+      }
+    }
+  }
+
+  Color _getPartCategoryColor(String key) {
+    switch (key) {
+      case 'engine':
+        return const Color(0xFFEF4444);
+      case 'oil':
+        return const Color(0xFFF59E0B);
+      case 'brake':
+        return const Color(0xFFDC2626);
+      case 'tire':
+        return const Color(0xFF38BDF8);
+      case 'battery':
+        return const Color(0xFF10B981);
+      case 'suspension':
+        return const Color(0xFF8B5CF6);
+      case 'electrical':
+        return const Color(0xFFEAB308);
+      case 'ac':
+        return const Color(0xFF06B6D4);
+      case 'transmission':
+        return const Color(0xFF6366F1);
+      case 'body':
+        return const Color(0xFF3B82F6);
+      case 'exhaust':
+        return const Color(0xFF94A3B8);
+      default:
+        return const Color(0xFF0284C7);
+    }
   }
 
   @override
-  bool shouldRepaint(covariant _BlueprintPainter old) =>
-      old.archetype != archetype || old.label != label;
-}
-
-/// ตัวช่วยแปลงสัดส่วน → พิกัดจริง
-class _PT {
-  final double w, h;
-  const _PT(this.w, this.h);
-  double x(double fx) => fx * w;
-  double y(double fy) => fy * h;
+  bool shouldRepaint(covariant _HighTechBlueprintPainter oldDelegate) {
+    return oldDelegate.archetype != archetype ||
+        oldDelegate.selectedCategory != selectedCategory ||
+        oldDelegate.pulseValue != pulseValue;
+  }
 }

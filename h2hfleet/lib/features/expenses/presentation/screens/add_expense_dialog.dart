@@ -25,14 +25,16 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
   DateTime _selectedDate = DateTime.now();
   bool _isSaving = false;
 
-  static const _expenseTypes = [
-    ('น้ำมัน', Icons.local_gas_station_rounded, Color(0xFFD97706)),
-    ('ซ่อม', Icons.build_rounded, Color(0xFFDC2626)),
-    ('ยาง', Icons.tire_repair_rounded, Color(0xFF059669)),
-    ('ค่าเที่ยว', Icons.route_rounded, Color(0xFF2563EB)),
-    ('ประกัน', Icons.shield_rounded, Color(0xFF7C3AED)),
+  static const _expenseCategories = [
+    ('น้ำมัน', Icons.local_gas_station_rounded, Color(0xFFE11D48)),
+    ('ซ่อมบำรุง', Icons.build_circle_rounded, Color(0xFFD97706)),
+    ('ยาง / ล้อ', Icons.tire_repair_rounded, Color(0xFF059669)),
+    ('ค่าเที่ยว / ทางด่วน', Icons.toll_rounded, Color(0xFF4F46E5)),
+    ('ประกัน / ภาษี', Icons.shield_rounded, Color(0xFF7C3AED)),
     ('อื่นๆ', Icons.more_horiz_rounded, Color(0xFF64748B)),
   ];
+
+  static const _quickAmounts = [500, 1000, 1500, 2000, 3000, 5000];
 
   @override
   void initState() {
@@ -55,7 +57,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
       lastDate: DateTime.now(),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: AppColors.primary),
+          colorScheme: const ColorScheme.light(primary: Color(0xFFE11D48)),
         ),
         child: child!,
       ),
@@ -63,11 +65,33 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
     if (picked != null) setState(() => _selectedDate = picked);
   }
 
+  void _addQuickAmount(int val) {
+    final current = double.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0;
+    final updated = current + val;
+    setState(() {
+      _amountCtrl.text = updated.toStringAsFixed(0);
+    });
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedVehicle == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('กรุณาเลือกรถก่อน')),
+        const SnackBar(
+          content: Text('กรุณาเลือกรถประจำรายการก่อน'),
+          backgroundColor: Color(0xFFEA580C),
+        ),
+      );
+      return;
+    }
+
+    final amountVal = double.tryParse(_amountCtrl.text.replaceAll(',', ''));
+    if (amountVal == null || amountVal <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('กรุณาระบุจำนวนเงินที่ถูกต้อง'),
+          backgroundColor: Color(0xFFEA580C),
+        ),
       );
       return;
     }
@@ -77,7 +101,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
       await ref.read(expensesProvider.notifier).addExpense(
             vehicleId: _selectedVehicle!.id,
             type: _selectedType,
-            amount: double.parse(_amountCtrl.text.replaceAll(',', '')),
+            amount: amountVal,
             expenseDate: _selectedDate,
             note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
           );
@@ -97,48 +121,82 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
   Widget build(BuildContext context) {
     final vehiclesAsync = ref.watch(vehiclesProvider);
     final vehicles = vehiclesAsync.valueOrNull ?? [];
-    final dateLabel = DateFormat('d MMM yyyy').format(_selectedDate);
+    final dateLabel = DateFormat('d MMMM yyyy', 'th_TH').format(_selectedDate);
+
+    // Auto select first vehicle if none selected
+    if (_selectedVehicle == null && vehicles.isNotEmpty) {
+      _selectedVehicle = vehicles.first;
+    }
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       child: Container(
+        constraints: const BoxConstraints(maxWidth: 480),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
+            // ─── 1. Modern Header ───────────────────────────────────────────
             Container(
-              padding: const EdgeInsets.fromLTRB(20, 20, 16, 20),
+              padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF059669), Color(0xFF047857)],
+                  colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF334155)],
                 ),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(10),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFE11D48), Color(0xFFF43F5E)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(Icons.receipt_long_rounded, color: Colors.white, size: 20),
                   ),
                   const SizedBox(width: 12),
                   const Expanded(
-                    child: Text('บันทึกค่าใช้จ่าย',
-                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'บันทึกค่าใช้จ่ายใหม่',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        Text(
+                          'Expense & Fuel Telematics Entry',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded, color: Colors.white, size: 22),
+                    icon: const Icon(Icons.close_rounded, color: Colors.white70, size: 22),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -146,183 +204,300 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
               ),
             ),
 
-            // Body
+            // ─── 2. Scrollable Body Form ────────────────────────────────────
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Vehicle picker
-                      _SectionLabel('รถ'),
-                      const SizedBox(height: 8),
-                      if (vehicles.isEmpty)
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: AppColors.warningSurface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 18),
-                              SizedBox(width: 8),
-                              Text('ยังไม่มีรถ กรุณาเพิ่มรถก่อน',
-                                  style: TextStyle(color: AppColors.warning, fontSize: 13)),
-                            ],
-                          ),
-                        )
-                      else
-                        _VehiclePicker(
-                          vehicles: vehicles,
-                          selected: _selectedVehicle,
-                          onChanged: (v) => setState(() => _selectedVehicle = v),
+                      // Vehicle Selector
+                      const Text(
+                        'เลือกรถในฟลีต (Vehicle)',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
                         ),
-
-                      const SizedBox(height: 20),
-
-                      // Expense type
-                      _SectionLabel('ประเภทค่าใช้จ่าย'),
-                      const SizedBox(height: 10),
-                      _ExpenseTypeGrid(
-                        selected: _selectedType,
-                        onSelected: (t) => setState(() => _selectedType = t),
-                        types: _expenseTypes,
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<VehicleModel>(
+                            value: _selectedVehicle,
+                            isExpanded: true,
+                            hint: const Text('เลือกรถ', style: TextStyle(fontSize: 13)),
+                            icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
+                            items: vehicles.map((v) {
+                              return DropdownMenuItem<VehicleModel>(
+                                value: v,
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF1E3A8A).withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        v.plateNumber,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 12,
+                                          color: Color(0xFF1E3A8A),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        '${v.brand} ${v.model} · ${v.vehicleType}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (val) => setState(() => _selectedVehicle = val),
+                          ),
+                        ),
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
 
-                      // Amount
-                      _SectionLabel('จำนวนเงิน (บาท)'),
+                      // Category Selector Grid
+                      const Text(
+                        'หมวดหมู่ค่าใช้จ่าย (Category)',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
                       const SizedBox(height: 8),
+                      GridView.count(
+                        crossAxisCount: 3,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                        childAspectRatio: 1.85,
+                        children: _expenseCategories.map((cat) {
+                          final isSelected = _selectedType == cat.$1;
+                          final color = cat.$3;
+                          return GestureDetector(
+                            onTap: () => setState(() => _selectedType = cat.$1),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 160),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: isSelected ? color : const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected ? color : const Color(0xFFE2E8F0),
+                                  width: isSelected ? 1.5 : 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    cat.$2,
+                                    size: 16,
+                                    color: isSelected ? Colors.white : color,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      cat.$1.split(' ').first,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                        color: isSelected ? Colors.white : const Color(0xFF334155),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Amount Input
+                      const Text(
+                        'จำนวนเงิน (บาท)',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
                       TextFormField(
                         controller: _amountCtrl,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[\d,.]')),
+                          FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                         ],
                         style: const TextStyle(
-                          fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
                         ),
                         decoration: InputDecoration(
-                          prefixText: '฿ ',
-                          prefixStyle: const TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.success,
-                          ),
                           hintText: '0.00',
-                          hintStyle: const TextStyle(color: AppColors.textHint, fontSize: 22),
+                          hintStyle: const TextStyle(color: Color(0xFFCBD5E1)),
+                          prefixIcon: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                            child: Text(
+                              '฿',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFFE11D48),
+                              ),
+                            ),
+                          ),
                           filled: true,
-                          fillColor: AppColors.card,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          fillColor: const Color(0xFFF8FAFC),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.divider),
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.divider),
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.success, width: 2),
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: Color(0xFFE11D48), width: 1.8),
                           ),
                         ),
-                        validator: (v) {
-                          if (v == null || v.isEmpty) return 'กรุณาใส่จำนวนเงิน';
-                          final num = double.tryParse(v.replaceAll(',', ''));
-                          if (num == null || num <= 0) return 'จำนวนเงินต้องมากกว่า 0';
+                        validator: (val) {
+                          if (val == null || val.trim().isEmpty) return 'กรุณาระบุจำนวนเงิน';
                           return null;
                         },
                       ),
 
-                      const SizedBox(height: 20),
-
-                      // Date
-                      _SectionLabel('วันที่'),
                       const SizedBox(height: 8),
-                      InkWell(
-                        onTap: _pickDate,
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          decoration: BoxDecoration(
-                            color: AppColors.card,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.divider),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.calendar_today_rounded,
-                                  size: 18, color: AppColors.primary),
-                              const SizedBox(width: 10),
-                              Text(dateLabel,
-                                  style: const TextStyle(
-                                      fontSize: 15, fontWeight: FontWeight.w600,
-                                      color: AppColors.textPrimary)),
-                              const Spacer(),
-                              const Icon(Icons.chevron_right_rounded,
-                                  size: 18, color: AppColors.textHint),
-                            ],
+
+                      // Quick Amount Increment Chips
+                      SizedBox(
+                        height: 28,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: _quickAmounts.map((amt) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: ActionChip(
+                                label: Text('+฿$amt', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700)),
+                                backgroundColor: const Color(0xFFF1F5F9),
+                                side: BorderSide.none,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                padding: EdgeInsets.zero,
+                                onPressed: () => _addQuickAmount(amt),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      // Date Picker Box
+                      const Text(
+                        'วันที่ทำรายการ',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Material(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(14),
+                        child: InkWell(
+                          onTap: _pickDate,
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.calendar_month_rounded, color: Color(0xFF0284C7), size: 18),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    dateLabel,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ),
+                                const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFF94A3B8), size: 13),
+                              ],
+                            ),
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 14),
 
-                      // Note (optional)
-                      _SectionLabel('หมายเหตุ (ไม่บังคับ)'),
-                      const SizedBox(height: 8),
+                      // Note / Reference Input
+                      const Text(
+                        'หมายเหตุ / รายละเอียดบิล (ไม่บังคับ)',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
                       TextFormField(
                         controller: _noteCtrl,
                         maxLines: 2,
-                        style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
                         decoration: InputDecoration(
-                          hintText: 'รายละเอียดเพิ่มเติม...',
-                          hintStyle: const TextStyle(color: AppColors.textHint),
+                          hintText: 'เช่น ปั๊ม ปตท. วังน้อย, เลขที่บิล #1042...',
+                          hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
                           filled: true,
-                          fillColor: AppColors.card,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          fillColor: const Color(0xFFF8FAFC),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.divider),
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.divider),
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: Color(0xFFE11D48), width: 1.8),
                           ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Save button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton(
-                          onPressed: _isSaving ? null : _save,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.success,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          child: _isSaving
-                              ? const SizedBox(
-                                  width: 22, height: 22,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2, color: Colors.white),
-                                )
-                              : const Text('บันทึกค่าใช้จ่าย',
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                         ),
                       ),
                     ],
@@ -330,127 +505,41 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                 ),
               ),
             ),
+
+            // ─── 3. Save Button Action ──────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: Color(0xFFF1F5F9))),
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _isSaving ? null : _save,
+                  icon: _isSaving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.check_circle_rounded, size: 18),
+                  label: Text(
+                    _isSaving ? 'กำลังบันทึก...' : 'บันทึกค่าใช้จ่าย',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE11D48),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 2,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  const _SectionLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(text,
-        style: const TextStyle(
-            fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSecondary,
-            letterSpacing: 0.3));
-  }
-}
-
-class _VehiclePicker extends StatelessWidget {
-  final List<VehicleModel> vehicles;
-  final VehicleModel? selected;
-  final ValueChanged<VehicleModel?> onChanged;
-
-  const _VehiclePicker({
-    required this.vehicles, required this.selected, required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<VehicleModel>(
-          value: selected,
-          isExpanded: true,
-          hint: const Text('เลือกรถ', style: TextStyle(color: AppColors.textHint)),
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-          items: vehicles.map((v) {
-            final isActive = v.status == 'active';
-            return DropdownMenuItem(
-              value: v,
-              child: Row(
-                children: [
-                  Container(
-                    width: 8, height: 8,
-                    decoration: BoxDecoration(
-                      color: isActive ? AppColors.success : AppColors.warning,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '${v.plateNumber} · ${v.vehicleType}',
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }).toList(),
-          onChanged: onChanged,
-        ),
-      ),
-    );
-  }
-}
-
-class _ExpenseTypeGrid extends StatelessWidget {
-  final String selected;
-  final ValueChanged<String> onSelected;
-  final List<(String, IconData, Color)> types;
-
-  const _ExpenseTypeGrid({
-    required this.selected, required this.onSelected, required this.types,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: types.map((t) {
-        final (label, icon, color) = t;
-        final isSelected = selected == label;
-        return GestureDetector(
-          onTap: () => onSelected(label),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected ? color.withValues(alpha: 0.12) : AppColors.card,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? color : AppColors.divider,
-                width: isSelected ? 2 : 1,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 18, color: isSelected ? color : AppColors.textSecondary),
-                const SizedBox(width: 6),
-                Text(label,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected ? color : AppColors.textSecondary,
-                    )),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
     );
   }
 }

@@ -1,14 +1,24 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:h2hfleet/core/theme/app_theme.dart';
+import 'package:h2hfleet/features/auth/presentation/screens/login_screen.dart';
 
 void main() {
-  testWidgets('Placeholder test', (WidgetTester tester) async {
-    expect(true, isTrue);
+  testWidgets('LoginScreen builds and renders cleanly', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: AppTheme.light,
+          home: const LoginScreen(),
+        ),
+      ),
+    );
+
+    // Verify H2H brand and login elements are present
+    expect(find.text('H2H'), findsOneWidget);
+    expect(find.text('FLEET'), findsOneWidget);
+    expect(find.text('เข้าสู่ระบบด้วย Google'), findsOneWidget);
+    expect(find.text('เข้าสู่ระบบด้วย Apple'), findsOneWidget);
   });
 }

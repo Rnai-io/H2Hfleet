@@ -69,7 +69,7 @@ serve(async (req) => {
             replyToken,
             messages: [
               { type: "text", text: replyText },
-              { type: "text", text: "📱 เปิดแอป H2HFleet\nhttps://rnai-io.github.io/H2Hfleet/" },
+              { type: "text", text: "📱 เปิดแอป H2HFleet (แอปจริง)\nhttps://h2hfleet.netlify.app/\n\n🎯 ดู Live Demo (ไม่ต้องสมัคร)\nhttps://rnai-io.github.io/H2Hfleet/demo.html" },
             ],
           }),
         });

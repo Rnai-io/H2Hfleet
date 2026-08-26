@@ -33,3 +33,8 @@ h2hfleet/assets/images/preview.html
 # Misc
 .DS_Store
 *.log
+
+# Local Netlify folder
+.netlify
+.claude/
+supabase/.temp/

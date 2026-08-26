@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>H2hfleet</string>
+	<string>H2H Fleet</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>h2hfleet</string>
+	<string>H2H Fleet</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -57,6 +57,18 @@
 	<string>แอปต้องการกล้องเพื่อถ่ายรูปอะไหล่/การซ่อมบำรุงรถ</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>แอปต้องการเข้าถึงรูปภาพเพื่อแนบรูปการซ่อมบำรุงรถ</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.h2hfleet.app</string>
+				<string>io.supabase.h2hfleet</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

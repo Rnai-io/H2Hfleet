@@ -97,4 +97,13 @@ class ExpensesNotifier extends StateNotifier<AsyncValue<List<ExpenseModel>>> {
       state = AsyncValue.error(e, st);
     }
   }
+
+  Future<void> deleteExpense(String id) async {
+    try {
+      await _supabase.client.from('expenses').delete().eq('id', id);
+      await fetchExpenses();
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
 }

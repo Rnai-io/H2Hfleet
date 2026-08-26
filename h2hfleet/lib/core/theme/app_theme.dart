@@ -35,31 +35,31 @@ class AppTheme {
     return base.copyWith(
       textTheme: GoogleFonts.promptTextTheme(base.textTheme).copyWith(
         headlineLarge: GoogleFonts.prompt(
-          fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.textPrimary, height: 1.2,
+          fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.textPrimary, height: 1.35,
         ),
         headlineMedium: GoogleFonts.prompt(
-          fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary, height: 1.3,
+          fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary, height: 1.35,
         ),
         titleLarge: GoogleFonts.prompt(
-          fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary,
+          fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary, height: 1.35,
         ),
         titleMedium: GoogleFonts.prompt(
-          fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary,
+          fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary, height: 1.35,
         ),
         titleSmall: GoogleFonts.prompt(
-          fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary,
+          fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary, height: 1.35,
         ),
         bodyLarge: GoogleFonts.prompt(
-          fontSize: 16, fontWeight: FontWeight.w400, color: AppColors.textPrimary,
+          fontSize: 16, fontWeight: FontWeight.w400, color: AppColors.textPrimary, height: 1.35,
         ),
         bodyMedium: GoogleFonts.prompt(
-          fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.textSecondary,
+          fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.textSecondary, height: 1.35,
         ),
         bodySmall: GoogleFonts.prompt(
-          fontSize: 12, fontWeight: FontWeight.w400, color: AppColors.textSecondary,
+          fontSize: 12, fontWeight: FontWeight.w400, color: AppColors.textSecondary, height: 1.35,
         ),
         labelLarge: GoogleFonts.prompt(
-          fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white,
+          fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white, height: 1.35,
         ),
       ),
       appBarTheme: AppBarTheme(
@@ -69,7 +69,7 @@ class AppTheme {
         scrolledUnderElevation: 1,
         shadowColor: AppColors.divider,
         titleTextStyle: GoogleFonts.prompt(
-          fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary,
+          fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary, height: 1.35,
         ),
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
@@ -87,18 +87,18 @@ class AppTheme {
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          textStyle: GoogleFonts.prompt(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.prompt(fontSize: 16, fontWeight: FontWeight.w600, height: 1.3),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
           side: const BorderSide(color: AppColors.primary, width: 1.5),
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          textStyle: GoogleFonts.prompt(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.prompt(fontSize: 16, fontWeight: FontWeight.w600, height: 1.3),
         ),
       ),
       textButtonTheme: TextButtonThemeData(

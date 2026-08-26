@@ -18,6 +18,7 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
   final _emailCtrl = TextEditingController();
   final _taxIdCtrl = TextEditingController();
   bool _isSaving = false;
+  bool _isSaved = false;
 
   static const _keyName = 'company_name';
   static const _keyAddress = 'company_address';
@@ -45,7 +46,10 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
   }
 
   Future<void> _saveSettings() async {
-    setState(() => _isSaving = true);
+    setState(() {
+      _isSaving = true;
+      _isSaved = false;
+    });
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyName, _nameCtrl.text.trim());
     await prefs.setString(_keyAddress, _addressCtrl.text.trim());
@@ -53,15 +57,21 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
     await prefs.setString(_keyEmail, _emailCtrl.text.trim());
     await prefs.setString(_keyTaxId, _taxIdCtrl.text.trim());
     if (mounted) {
-      setState(() => _isSaving = false);
+      setState(() {
+        _isSaving = false;
+        _isSaved = true;
+      });
       final s = ref.read(strProvider);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(s.companyProfileSaved),
-          backgroundColor: AppColors.success,
+          backgroundColor: const Color(0xFF10B981),
         ),
       );
     }
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _isSaved = false);
+    });
   }
 
   @override
@@ -77,23 +87,23 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
   InputDecoration _decoration(String hint, IconData icon) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: AppColors.textHint),
+      hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
       filled: true,
-      fillColor: AppColors.card,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.divider),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.divider),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        borderSide: const BorderSide(color: Color(0xFF1E3A8A), width: 1.8),
       ),
-      prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 20),
+      prefixIcon: Icon(icon, color: const Color(0xFF64748B), size: 20),
     );
   }
 
@@ -101,95 +111,199 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
   Widget build(BuildContext context) {
     final s = ref.watch(strProvider);
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: const Color(0xFF0F172A),
         foregroundColor: Colors.white,
         elevation: 0,
-        title: Text(s.companyProfile,
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+        leadingWidth: 54,
+        titleSpacing: 4,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 10, top: 8, bottom: 8),
+          child: Material(
+            color: Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: () => Navigator.of(context).pop(),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1.2),
+                ),
+                child: const Center(
+                  child: Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
+                ),
+              ),
+            ),
+          ),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0F172A), Color(0xFF334155)],
+                ),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+              ),
+              child: const Icon(Icons.apartment_rounded, color: Colors.white, size: 18),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  s.companyProfile,
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white),
+                ),
+                Text(
+                  s.isTh ? 'ข้อมูลองค์กรและหัวบิลรายงาน' : 'Enterprise & Billing Setup',
+                  style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w500, color: Colors.white70),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Hero Banner
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primarySurface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF334155)],
+                ),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.apartment_rounded, color: AppColors.primary, size: 20),
-                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0284C7).withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.4)),
+                    ),
+                    child: const Icon(Icons.business_rounded, color: Color(0xFF38BDF8), size: 24),
+                  ),
+                  const SizedBox(width: 14),
                   Expanded(
-                    child: Text(
-                      s.companyProfileDesc,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.5),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          s.isTh ? 'หัวบิลและข้อมูลนิติบุคคล' : 'Corporate Identity & Billing',
+                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          s.companyProfileDesc,
+                          style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 11, height: 1.3),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 22),
 
-            Text(s.companyName,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
-            const SizedBox(height: 8),
+            // Form Fields
+            Text(
+              s.companyName,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 6),
             TextFormField(
               controller: _nameCtrl,
-              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
-              decoration: _decoration(s.companyNameHint, Icons.business_rounded),
+              style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              decoration: _decoration(s.companyNameHint, Icons.apartment_rounded),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
-            Text(s.companyAddress,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
-            const SizedBox(height: 8),
+            Text(
+              s.companyAddress,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 6),
             TextFormField(
               controller: _addressCtrl,
               maxLines: 3,
-              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+              style: const TextStyle(fontSize: 13.5, color: AppColors.textPrimary),
               decoration: _decoration(s.companyAddressHint, Icons.location_on_outlined),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
-            Text(s.companyPhone,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _phoneCtrl,
-              keyboardType: TextInputType.phone,
-              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
-              decoration: _decoration('08x-xxx-xxxx', Icons.phone_outlined),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        s.companyPhone,
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: _phoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                        decoration: _decoration('08x-xxx-xxxx', Icons.phone_outlined),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        s.companyEmail,
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: _emailCtrl,
+                        keyboardType: TextInputType.emailAddress,
+                        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                        decoration: _decoration('info@company.com', Icons.email_outlined),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
-            Text(s.companyEmail,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _emailCtrl,
-              keyboardType: TextInputType.emailAddress,
-              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
-              decoration: _decoration('company@email.com', Icons.email_outlined),
+            Text(
+              s.companyTaxId,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
             ),
-            const SizedBox(height: 20),
-
-            Text(s.companyTaxId,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
-            const SizedBox(height: 4),
-            Text(s.companyTaxIdHint,
-                style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
-            const SizedBox(height: 8),
+            const SizedBox(height: 2),
+            Text(s.companyTaxIdHint, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+            const SizedBox(height: 6),
             TextFormField(
               controller: _taxIdCtrl,
               keyboardType: TextInputType.number,
-              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+              style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
               decoration: _decoration('0-0000-00000-00-0', Icons.badge_outlined),
             ),
             const SizedBox(height: 28),
@@ -198,19 +312,25 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _isSaving ? null : _saveSettings,
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 16, height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Icon(Icons.save_rounded, size: 18),
-                label: Text(s.save, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                icon: _isSaved
+                    ? const Icon(Icons.check_circle_rounded, size: 18)
+                    : _isSaving
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.save_rounded, size: 18),
+                label: Text(
+                  _isSaved ? 'บันทึกข้อมูลแล้ว!' : s.save,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: _isSaved ? const Color(0xFF10B981) : const Color(0xFF1E3A8A),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
+                  elevation: 2,
                 ),
               ),
             ),

@@ -24,8 +24,14 @@ class AppStrings {
   String get passwordNotMatch => isTh ? 'รหัสผ่านไม่ตรงกัน' : 'Passwords do not match';
   String get registerSuccess => isTh ? 'สมัครสมาชิกสำเร็จ กรุณาตรวจสอบอีเมล' : 'Registration successful, please verify your email';
   String get welcomeBack => isTh ? 'ยินดีต้อนรับกลับ!' : 'Welcome back!';
-  String get loginSubtitle => isTh ? 'เข้าสู่ระบบเพื่อจัดการรถของคุณ' : 'Sign in to manage your fleet';
-  String get registerSubtitle => isTh ? 'สร้างบัญชีเพื่อเริ่มต้นใช้งาน' : 'Create an account to get started';
+  String get loginSubtitle => isTh ? 'เข้าสู่ระบบเพื่อจัดการกองรถอัจฉริยะ' : 'Sign in to smart fleet management';
+  String get registerSubtitle => isTh ? 'สร้างบัญชีเพื่อเริ่มต้นใช้งานฟรี' : 'Create an account to get started free';
+  String get continueWithGoogle => isTh ? 'เข้าสู่ระบบด้วย Google' : 'Continue with Google';
+  String get continueWithApple => isTh ? 'เข้าสู่ระบบด้วย Apple' : 'Continue with Apple';
+  String get orContinueWithEmail => isTh ? 'หรือเข้าสู่ระบบด้วยอีเมล' : 'Or continue with email';
+  String get forgotPassword => isTh ? 'ลืมรหัสผ่าน?' : 'Forgot password?';
+  String get oAuthError => isTh ? 'ไม่สามารถเข้าสู่ระบบผ่านผู้ให้บริการได้' : 'Failed to authenticate with provider';
+  String get tagLine => isTh ? 'จัดการกองรถอัจฉริยะ แม่นยำ ครบวงจร' : 'Smart Fleet Intelligence & Telematics';
 
   // ─── Dashboard ─────────────────────────────────
   String get greeting => isTh ? 'สวัสดี! วันนี้รถของคุณเป็นอย่างไรบ้าง?' : 'Hello! How is your fleet today?';
@@ -182,6 +188,11 @@ class AppStrings {
   String get geminiDesc => isTh ? 'ใช้ Gemini AI วิเคราะห์และสรุปข้อมูลรถของคุณเป็นภาษาไทย' : 'Use Gemini AI to analyze and summarize your fleet data';
   String get apiKeySaved => isTh ? 'บันทึก API Key สำเร็จ' : 'API Key saved successfully';
   String get apiKeyCleared => isTh ? 'ลบ API Key แล้ว' : 'API Key cleared';
+
+  // ─── AI Chat ───────────────────────────────────
+  String get aiAssistant => isTh ? 'AI ผู้ช่วย' : 'AI Assistant';
+  String get aiChatHint => isTh ? 'สอบถามข้อมูลรถหรือค่าใช้จ่าย' : 'Ask about vehicles or expenses';
+  String get aiChatInputHint => isTh ? 'พิมพ์คำถามของคุณ...' : 'Type your question...';
 
   // ─── Common ────────────────────────────────────
   String get error => isTh ? 'เกิดข้อผิดพลาด' : 'Error';

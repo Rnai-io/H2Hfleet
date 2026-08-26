@@ -90,4 +90,55 @@ class OpenAIService {
       return _localSummary(totalSpent, expenses, vehicleCount);
     }
   }
+
+  Future<String> askAi(
+    String question, {
+    required double totalSpent,
+    required Map<String, double> expenses,
+    required int vehicleCount,
+  }) async {
+    final apiKey = await getKey();
+    if (apiKey.isEmpty) {
+      return 'ยังไม่ได้ตั้งค่า OpenAI API Key กรุณาไปที่ Settings → AI Settings';
+    }
+
+    try {
+      final contextPrompt = expenses.isEmpty
+          ? 'ข้อมูลปัจจุบัน: รถทั้งหมด $vehicleCount คัน, วันนี้ยังไม่มีค่าใช้จ่าย'
+          : 'ข้อมูลปัจจุบัน: รถทั้งหมด $vehicleCount คัน, ค่าใช้จ่ายวันนี้รวม ${totalSpent.toStringAsFixed(0)} บาท\nรายละเอียด:\n'
+            '${expenses.entries.map((e) => '- ${e.key}: ${e.value.toStringAsFixed(0)} บาท').join('\n')}';
+
+      final res = await _dio.post(
+        'https://api.openai.com/v1/chat/completions',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $apiKey',
+            'Content-Type': 'application/json',
+          },
+          sendTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(seconds: 15),
+        ),
+        data: {
+          'model': 'gpt-4o-mini',
+          'messages': [
+            {
+              'role': 'system',
+              'content': 'คุณเป็น AI ผู้ช่วยจัดการรถบริษัทสำหรับ SME ตอบคำถามผู้ใช้โดยอ้างอิงจากข้อมูลบริบทที่ให้ไว้ ตอบเป็นภาษาไทย กระชับ เป็นประโยชน์และเข้าใจง่าย',
+            },
+            {
+              'role': 'system',
+              'content': contextPrompt,
+            },
+            {'role': 'user', 'content': question},
+          ],
+          'max_tokens': 300,
+          'temperature': 0.7,
+        },
+      );
+
+      return res.data['choices'][0]['message']['content']?.toString().trim() ?? 'ขออภัย ฉันไม่สามารถตอบได้ในขณะนี้';
+    } catch (e) {
+      return 'เกิดข้อผิดพลาดในการเชื่อมต่อกับ AI: ${e.toString()}';
+    }
+  }
 }
