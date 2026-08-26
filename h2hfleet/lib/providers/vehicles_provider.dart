@@ -53,7 +53,27 @@ class VehiclesNotifier extends StateNotifier<AsyncValue<List<VehicleModel>>> {
       });
 
       return companyId;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Error auto-creating company/user: $e');
+      // Fallback: check if an existing company is visible
+      try {
+        final existingCompany = await _supabase.client
+            .from('companies')
+            .select('id')
+            .limit(1)
+            .maybeSingle();
+        if (existingCompany != null) {
+          final companyId = existingCompany['id'] as String;
+          await _supabase.client.from('users').upsert({
+            'id': user.id,
+            'email': user.email ?? 'user_${user.id.substring(0, 6)}@h2hfleet.app',
+            'name': user.userMetadata?['full_name'] as String? ?? 'Fleet Manager',
+            'company_id': companyId,
+            'role': 'owner',
+          });
+          return companyId;
+        }
+      } catch (_) {}
       return null;
     }
   }
