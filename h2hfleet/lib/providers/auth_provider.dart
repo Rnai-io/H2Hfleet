@@ -103,10 +103,17 @@ class AuthRepository {
     return true;
   }
 
+  String _getAuthRedirectUrl() {
+    if (kIsWeb) {
+      return Uri.base.origin;
+    }
+    return 'com.h2hfleet.app://login-callback/';
+  }
+
   Future<bool> signInWithGoogle() async {
     return await _supabase.client.auth.signInWithOAuth(
       OAuthProvider.google,
-      redirectTo: kIsWeb ? null : 'com.h2hfleet.app://login-callback/',
+      redirectTo: _getAuthRedirectUrl(),
     );
   }
 
@@ -153,7 +160,7 @@ class AuthRepository {
         // ─── Web / Fallback OAuth Flow ──────────────────────────────────
         return await _supabase.client.auth.signInWithOAuth(
           OAuthProvider.apple,
-          redirectTo: kIsWeb ? null : 'com.h2hfleet.app://login-callback/',
+          redirectTo: _getAuthRedirectUrl(),
         );
       }
     } catch (e) {
