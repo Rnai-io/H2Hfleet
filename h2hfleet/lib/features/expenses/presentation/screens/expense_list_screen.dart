@@ -182,6 +182,217 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
             }
             final sortedKeys = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
 
+            final isLargeScreen = MediaQuery.of(context).size.width >= 800;
+
+            if (isLargeScreen) {
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ─── Left Column (KPI & Breakdown Filters: 45%) ───
+                    Expanded(
+                      flex: 5,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _ModernSummaryBanner(
+                              totalAll: totalAll,
+                              monthTotal: monthTotal,
+                              count: expenses.length,
+                              currencyFormat: currencyFormat,
+                            ),
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.02),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Row(
+                                        children: [
+                                          Icon(Icons.filter_list_rounded, size: 16, color: Color(0xFFE11D48)),
+                                          SizedBox(width: 6),
+                                          Text(
+                                            'กรองตามหมวดหมู่',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      if (_selectedCategory != null || _selectedVehicleId != null)
+                                        GestureDetector(
+                                          onTap: () => setState(() {
+                                            _selectedCategory = null;
+                                            _selectedVehicleId = null;
+                                          }),
+                                          child: const Text(
+                                            'ล้างตัวกรอง',
+                                            style: TextStyle(
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFFEF4444),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Wrap(
+                                    spacing: 6,
+                                    runSpacing: 6,
+                                    children: [
+                                      _FilterChip(
+                                        label: 'ทั้งหมด (${expenses.length})',
+                                        isSelected: _selectedCategory == null,
+                                        onTap: () => setState(() => _selectedCategory = null),
+                                      ),
+                                      _FilterChip(
+                                        label: 'ค่าน้ำมัน',
+                                        icon: Icons.local_gas_station_rounded,
+                                        color: const Color(0xFFEA580C),
+                                        isSelected: _selectedCategory == 'น้ำมัน',
+                                        onTap: () => setState(() =>
+                                            _selectedCategory = _selectedCategory == 'น้ำมัน' ? null : 'น้ำมัน'),
+                                      ),
+                                      _FilterChip(
+                                        label: 'ซ่อมบำรุง',
+                                        icon: Icons.build_rounded,
+                                        color: const Color(0xFF0284C7),
+                                        isSelected: _selectedCategory == 'ซ่อมบำรุง',
+                                        onTap: () => setState(() =>
+                                            _selectedCategory = _selectedCategory == 'ซ่อมบำรุง' ? null : 'ซ่อมบำรุง'),
+                                      ),
+                                      _FilterChip(
+                                        label: 'ค่าทางด่วน',
+                                        icon: Icons.toll_rounded,
+                                        color: const Color(0xFF0D9488),
+                                        isSelected: _selectedCategory == 'ทางด่วน',
+                                        onTap: () => setState(() =>
+                                            _selectedCategory = _selectedCategory == 'ทางด่วน' ? null : 'ทางด่วน'),
+                                      ),
+                                      _FilterChip(
+                                        label: 'เบี้ยเลี้ยง / ค่าเที่ยว',
+                                        icon: Icons.person_pin_circle_rounded,
+                                        color: const Color(0xFF4F46E5),
+                                        isSelected: _selectedCategory == 'ค่าเที่ยว',
+                                        onTap: () => setState(() =>
+                                            _selectedCategory = _selectedCategory == 'ค่าเที่ยว' ? null : 'ค่าเที่ยว'),
+                                      ),
+                                      _FilterChip(
+                                        label: 'ประกัน / พ.ร.บ.',
+                                        icon: Icons.shield_rounded,
+                                        color: const Color(0xFF7C3AED),
+                                        isSelected: _selectedCategory == 'ประกัน',
+                                        onTap: () => setState(() =>
+                                            _selectedCategory = _selectedCategory == 'ประกัน' ? null : 'ประกัน'),
+                                      ),
+                                    ],
+                                  ),
+                                  if (vehicleMap.length > 1) ...[
+                                    const SizedBox(height: 16),
+                                    const Text('เลือกรถที่ต้องการดู', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 6,
+                                      children: [
+                                        _VehicleChip(
+                                          label: 'รถทุกคัน',
+                                          isSelected: _selectedVehicleId == null,
+                                          onTap: () => setState(() => _selectedVehicleId = null),
+                                        ),
+                                        ...vehicleMap.values.map((v) {
+                                          final isSel = _selectedVehicleId == v.id;
+                                          return _VehicleChip(
+                                            label: '${v.plateNumber}',
+                                            isSelected: isSel,
+                                            onTap: () => setState(() =>
+                                                _selectedVehicleId = isSel ? null : v.id),
+                                          );
+                                        }),
+                                      ],
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 20),
+
+                    // ─── Right Column (Expense Stream: 55%) ───
+                    Expanded(
+                      flex: 6,
+                      child: filtered.isEmpty
+                          ? Container(
+                              padding: const EdgeInsets.all(40),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                              ),
+                              child: const Center(
+                                child: Text('ไม่พบรายการค่าใช้จ่ายในเงื่อนไขที่เลือก', style: TextStyle(color: Color(0xFF64748B))),
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: sortedKeys.length,
+                              itemBuilder: (context, i) {
+                                final dateKey = sortedKeys[i];
+                                final dayExpenses = grouped[dateKey]!;
+                                final dayTotal = dayExpenses.fold<double>(0, (s, e) => s + e.amount);
+                                final date = DateTime.parse(dateKey);
+
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _DateGroupHeader(
+                                      date: date,
+                                      dayTotal: dayTotal,
+                                      currencyFormat: currencyFormat,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    ...dayExpenses.map((expense) => Padding(
+                                          padding: const EdgeInsets.only(bottom: 8),
+                                          child: _ExpenseCard(
+                                            expense: expense,
+                                            vehicleLabel: vehicleMap[expense.vehicleId]?.plateNumber ?? '–',
+                                            currencyFormat: currencyFormat,
+                                          ),
+                                        )),
+                                    const SizedBox(height: 10),
+                                  ],
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
             return CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
@@ -251,32 +462,32 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
                                 onTap: () => setState(() => _selectedCategory = null),
                               ),
                               _FilterChip(
-                                label: 'น้ำมัน',
+                                label: 'ค่าน้ำมัน',
                                 icon: Icons.local_gas_station_rounded,
-                                color: const Color(0xFFE11D48),
+                                color: const Color(0xFFEA580C),
                                 isSelected: _selectedCategory == 'น้ำมัน',
                                 onTap: () => setState(() =>
                                     _selectedCategory = _selectedCategory == 'น้ำมัน' ? null : 'น้ำมัน'),
                               ),
                               _FilterChip(
                                 label: 'ซ่อมบำรุง',
-                                icon: Icons.build_circle_rounded,
-                                color: const Color(0xFFD97706),
+                                icon: Icons.build_rounded,
+                                color: const Color(0xFF0284C7),
                                 isSelected: _selectedCategory == 'ซ่อมบำรุง',
                                 onTap: () => setState(() =>
                                     _selectedCategory = _selectedCategory == 'ซ่อมบำรุง' ? null : 'ซ่อมบำรุง'),
                               ),
                               _FilterChip(
-                                label: 'ยาง / ล้อ',
-                                icon: Icons.tire_repair_rounded,
-                                color: const Color(0xFF059669),
-                                isSelected: _selectedCategory == 'ยาง',
+                                label: 'ค่าทางด่วน',
+                                icon: Icons.toll_rounded,
+                                color: const Color(0xFF0D9488),
+                                isSelected: _selectedCategory == 'ทางด่วน',
                                 onTap: () => setState(() =>
-                                    _selectedCategory = _selectedCategory == 'ยาง' ? null : 'ยาง'),
+                                    _selectedCategory = _selectedCategory == 'ทางด่วน' ? null : 'ทางด่วน'),
                               ),
                               _FilterChip(
-                                label: 'ค่าเที่ยว / ทางด่วน',
-                                icon: Icons.toll_rounded,
+                                label: 'เบี้ยเลี้ยง / ค่าเที่ยว',
+                                icon: Icons.person_pin_circle_rounded,
                                 color: const Color(0xFF4F46E5),
                                 isSelected: _selectedCategory == 'ค่าเที่ยว',
                                 onTap: () => setState(() =>

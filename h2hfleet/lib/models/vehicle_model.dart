@@ -10,6 +10,9 @@ class VehicleModel {
   final String fuelType;
   final String status;
   final String? remark;
+  final String? gpsDeviceImei;  // IMEI หรือ Device ID ของ GPS
+  final String? gpsDeviceType;  // ประเภทกล่อง GPS: teltonika, ruptela, driver_app, other
+  final String? imageUrl;       // URL ภาพถ่ายรถจริง
 
   VehicleModel({
     required this.id,
@@ -23,6 +26,9 @@ class VehicleModel {
     required this.fuelType,
     required this.status,
     this.remark,
+    this.gpsDeviceImei,
+    this.gpsDeviceType,
+    this.imageUrl,
   });
 
   factory VehicleModel.fromJson(Map<String, dynamic> json) {
@@ -38,6 +44,9 @@ class VehicleModel {
       fuelType: json['fuel_type'] as String? ?? 'diesel',
       status: json['status'] as String? ?? 'active',
       remark: json['remark'] as String?,
+      gpsDeviceImei: json['gps_device_imei'] as String?,
+      gpsDeviceType: json['gps_device_type'] as String?,
+      imageUrl: json['image_url'] as String?,
     );
   }
 
@@ -53,6 +62,12 @@ class VehicleModel {
       'fuel_type': fuelType,
       'status': status,
       if (remark != null && remark!.isNotEmpty) 'remark': remark,
+      if (gpsDeviceImei != null && gpsDeviceImei!.isNotEmpty)
+        'gps_device_imei': gpsDeviceImei,
+      if (gpsDeviceType != null && gpsDeviceType!.isNotEmpty)
+        'gps_device_type': gpsDeviceType,
+      if (imageUrl != null && imageUrl!.isNotEmpty)
+        'image_url': imageUrl,
     };
   }
 }

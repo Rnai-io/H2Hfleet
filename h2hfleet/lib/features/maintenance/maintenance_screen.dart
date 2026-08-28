@@ -126,216 +126,424 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                 ? '${selectedVehicle.plateNumber} · ${selectedVehicle.brand ?? ''} ${selectedVehicle.model ?? ''}'
                 : (s.isTh ? 'กองรถทั้งหมด · Blueprint กลาง' : 'Fleet Blueprint · Diagnostic HUD');
 
-            return CustomScrollView(
-              slivers: [
-                // 1. KPI Summary Banner
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-                    child: _ModernSummaryBanner(
-                      pendingCount: pendingCount,
-                      completedCount: completedCount,
-                      totalCost: totalCost,
-                      currencyFormat: currencyFormat,
-                      s: s,
-                    ),
-                  ),
-                ),
+            final isLargeScreen = MediaQuery.of(context).size.width >= 800;
 
-                // 2. High-Tech Engineering Blueprint Diagram
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-                    child: VehicleDiagram(
-                      archetype: currentArchetype,
-                      customHeaderTitle: diagramHeaderLabel,
-                      selectedCategory: _categoryFilter,
-                      onCategorySelected: (key) {
-                        setState(() {
-                          _categoryFilter = _categoryFilter == key ? null : key;
-                        });
-                      },
-                    ),
-                  ),
-                ),
+            if (isLargeScreen) {
+              // ═══════════════ iPad & Web Balanced Dual-Pane Layout ═══════════════
+              final isDesktop = MediaQuery.of(context).size.width >= 1100;
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ─── Left Column (Blueprint & Controls: 44%) ───
+                    Expanded(
+                      flex: isDesktop ? 5 : 5,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // 1. KPI Summary Banner
+                            _ModernSummaryBanner(
+                              pendingCount: pendingCount,
+                              completedCount: completedCount,
+                              totalCost: totalCost,
+                              currencyFormat: currencyFormat,
+                              s: s,
+                            ),
+                            const SizedBox(height: 12),
 
-                // 3. Vehicle Selector Bar (Horizontal Selector Chips)
-                if (vehicleMap.isNotEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.directions_car_filled_rounded, size: 16, color: Color(0xFF1E3A8A)),
-                              const SizedBox(width: 6),
-                              Text(
-                                s.isTh ? 'เลือกรถเพื่อเปลี่ยนพิมพ์เขียว (CAD View)' : 'Select Vehicle Profile',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary,
+                            // 2. High-Tech Blueprint (Proportional Height)
+                            VehicleDiagram(
+                              archetype: currentArchetype,
+                              customHeaderTitle: diagramHeaderLabel,
+                              selectedCategory: _categoryFilter,
+                              aspectRatio: isDesktop ? 16 / 8.2 : 16 / 8.5,
+                              onCategorySelected: (key) {
+                                setState(() {
+                                  _categoryFilter = _categoryFilter == key ? null : key;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 12),
+
+                            // 3. Vehicle Selector Chips
+                            if (vehicleMap.isNotEmpty) ...[
+                              Row(
+                                children: [
+                                  const Icon(Icons.directions_car_filled_rounded, size: 14, color: Color(0xFF1E3A8A)),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    s.isTh ? 'เลือกรถเพื่อเปลี่ยนภาพพิมพ์เขียว' : 'Select Vehicle Profile',
+                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              SizedBox(
+                                height: 34,
+                                child: ListView(
+                                  scrollDirection: Axis.horizontal,
+                                  children: [
+                                    _VehicleSelectorPill(
+                                      label: s.isTh ? 'รถทั้งหมด' : 'All Vehicles',
+                                      icon: Icons.all_inclusive_rounded,
+                                      isSelected: _vehicleFilter == null,
+                                      onTap: () => setState(() => _vehicleFilter = null),
+                                    ),
+                                    ...vehicleMap.values.map((v) {
+                                      final isSel = _vehicleFilter == v.id;
+                                      return _VehicleSelectorPill(
+                                        label: '${v.plateNumber}',
+                                        subLabel: v.vehicleType as String?,
+                                        icon: Icons.local_shipping_rounded,
+                                        isSelected: isSel,
+                                        onTap: () => setState(() => _vehicleFilter = isSel ? null : v.id),
+                                      );
+                                    }),
+                                  ],
                                 ),
                               ),
+                              const SizedBox(height: 12),
                             ],
-                          ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            height: 38,
-                            child: ListView(
-                              scrollDirection: Axis.horizontal,
+
+                            // 4. Part Category Filter Grid
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                _VehicleSelectorPill(
-                                  label: s.isTh ? 'รถทั้งหมด' : 'All Vehicles',
-                                  icon: Icons.all_inclusive_rounded,
-                                  isSelected: _vehicleFilter == null,
-                                  onTap: () => setState(() => _vehicleFilter = null),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.category_rounded, size: 14, color: Color(0xFFD97706)),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      s.selectPartCategory,
+                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                                    ),
+                                  ],
                                 ),
-                                ...vehicleMap.values.map((v) {
-                                  final isSel = _vehicleFilter == v.id;
-                                  return _VehicleSelectorPill(
-                                    label: '${v.plateNumber}',
-                                    subLabel: v.vehicleType as String?,
-                                    icon: Icons.local_shipping_rounded,
-                                    isSelected: isSel,
-                                    onTap: () => setState(() => _vehicleFilter = isSel ? null : v.id),
+                                if (_categoryFilter != null)
+                                  GestureDetector(
+                                    onTap: () => setState(() => _categoryFilter = null),
+                                    child: Text(
+                                      s.isTh ? 'ล้างตัวกรอง' : 'Clear Filter',
+                                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFFEF4444)),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: [
+                                _ModernCategoryChipCompact(
+                                  icon: Icons.apps_rounded,
+                                  label: s.allCategories,
+                                  color: const Color(0xFF0F172A),
+                                  selected: _categoryFilter == null,
+                                  onTap: () => setState(() => _categoryFilter = null),
+                                ),
+                                ...kPartCategories.map((cat) {
+                                  final count = records.where((r) => r.partCategory == cat.key).length;
+                                  return _ModernCategoryChipCompact(
+                                    icon: cat.icon,
+                                    label: cat.label(s.isTh),
+                                    color: cat.color,
+                                    badgeCount: count > 0 ? count : null,
+                                    selected: _categoryFilter == cat.key,
+                                    onTap: () => setState(() => _categoryFilter = _categoryFilter == cat.key ? null : cat.key),
                                   );
                                 }),
                               ],
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
 
-                // 4. Part Category Visual Grid
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.category_rounded, size: 16, color: Color(0xFFD97706)),
-                            const SizedBox(width: 6),
-                            Text(
-                              s.selectPartCategory,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.textPrimary,
-                              ),
+                    const SizedBox(width: 20),
+
+                    // ─── Right Column (Service Records: 56%) ───
+                    Expanded(
+                      flex: isDesktop ? 6 : 6,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
-                        if (_categoryFilter != null)
-                          GestureDetector(
-                            onTap: () => setState(() => _categoryFilter = null),
-                            child: Text(
-                              s.isTh ? 'ล้างตัวกรอง' : 'Clear Filter',
-                              style: const TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFFEF4444),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Header Bar with Filter Badges
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1E3A8A).withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(Icons.history_rounded, size: 18, color: Color(0xFF1E3A8A)),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  s.isTh ? 'ประวัติการซ่อมบำรุง' : 'Service Records',
+                                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF0F172A),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '${filtered.length}',
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
+                                  ),
+                                ),
+                                const Spacer(),
+                                if (_categoryFilter != null || _vehicleFilter != null)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0284C7).withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.3)),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          _categoryFilter != null ? 'หมวด: $_categoryFilter' : 'รถ: ${selectedVehicle?.plateNumber}',
+                                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF0284C7)),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        GestureDetector(
+                                          onTap: () => setState(() {
+                                            _categoryFilter = null;
+                                            _vehicleFilter = null;
+                                          }),
+                                          child: const Icon(Icons.close_rounded, size: 14, color: Color(0xFF0284C7)),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+
+                            // List of Records or Empty State
+                            Expanded(
+                              child: filtered.isEmpty
+                                  ? Center(
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Container(
+                                            width: 64,
+                                            height: 64,
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF1E3A8A).withValues(alpha: 0.08),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(Icons.build_circle_outlined, size: 32, color: Color(0xFF1E3A8A)),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Text(
+                                            s.noMaintenanceRecords,
+                                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            s.isTh ? 'กดปุ่ม "+ เพิ่มรายการซ่อมบำรุง" เพื่อบันทึกข้อมูลแรก' : 'Click + Add Maintenance to log your first service',
+                                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : ListView.builder(
+                                      padding: const EdgeInsets.only(bottom: 20),
+                                      itemCount: filtered.length,
+                                      itemBuilder: (context, i) => Padding(
+                                        padding: const EdgeInsets.only(bottom: 10),
+                                        child: _ModernMaintenanceCard(
+                                          record: filtered[i],
+                                          vehicleLabel: vehicleMap[filtered[i].vehicleId]?.plateNumber ?? '–',
+                                          currencyFormat: currencyFormat,
+                                          s: s,
+                                        ),
+                                      ),
+                                    ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // ═══════════════ Mobile 1-Screen Compact Layout ═══════════════
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. Slim KPI Summary Banner
+                  _ModernSummaryBanner(
+                    pendingCount: pendingCount,
+                    completedCount: completedCount,
+                    totalCost: totalCost,
+                    currencyFormat: currencyFormat,
+                    s: s,
+                  ),
+                  const SizedBox(height: 8),
+
+                  // 2. Compact Balanced Blueprint Diagram (Height: 125px)
+                  VehicleDiagram(
+                    archetype: currentArchetype,
+                    customHeaderTitle: diagramHeaderLabel,
+                    selectedCategory: _categoryFilter,
+                    height: 125,
+                    onCategorySelected: (key) {
+                      setState(() {
+                        _categoryFilter = _categoryFilter == key ? null : key;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 6),
+
+                  // 3. Vehicle Selector (Slim Horizontal Bar)
+                  if (vehicleMap.isNotEmpty) ...[
+                    SizedBox(
+                      height: 30,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          _VehicleSelectorPill(
+                            label: s.isTh ? 'รถทั้งหมด' : 'All',
+                            icon: Icons.all_inclusive_rounded,
+                            isSelected: _vehicleFilter == null,
+                            onTap: () => setState(() => _vehicleFilter = null),
+                          ),
+                          ...vehicleMap.values.map((v) {
+                            final isSel = _vehicleFilter == v.id;
+                            return _VehicleSelectorPill(
+                              label: '${v.plateNumber}',
+                              icon: Icons.local_shipping_rounded,
+                              isSelected: isSel,
+                              onTap: () => setState(() => _vehicleFilter = isSel ? null : v.id),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                  ],
+
+                  // 4. Part Categories (Slim Horizontal Bar)
+                  SizedBox(
+                    height: 32,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        _ModernCategoryChipCompact(
+                          icon: Icons.apps_rounded,
+                          label: s.allCategories,
+                          color: const Color(0xFF0F172A),
+                          selected: _categoryFilter == null,
+                          onTap: () => setState(() => _categoryFilter = null),
+                        ),
+                        ...kPartCategories.map((cat) {
+                          final count = records.where((r) => r.partCategory == cat.key).length;
+                          return _ModernCategoryChipCompact(
+                            icon: cat.icon,
+                            label: cat.label(s.isTh),
+                            color: cat.color,
+                            badgeCount: count > 0 ? count : null,
+                            selected: _categoryFilter == cat.key,
+                            onTap: () => setState(() => _categoryFilter = _categoryFilter == cat.key ? null : cat.key),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // 5. Records Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.history_rounded, size: 15, color: Color(0xFF1E3A8A)),
+                          const SizedBox(width: 4),
+                          Text(
+                            s.isTh ? 'รายการซ่อมบำรุง (${filtered.length})' : 'Records (${filtered.length})',
+                            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                          ),
+                        ],
+                      ),
+                      if (_categoryFilter != null || _vehicleFilter != null)
+                        GestureDetector(
+                          onTap: () => setState(() {
+                            _categoryFilter = null;
+                            _vehicleFilter = null;
+                          }),
+                          child: Text(
+                            s.isTh ? 'ล้างตัวกรองทั้งหมด' : 'Clear Filters',
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFFEF4444)),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+
+                  // 6. Maintenance Records List (fills remaining viewport)
+                  Expanded(
+                    child: filtered.isEmpty
+                        ? _EmptyState(message: s.noMaintenanceRecords)
+                        : ListView.builder(
+                            padding: const EdgeInsets.only(bottom: 80),
+                            itemCount: filtered.length,
+                            itemBuilder: (context, i) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: _ModernMaintenanceCard(
+                                record: filtered[i],
+                                vehicleLabel: vehicleMap[filtered[i].vehicleId]?.plateNumber ?? '–',
+                                currencyFormat: currencyFormat,
+                                s: s,
                               ),
                             ),
                           ),
-                      ],
-                    ),
                   ),
-                ),
-
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        const spacing = 8.0;
-                        final cols = constraints.maxWidth < 360 ? 3 : (constraints.maxWidth < 600 ? 4 : 6);
-                        final itemWidth = (constraints.maxWidth - spacing * (cols - 1)) / cols;
-
-                        final chips = <Widget>[
-                          _ModernCategoryChip(
-                            icon: Icons.apps_rounded,
-                            label: s.allCategories,
-                            color: const Color(0xFF0F172A),
-                            selected: _categoryFilter == null,
-                            onTap: () => setState(() => _categoryFilter = null),
-                          ),
-                          ...kPartCategories.map((cat) {
-                            final count = records.where((r) => r.partCategory == cat.key).length;
-                            return _ModernCategoryChip(
-                              icon: cat.icon,
-                              label: cat.label(s.isTh),
-                              color: cat.color,
-                              badgeCount: count > 0 ? count : null,
-                              selected: _categoryFilter == cat.key,
-                              onTap: () => setState(() =>
-                                  _categoryFilter = _categoryFilter == cat.key ? null : cat.key),
-                            );
-                          }),
-                        ];
-
-                        return Wrap(
-                          spacing: spacing,
-                          runSpacing: spacing,
-                          children: chips.map((c) => SizedBox(width: itemWidth, child: c)).toList(),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-
-                // 5. Maintenance Records Title
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.history_rounded, size: 16, color: Color(0xFF1E3A8A)),
-                        const SizedBox(width: 6),
-                        Text(
-                          s.isTh ? 'รายการซ่อมบำรุง (${filtered.length})' : 'Service Records (${filtered.length})',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // 6. Maintenance Records List
-                if (filtered.isEmpty)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: _EmptyState(message: s.noMaintenanceRecords),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, i) => Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: _ModernMaintenanceCard(
-                            record: filtered[i],
-                            vehicleLabel: vehicleMap[filtered[i].vehicleId]?.plateNumber ?? '–',
-                            currencyFormat: currencyFormat,
-                            s: s,
-                          ),
-                        ),
-                        childCount: filtered.length,
-                      ),
-                    ),
-                  ),
-              ],
+                ],
+              ),
             );
           },
         ),
@@ -363,19 +571,19 @@ class _ModernSummaryBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF0F172A).withValues(alpha: 0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -391,7 +599,7 @@ class _ModernSummaryBanner extends StatelessWidget {
               icon: Icons.hourglass_top_rounded,
             ),
           ),
-          Container(width: 1, height: 32, color: Colors.white.withValues(alpha: 0.15)),
+          Container(width: 1, height: 20, color: Colors.white.withValues(alpha: 0.15)),
           // Completed
           Expanded(
             flex: 3,
@@ -402,7 +610,7 @@ class _ModernSummaryBanner extends StatelessWidget {
               icon: Icons.check_circle_rounded,
             ),
           ),
-          Container(width: 1, height: 32, color: Colors.white.withValues(alpha: 0.15)),
+          Container(width: 1, height: 20, color: Colors.white.withValues(alpha: 0.15)),
           // Total Cost
           Expanded(
             flex: 4,
@@ -434,34 +642,34 @@ class _KpiPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Icon(icon, color: color, size: 13),
+        const SizedBox(width: 5),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: color, size: 12),
-            const SizedBox(width: 4),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
             Text(
               label,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
+                color: Colors.white.withValues(alpha: 0.65),
+                fontSize: 8.5,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 3),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 13.5,
-            fontWeight: FontWeight.w800,
-          ),
         ),
       ],
     );
@@ -487,25 +695,25 @@ class _VehicleSelectorPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.only(right: 6),
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: isSelected ? const Color(0xFF1E3A8A) : Colors.white,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isSelected ? const Color(0xFF1E3A8A) : const Color(0xFFE2E8F0),
-              width: isSelected ? 1.5 : 1.0,
+              width: 1.0,
             ),
             boxShadow: [
               if (isSelected)
                 BoxShadow(
                   color: const Color(0xFF1E3A8A).withValues(alpha: 0.25),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
                 ),
             ],
           ),
@@ -514,24 +722,24 @@ class _VehicleSelectorPill extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                size: 14,
+                size: 13,
                 color: isSelected ? Colors.white : const Color(0xFF64748B),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 5),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                   color: isSelected ? Colors.white : const Color(0xFF1E293B),
                 ),
               ),
               if (subLabel != null && subLabel!.isNotEmpty) ...[
-                const SizedBox(width: 4),
+                const SizedBox(width: 3),
                 Text(
                   '($subLabel)',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 9.5,
                     fontWeight: FontWeight.w500,
                     color: isSelected ? Colors.white.withValues(alpha: 0.75) : const Color(0xFF94A3B8),
                   ),
@@ -545,8 +753,8 @@ class _VehicleSelectorPill extends StatelessWidget {
   }
 }
 
-// ─── 3. Modern Category Chip ────────────────────────────────────────────────
-class _ModernCategoryChip extends StatelessWidget {
+// ─── 3. Modern Category Chip (Compact & Standard) ───────────────────────────
+class _ModernCategoryChipCompact extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
@@ -554,7 +762,7 @@ class _ModernCategoryChip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _ModernCategoryChip({
+  const _ModernCategoryChipCompact({
     required this.icon,
     required this.label,
     required this.color,
@@ -569,66 +777,61 @@ class _ModernCategoryChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        height: 64,
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+        margin: const EdgeInsets.only(right: 6),
         decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.12) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: selected ? color : Colors.white,
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: selected ? color : const Color(0xFFE2E8F0),
-            width: selected ? 2 : 1,
+            width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: selected ? 0.06 : 0.02),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+              color: Colors.black.withValues(alpha: selected ? 0.12 : 0.02),
+              blurRadius: 3,
+              offset: const Offset(0, 1),
             ),
           ],
         ),
-        child: Stack(
-          alignment: Alignment.center,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: selected ? color : color.withValues(alpha: 0.8), size: 20),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 9.5,
-                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                    color: selected ? color : const Color(0xFF475569),
-                  ),
-                ),
-              ],
+            Icon(icon, color: selected ? Colors.white : color, size: 13),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                color: selected ? Colors.white : const Color(0xFF334155),
+              ),
             ),
-            if (badgeCount != null)
-              Positioned(
-                top: 0,
-                right: 2,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    '$badgeCount',
-                    style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.white),
+            if (badgeCount != null) ...[
+              const SizedBox(width: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: selected ? Colors.white.withValues(alpha: 0.3) : color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '$badgeCount',
+                  style: TextStyle(
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w800,
+                    color: selected ? Colors.white : color,
                   ),
                 ),
               ),
+            ],
           ],
         ),
       ),
     );
   }
 }
+
 
 // ─── 4. Modern Maintenance Record Card ──────────────────────────────────────
 class _ModernMaintenanceCard extends ConsumerWidget {

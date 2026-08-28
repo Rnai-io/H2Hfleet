@@ -295,6 +295,8 @@ class VehicleDiagram extends StatefulWidget {
   final String? selectedCategory;
   final ValueChanged<String>? onCategorySelected;
   final String? customHeaderTitle;
+  final double? height;
+  final double aspectRatio;
 
   const VehicleDiagram({
     super.key,
@@ -302,6 +304,8 @@ class VehicleDiagram extends StatefulWidget {
     this.selectedCategory,
     this.onCategorySelected,
     this.customHeaderTitle,
+    this.height,
+    this.aspectRatio = 16 / 7.2,
   });
 
   @override
@@ -349,9 +353,7 @@ class _VehicleDiagramState extends State<VehicleDiagram> with SingleTickerProvid
           )
         : null;
 
-    return AspectRatio(
-      aspectRatio: 16 / 9.6,
-      child: Container(
+    final childWidget = Container(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
@@ -362,13 +364,13 @@ class _VehicleDiagramState extends State<VehicleDiagram> with SingleTickerProvid
               Color(0xFF0F1E4A),
             ],
           ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.4), width: 1.5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.4), width: 1.2),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF0284C7).withValues(alpha: 0.2),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+              color: const Color(0xFF0284C7).withValues(alpha: 0.15),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -405,63 +407,72 @@ class _VehicleDiagramState extends State<VehicleDiagram> with SingleTickerProvid
 
               // Technical Header Overlay
               Positioned(
-                top: 12,
-                left: 14,
-                right: 14,
+                top: 10,
+                left: 12,
+                right: 12,
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0284C7).withValues(alpha: 0.3),
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.6)),
-                              ),
-                              child: const Text(
-                                'CAD DIAGNOSTIC HUD',
-                                style: TextStyle(
-                                  fontSize: 8.5,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF38BDF8),
-                                  letterSpacing: 1.2,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.6)),
+                                ),
+                                child: const Text(
+                                  'CAD HUD',
+                                  style: TextStyle(
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color(0xFF38BDF8),
+                                    letterSpacing: 1.0,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              widget.customHeaderTitle ?? archetypeLabelTh(widget.archetype),
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                letterSpacing: 0.3,
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  widget.customHeaderTitle ?? archetypeLabelTh(widget.archetype),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          archetypeDimSpec(widget.archetype),
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white.withValues(alpha: 0.5),
-                            letterSpacing: 0.5,
+                            ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 2),
+                          Text(
+                            archetypeDimSpec(widget.archetype),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withValues(alpha: 0.5),
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
 
                     // Active Inspection Badge
                     if (widget.selectedCategory != null && activeSpot != null && activeSpot.key.isNotEmpty)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
                           color: const Color(0xFFEF4444).withValues(alpha: 0.25),
                           borderRadius: BorderRadius.circular(6),
@@ -471,18 +482,18 @@ class _VehicleDiagramState extends State<VehicleDiagram> with SingleTickerProvid
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
-                              width: 6,
-                              height: 6,
+                              width: 5,
+                              height: 5,
                               decoration: const BoxDecoration(
                                 color: Color(0xFFEF4444),
                                 shape: BoxShape.circle,
                               ),
                             ),
-                            const SizedBox(width: 5),
+                            const SizedBox(width: 4),
                             Text(
                               activeSpot.label.isNotEmpty ? activeSpot.label : widget.selectedCategory!,
                               style: const TextStyle(
-                                fontSize: 10,
+                                fontSize: 9.5,
                                 fontWeight: FontWeight.w800,
                                 color: Colors.white,
                               ),
@@ -525,7 +536,14 @@ class _VehicleDiagramState extends State<VehicleDiagram> with SingleTickerProvid
             ],
           ),
         ),
-      ),
+      );
+
+    if (widget.height != null) {
+      return SizedBox(height: widget.height, width: double.infinity, child: childWidget);
+    }
+    return AspectRatio(
+      aspectRatio: widget.aspectRatio,
+      child: childWidget,
     );
   }
 }

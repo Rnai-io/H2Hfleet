@@ -195,6 +195,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
   Widget build(BuildContext context) {
     ref.watch(strProvider);
     final timeFormat = DateFormat('HH:mm');
+    final isLargeScreen = MediaQuery.of(context).size.width >= 800;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -241,7 +242,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'H2HFleet Copilot',
+                  'H2HFleet Copilot & AI Telematics',
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5, color: Colors.white),
                 ),
                 Row(
@@ -256,7 +257,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Gemini 2.5 Flash Online',
+                      'Gemini 2.5 Enterprise Flash Online',
                       style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.75)),
                     ),
                   ],
@@ -275,158 +276,424 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
           const SizedBox(width: 6),
         ],
       ),
-      body: Column(
+      body: isLargeScreen
+          ? _buildLargeScreenAiWorkspace(context, timeFormat)
+          : _buildMobileAiChat(context, timeFormat),
+    );
+  }
+
+  // ═══════════════ iPad & Web Dual-Pane AI Workspace ═══════════════
+  Widget _buildLargeScreenAiWorkspace(BuildContext context, DateFormat timeFormat) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Chat Stream or Welcome Template Hub
+          // ─── Left Column (AI Fleet Diagnostics & Prompts: 38%) ───
           Expanded(
-            child: _messages.isEmpty
-                ? _WelcomeTemplateHub(
-                    onSelectTemplate: (prompt) => _sendMessage(prompt),
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
-                    itemCount: _messages.length,
-                    itemBuilder: (context, index) {
-                      final msg = _messages[index];
-                      return _MessageBubble(
-                        message: msg,
-                        timeStr: timeFormat.format(msg.timestamp),
-                      );
-                    },
-                  ),
-          ),
-
-          // Loading Typing Indicator
-          if (_isLoading)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              alignment: Alignment.centerLeft,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF7C3AED)),
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'AI กำลังวิเคราะห์ข้อมูลกองรถ...',
-                      style: TextStyle(
-                        color: Color(0xFF64748B),
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-          // Quick Prompt Pill Bar (Always accessible above input)
-          if (_messages.isNotEmpty)
-            Container(
-              height: 38,
-              margin: const EdgeInsets.only(bottom: 6),
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                itemCount: kPromptTemplates.length,
-                itemBuilder: (context, i) {
-                  final t = kPromptTemplates[i];
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: ActionChip(
-                      avatar: Icon(t.icon, size: 14, color: t.color),
-                      label: Text(
-                        t.title,
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: t.color),
-                      ),
-                      backgroundColor: Colors.white,
-                      side: BorderSide(color: t.color.withValues(alpha: 0.3)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      onPressed: () => _sendMessage(t.prompt),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-          // Chat Input Box
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)
-                .copyWith(bottom: MediaQuery.of(context).padding.bottom + 10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: const Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 8,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
+            flex: 4,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. AI Fleet Diagnostics Card
+                  Container(
+                    padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: TextField(
-                      controller: _controller,
-                      minLines: 1,
-                      maxLines: 4,
-                      style: const TextStyle(fontSize: 13.5, color: Color(0xFF0F172A)),
-                      decoration: const InputDecoration(
-                        hintText: 'พิมพ์คำถามเกี่ยวกับรถ ค่าใช้จ่าย หรือระบบ...',
-                        hintStyle: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        border: InputBorder.none,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      onSubmitted: (_) => _sendMessage(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: _isLoading ? null : () => _sendMessage(),
-                  child: Container(
-                    padding: const EdgeInsets.all(11),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: _isLoading
-                            ? [const Color(0xFF94A3B8), const Color(0xFF64748B)]
-                            : [const Color(0xFF7C3AED), const Color(0xFF4F46E5)],
-                      ),
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(18),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF7C3AED).withValues(alpha: 0.3),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.analytics_rounded, color: Color(0xFF38BDF8), size: 18),
+                                SizedBox(width: 8),
+                                Text(
+                                  'AI Fleet Health Audit',
+                                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Colors.white),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                'สุขภาพดีเยี่ยม 98%',
+                                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: Color(0xFF34D399)),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'AI ทำหน้าที่วิเคราะห์ค่าน้ำมัน, ตรวจสอบรอบซ่อมบำรุง และให้คำปรึกษาการบริหารกองรถแบบเรียลไทม์',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8), height: 1.4),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 16),
+
+                  // 2. Quick Prompt Template Hub
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.bolt_rounded, size: 18, color: Color(0xFF7C3AED)),
+                            SizedBox(width: 6),
+                            Text(
+                              'คำถามแนะนำ (1-Click Prompt)',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        ...kPromptTemplates.map((t) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: InkWell(
+                                onTap: () => _sendMessage(t.prompt),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: t.color.withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Icon(t.icon, size: 16, color: t.color),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(t.title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+                                            Text(t.category, style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B))),
+                                          ],
+                                        ),
+                                      ),
+                                      const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Color(0xFF94A3B8)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            )),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 20),
+
+          // ─── Right Column (Interactive Chat Stream: 62%) ───
+          Expanded(
+            flex: 6,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Chat Stream
+                  Expanded(
+                    child: _messages.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF7C3AED).withValues(alpha: 0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.auto_awesome_rounded, size: 48, color: Color(0xFF7C3AED)),
+                                ),
+                                const SizedBox(height: 14),
+                                const Text(
+                                  'H2HFleet Copilot พร้อมตอบทุกคำถาม',
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                                ),
+                                const SizedBox(height: 6),
+                                const Text(
+                                  'คลิกเลือกหัวข้อทางซ้าย หรือพิมพ์คำถามของคุณด้านล่างได้เลย',
+                                  style: TextStyle(fontSize: 12.5, color: Color(0xFF64748B)),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            controller: _scrollController,
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _messages.length,
+                            itemBuilder: (context, index) {
+                              final msg = _messages[index];
+                              return _MessageBubble(
+                                message: msg,
+                                timeStr: timeFormat.format(msg.timestamp),
+                              );
+                            },
+                          ),
+                  ),
+
+                  // Typing Indicator
+                  if (_isLoading)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF7C3AED))),
+                            SizedBox(width: 8),
+                            Text('AI กำลังวิเคราะห์...', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  // Chat Input Field
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(bottom: Radius.circular(18)),
+                      border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _controller,
+                            decoration: InputDecoration(
+                              hintText: 'พิมพ์คำถามเกี่ยวกับกองรถ ค่าใช้จ่าย หรือพิมพ์เขียว...',
+                              hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                              ),
+                            ),
+                            onSubmitted: (_) => _sendMessage(),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        ElevatedButton(
+                          onPressed: _isLoading ? null : () => _sendMessage(),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF7C3AED),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Icon(Icons.send_rounded, size: 18),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  // ═══════════════ Mobile Layout ═══════════════
+  Widget _buildMobileAiChat(BuildContext context, DateFormat timeFormat) {
+    return Column(
+      children: [
+        // Chat Stream or Welcome Template Hub
+        Expanded(
+          child: _messages.isEmpty
+              ? _WelcomeTemplateHub(
+                  onSelectTemplate: (prompt) => _sendMessage(prompt),
+                )
+              : ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
+                  itemCount: _messages.length,
+                  itemBuilder: (context, index) {
+                    final msg = _messages[index];
+                    return _MessageBubble(
+                      message: msg,
+                      timeStr: timeFormat.format(msg.timestamp),
+                    );
+                  },
+                ),
+        ),
+
+        // Loading Typing Indicator
+        if (_isLoading)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF7C3AED)),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'AI กำลังวิเคราะห์ข้อมูลกองรถ...',
+                    style: TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+        // Quick Prompt Pill Bar (Always accessible above input)
+        if (_messages.isNotEmpty)
+          Container(
+            height: 38,
+            margin: const EdgeInsets.only(bottom: 6),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              itemCount: kPromptTemplates.length,
+              itemBuilder: (context, i) {
+                final t = kPromptTemplates[i];
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: ActionChip(
+                    avatar: Icon(t.icon, size: 14, color: t.color),
+                    label: Text(
+                      t.title,
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: t.color),
+                    ),
+                    backgroundColor: Colors.white,
+                    side: BorderSide(color: t.color.withValues(alpha: 0.3)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    onPressed: () => _sendMessage(t.prompt),
+                  ),
+                );
+              },
+            ),
+          ),
+
+        // Chat Input Box
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)
+              .copyWith(bottom: MediaQuery.of(context).padding.bottom + 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: const Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  decoration: InputDecoration(
+                    hintText: 'พิมพ์คำถามเกี่ยวกับกองรถ...',
+                    hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                  ),
+                  onSubmitted: (_) => _sendMessage(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: _isLoading ? null : () => _sendMessage(),
+                icon: const Icon(Icons.send_rounded, color: Color(0xFF7C3AED)),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

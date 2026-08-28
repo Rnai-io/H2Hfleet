@@ -39,6 +39,9 @@ dependencies:
   # GPS / Location
   geolocator: ^13.0.2
 
+  # URL Launcher & Deep Links
+  url_launcher: ^6.3.0
+
   # Photos
   image_picker: ^1.1.2
   sign_in_with_apple: ^8.1.0

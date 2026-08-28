@@ -3,439 +3,978 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>H2HFleet - ระบบบริหารจัดการรถยนต์ สำหรับ SME ไทย</title>
-  <meta name="description" content="H2HFleet - แอปพลิเคชันบริหารจัดการรถยนต์สำหรับธุรกิจ SME ไทย ติดตาม GPS เรียลไทม์ วิเคราะห์ค่าใช้จ่าย AI สรุมภาษาไทย">
+  <title>H2HFleet — ระบบบริหารจัดการกองยานพาหนะอัจฉริยะ สำหรับธุรกิจและ SME</title>
+  <meta name="description" content="H2HFleet แพลตฟอร์มบริหารกองรถอัจฉริยะ ติดตามพิกัด GPS สด วางแผนเส้นทางหลายจุดแบบ Google Maps วิเคราะห์ต้นทุนด้วย AI และเชื่อมต่อ LINE อัตโนมัติ">
+  <meta property="og:title" content="H2HFleet — Intelligent Fleet Management">
+  <meta property="og:description" content="ระบบติดตาม GPS กองรถ คำนวณค่าน้ำมันอัตโนมัติ และแจ้งเตือนผ่าน LINE @655Jmtme">
   <meta property="og:image" content="https://rnai-io.github.io/H2Hfleet/assets/images/logo.svg">
   <meta property="og:url" content="https://rnai-io.github.io/H2Hfleet/">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --primary: #1E40AF;
-      --accent: #2563EB;
-      --success: #059669;
-      --warning: #CA8A04;
-      --text: #1E293B;
-      --muted: #64748B;
-      --light: #F1F5F9;
-      --white: #FFFFFF;
+      --bg-dark: #0B1120;
+      --bg-surface: #0F172A;
+      --bg-card: #1E293B;
+      --bg-subtle: #334155;
+      
+      --primary: #0284C7;
+      --primary-glow: #38BDF8;
+      --accent: #0EA5E9;
+      
+      --emerald: #10B981;
+      --emerald-glow: #34D399;
+      --amber: #F59E0B;
+      --rose: #F43F5E;
+      --purple: #8B5CF6;
+      
+      --line-green: #06C755;
+      
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+      
+      --border-glow: rgba(56, 189, 248, 0.25);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --font-th: 'Prompt', -apple-system, sans-serif;
+      --font-en: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Thai', Roboto, sans-serif;
-      background: #FFFFFF;
-      color: var(--text);
+      font-family: var(--font-th);
+      background-color: var(--bg-dark);
+      color: var(--text-main);
       line-height: 1.6;
+      overflow-x: hidden;
     }
 
-    /* Header & Nav */
-    header {
-      background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
-      color: white;
-      padding: 20px 0;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    /* ─── Ambient Glow Mesh ─── */
+    .bg-mesh {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+      background: 
+        radial-gradient(circle at 15% 20%, rgba(2, 132, 199, 0.18) 0%, transparent 45%),
+        radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 50% 80%, rgba(139, 92, 246, 0.14) 0%, transparent 50%);
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1280px;
       margin: 0 auto;
-      padding: 0 20px;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── Navigation Bar ─── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: rgba(11, 17, 32, 0.82);
+      border-bottom: 1px solid var(--card-border);
     }
 
     .nav {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      height: 76px;
     }
 
-    .logo {
+    .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: 24px;
-      font-weight: 800;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-main);
     }
 
-    .logo-icon { font-size: 28px; }
-
-    .nav-links {
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #0284C7, #0369A1);
+      border-radius: 12px;
       display: flex;
-      gap: 30px;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 0 20px rgba(2, 132, 199, 0.4);
+    }
+
+    .brand-text h1 {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand-badge {
+      background: var(--primary);
+      color: white;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.2px;
+    }
+
+    .nav-menu {
+      display: flex;
+      align-items: center;
+      gap: 32px;
       list-style: none;
     }
 
-    .nav-links a {
-      color: white;
+    .nav-link {
+      color: var(--text-muted);
       text-decoration: none;
       font-size: 14px;
-      transition: opacity 0.3s;
+      font-weight: 600;
+      transition: color 0.2s;
     }
 
-    .nav-links a:hover { opacity: 0.8; }
+    .nav-link:hover { color: var(--primary-glow); }
 
-    /* Hero Section */
-    .hero {
-      background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
-      color: white;
-      padding: 80px 20px;
-      text-align: center;
-    }
-
-    .hero h1 {
-      font-size: 48px;
-      font-weight: 800;
-      margin-bottom: 20px;
-      line-height: 1.2;
-    }
-
-    .hero p {
-      font-size: 18px;
-      opacity: 0.9;
-      margin-bottom: 30px;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .btn-group {
+    .nav-actions {
       display: flex;
-      gap: 15px;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-bottom: 60px;
+      align-items: center;
+      gap: 12px;
     }
 
-    .btn {
-      padding: 14px 28px;
-      border-radius: 8px;
-      border: none;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.3s;
-      text-decoration: none;
-      display: inline-block;
-    }
-
-    .btn-primary {
-      background: white;
-      color: var(--primary);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-    }
-
-    .btn-secondary {
-      background: rgba(255,255,255,0.2);
+    .btn-line {
+      background: #06C755;
       color: white;
-      border: 2px solid white;
+      text-decoration: none;
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.25s;
+      box-shadow: 0 4px 14px rgba(6, 199, 85, 0.3);
     }
 
-    .btn-secondary:hover {
-      background: rgba(255,255,255,0.3);
+    .btn-line:hover {
+      background: #05B34C;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(6, 199, 85, 0.4);
     }
 
-    .hero-image {
-      max-width: 500px;
-      height: auto;
+    .btn-app {
+      background: linear-gradient(135deg, #0284C7, #0369A1);
+      color: white;
+      text-decoration: none;
+      padding: 9px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.25s;
+      box-shadow: 0 4px 16px rgba(2, 132, 199, 0.35);
+    }
+
+    .btn-app:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 22px rgba(2, 132, 199, 0.5);
+    }
+
+    /* ─── Hero Section ─── */
+    .hero-section {
+      padding: 70px 0 60px;
+      position: relative;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(2, 132, 199, 0.15);
+      border: 1px solid var(--border-glow);
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--primary-glow);
+      margin-bottom: 20px;
+    }
+
+    .hero-title {
+      font-size: 46px;
+      font-weight: 900;
+      line-height: 1.22;
+      letter-spacing: -1px;
+      margin-bottom: 20px;
+    }
+
+    .hero-title span {
+      background: linear-gradient(135deg, #38BDF8 0%, #34D399 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-desc {
+      font-size: 16.5px;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-bottom: 32px;
+      max-width: 580px;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
       margin-bottom: 40px;
     }
 
-    /* Features Section */
-    .features {
-      padding: 80px 20px;
-      background: var(--light);
+    .hero-badges {
+      display: flex;
+      gap: 24px;
+      border-top: 1px solid var(--card-border);
+      padding-top: 24px;
+    }
+
+    .hero-badge-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero-badge-num {
+      font-size: 24px;
+      font-weight: 900;
+      font-family: var(--font-mono);
+      color: var(--text-main);
+    }
+
+    .hero-badge-label {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    /* ─── Hero Futuristic Art Mockup ─── */
+    .hero-art-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+      border: 1px solid var(--border-glow);
+      border-radius: 24px;
+      padding: 24px;
+      position: relative;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(2, 132, 199, 0.2);
+    }
+
+    .mockup-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 14px;
+      margin-bottom: 18px;
+    }
+
+    .mockup-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .mockup-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot-red { background: #EF4444; }
+    .dot-yellow { background: #F59E0B; }
+    .dot-green { background: #10B981; }
+
+    .mockup-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .mockup-stat {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+
+    .mockup-stat-title {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+
+    .mockup-stat-val {
+      font-size: 18px;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--text-main);
+    }
+
+    .radar-box {
+      background: #0B1120;
+      border-radius: 16px;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      height: 200px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .radar-circle {
+      position: absolute;
+      border: 1px solid rgba(2, 132, 199, 0.3);
+      border-radius: 50%;
+    }
+
+    .rc-1 { width: 60px; height: 60px; }
+    .rc-2 { width: 120px; height: 120px; }
+    .rc-3 { width: 170px; height: 170px; }
+
+    .radar-sweep {
+      position: absolute;
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, transparent 70%, rgba(2, 132, 199, 0.4) 100%);
+      animation: sweep 4s linear infinite;
+    }
+
+    @keyframes sweep {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .vehicle-ping {
+      position: absolute;
+      background: var(--emerald);
+      color: white;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      box-shadow: 0 0 10px var(--emerald);
+    }
+
+    /* ─── Features Grid ─── */
+    .section {
+      padding: 80px 0;
+      border-top: 1px solid var(--card-border);
+    }
+
+    .section-header {
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto 50px;
+    }
+
+    .section-badge {
+      display: inline-block;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      color: var(--emerald-glow);
+      font-size: 11.5px;
+      font-weight: 700;
+      margin-bottom: 12px;
     }
 
     .section-title {
-      text-align: center;
-      font-size: 36px;
-      font-weight: 800;
-      margin-bottom: 50px;
-      color: var(--text);
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      margin-bottom: 14px;
     }
 
-    .feature-grid {
+    .section-desc {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .features-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 30px;
-      max-width: 1200px;
-      margin: 0 auto;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
     }
 
-    .feature-card {
-      background: white;
-      border-radius: 12px;
-      padding: 40px 30px;
-      text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    .feat-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 28px;
       transition: all 0.3s;
+      position: relative;
     }
 
-    .feature-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    .feat-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-glow);
+      box-shadow: 0 16px 30px rgba(0, 0, 0, 0.4);
     }
 
-    .feature-icon {
-      font-size: 48px;
+    .feat-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
       margin-bottom: 20px;
     }
 
-    .feature-card h3 {
-      font-size: 20px;
-      margin-bottom: 15px;
-      color: var(--primary);
-    }
+    .fi-blue { background: rgba(2, 132, 199, 0.15); color: var(--primary-glow); }
+    .fi-emerald { background: rgba(16, 185, 129, 0.15); color: var(--emerald-glow); }
+    .fi-purple { background: rgba(139, 92, 246, 0.15); color: #C084FC; }
+    .fi-amber { background: rgba(245, 158, 11, 0.15); color: #FCD34D; }
+    .fi-rose { background: rgba(244, 63, 94, 0.15); color: #FDA4AF; }
+    .fi-green { background: rgba(6, 199, 85, 0.15); color: #4ADE80; }
 
-    .feature-card p {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.7;
-    }
-
-    /* Stats Section */
-    .stats {
-      padding: 60px 20px;
-      background: white;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 40px;
-      text-align: center;
-    }
-
-    .stat-item h4 {
-      font-size: 32px;
-      color: var(--accent);
+    .feat-title {
+      font-size: 18px;
+      font-weight: 800;
       margin-bottom: 10px;
     }
 
-    .stat-item p {
-      color: var(--muted);
-      font-size: 14px;
+    .feat-text {
+      color: var(--text-muted);
+      font-size: 13.5px;
+      line-height: 1.6;
     }
 
-    /* Download Section */
-    .download {
-      padding: 80px 20px;
-      background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
-      color: white;
-      text-align: center;
+    /* ─── Pricing Section (฿599, ฿2,990, ฿6,990) ─── */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      align-items: stretch;
     }
 
-    .download h2 {
-      font-size: 36px;
-      margin-bottom: 30px;
-    }
-
-    .download-buttons {
+    .price-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 36px 28px;
       display: flex;
-      gap: 20px;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-bottom: 40px;
-    }
-
-    .download-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      background: white;
-      color: var(--primary);
-      padding: 12px 24px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 700;
+      flex-direction: column;
+      position: relative;
       transition: all 0.3s;
     }
 
-    .download-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    .price-card.popular {
+      background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
+      border: 2px solid var(--primary-glow);
+      box-shadow: 0 0 30px rgba(2, 132, 199, 0.25);
+      transform: scale(1.03);
     }
 
-    .app-icon { font-size: 24px; }
-
-    /* Footer */
-    footer {
-      background: #0F172A;
+    .popular-tag {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--primary);
       color: white;
-      padding: 40px 20px;
-      text-align: center;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 14px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    .price-name {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .price-sub {
+      color: var(--text-dim);
+      font-size: 12.5px;
+      margin-bottom: 20px;
+    }
+
+    .price-val {
+      font-size: 42px;
+      font-weight: 900;
+      font-family: var(--font-mono);
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .price-unit {
+      color: var(--text-dim);
+      font-size: 12.5px;
+      margin-bottom: 24px;
+    }
+
+    .price-features {
+      list-style: none;
+      margin-bottom: 30px;
+      flex-grow: 1;
+    }
+
+    .price-features li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .price-features li span.check {
+      color: var(--emerald-glow);
+      font-weight: 800;
+    }
+
+    .btn-pricing {
+      width: 100%;
+      padding: 13px 0;
+      border-radius: 12px;
+      border: none;
       font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      transition: all 0.25s;
+    }
+
+    .btn-pricing-primary {
+      background: linear-gradient(135deg, #0284C7, #0369A1);
+      color: white;
+      box-shadow: 0 4px 16px rgba(2, 132, 199, 0.4);
+    }
+
+    .btn-pricing-subtle {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--card-border);
+    }
+
+    .btn-pricing-subtle:hover {
+      background: var(--bg-subtle);
+    }
+
+    /* ─── LINE CTA Banner ─── */
+    .line-cta-box {
+      background: linear-gradient(135deg, #0F2744 0%, #064E3B 100%);
+      border: 1px solid rgba(6, 199, 85, 0.3);
+      border-radius: 28px;
+      padding: 48px;
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 32px;
+      align-items: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .line-cta-title {
+      font-size: 32px;
+      font-weight: 900;
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+
+    .line-cta-text {
+      color: #D1FAE5;
+      font-size: 15px;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+
+    .line-qr-card {
+      background: white;
+      border-radius: 20px;
+      padding: 24px;
+      text-align: center;
+      color: #0F172A;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .line-qr-id {
+      font-size: 18px;
+      font-weight: 900;
+      color: #06C755;
+      font-family: var(--font-mono);
+      margin-top: 8px;
+    }
+
+    /* ─── Footer ─── */
+    footer {
+      border-top: 1px solid var(--card-border);
+      padding: 50px 0 30px;
+      color: var(--text-dim);
+      font-size: 13px;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 40px;
     }
 
     .footer-links {
-      display: flex;
-      justify-content: center;
-      gap: 30px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
+      list-style: none;
     }
 
-    .footer-links a {
-      color: #93C5FD;
-      text-decoration: none;
+    .footer-links li { margin-bottom: 10px; }
+    .footer-links a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--primary-glow); }
+
+    /* ─── Responsive Media Queries (iPad & Mobile) ─── */
+    @media (max-width: 1024px) {
+      .hero-grid { grid-template-columns: 1fr; gap: 36px; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .pricing-grid { grid-template-columns: 1fr; max-width: 500px; margin: 0 auto; gap: 28px; }
+      .price-card.popular { transform: none; }
+      .line-cta-box { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
     }
 
-    .footer-links a:hover {
-      text-decoration: underline;
-    }
-
-    /* Responsive */
     @media (max-width: 768px) {
-      .hero h1 { font-size: 32px; }
-      .hero p { font-size: 16px; }
-      .section-title { font-size: 28px; }
-      .nav-links { display: none; }
-      .btn-group { flex-direction: column; }
-      .btn { width: 100%; }
+      .nav-menu { display: none; }
+      .hero-title { font-size: 32px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
+
+  <!-- Ambient Mesh Background -->
+  <div class="bg-mesh"></div>
+
   <!-- Header -->
   <header>
-    <div class="container">
-      <nav class="nav">
-        <div class="logo">
-          <span class="logo-icon">🚛</span>
-          <span>H2HFleet</span>
+    <div class="container nav">
+      <a href="#" class="brand">
+        <div class="brand-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/>
+            <path d="M15 18H9"/>
+            <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/>
+            <circle cx="17" cy="18" r="2"/>
+            <circle cx="7" cy="18" r="2"/>
+          </svg>
         </div>
-        <ul class="nav-links">
-          <li><a href="#features">Features</a></li>
-          <li><a href="#download">Download</a></li>
-          <li><a href="https://rnai-io.github.io/H2Hfleet/privacy-policy.html" target="_blank">Privacy</a></li>
-          <li><a href="https://rnai-io.github.io/H2Hfleet/terms-of-service.html" target="_blank">Terms</a></li>
-        </ul>
-      </nav>
+        <div class="brand-text">
+          <h1>H2H <span class="brand-badge">FLEET</span></h1>
+          <div class="brand-sub">Intelligent Fleet Telematics</div>
+        </div>
+      </a>
+
+      <ul class="nav-menu">
+        <li><a href="#features" class="nav-link">ฟังก์ชันระบบ</a></li>
+        <li><a href="#telematics" class="nav-link">ระบบ GPS สด</a></li>
+        <li><a href="#pricing" class="nav-link">แพ็กเกจราคา</a></li>
+        <li><a href="H2HFLEET_EXECUTIVE_REPORT.pdf" target="_blank" class="nav-link">📑 รายงานผู้บริหาร</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a href="https://line.me/R/ti/p/@655Jmtme" target="_blank" class="btn-line">
+          <span>💬 LINE @655Jmtme</span>
+        </a>
+        <a href="#pricing" class="btn-app">เริ่มใช้งานฟรี</a>
+      </div>
     </div>
   </header>
 
   <!-- Hero Section -->
-  <section class="hero">
+  <section class="hero-section">
     <div class="container">
-      <h1>🚛 ระบบบริหารจัดการรถยนต์<br>สำหรับ SME ไทย</h1>
-      <p>ติดตาม GPS เรียลไทม์ • วิเคราะห์ค่าใช้จ่าย • AI สรุปภาษาไทย • บริหารจัดการรถได้ง่ายๆ</p>
+      <div class="hero-grid">
+        <div>
+          <div class="hero-tag">
+            <span>⚡ H2HFleet v1.1.0 · รองรับ iPad, WebApp & Mobile</span>
+          </div>
+          <h1 class="hero-title">
+            บริหารกองรถอัจฉริยะ<br>
+            <span>ลดต้นทุนค่าน้ำมัน 20%</span> ด้วย AI & GPS สด
+          </h1>
+          <p class="hero-desc">
+            ระบบจัดสรรกองยานพาหนะสำหรับผู้ประกอบการและ SME ติดตามพิกัดแบบ Sub-second วางแผนเส้นทางหลายจุดแบบ Google Maps คำนวณค่าน้ำมันอัตโนมัติ และเชื่อมต่อแจ้งเตือนผ่าน LINE Official
+          </p>
 
-      <div class="btn-group">
-        <a href="demo.html" class="btn btn-primary" style="background:#4ADE80;color:#14532D;font-size:18px;padding:16px 40px;border-radius:12px">🎯 ทดลองระบบ Live Demo</a>
-        <a href="https://apps.apple.com" class="btn btn-secondary">📱 App Store</a>
-        <a href="https://play.google.com" class="btn btn-secondary">🤖 Google Play</a>
+          <div class="hero-cta">
+            <a href="https://line.me/R/ti/p/@655Jmtme" target="_blank" class="btn-line" style="padding: 13px 24px; font-size: 15px;">
+              <span>💬 ติดต่อ LINE Official @655Jmtme</span>
+            </a>
+            <a href="#features" class="btn-app" style="padding: 13px 24px; font-size: 15px;">
+              ดูตัวอย่างการใช้งาน
+            </a>
+          </div>
+
+          <div class="hero-badges">
+            <div class="hero-badge-item">
+              <span class="hero-badge-num">1.6 เดือน</span>
+              <span class="hero-badge-label">ระยะเวลาคืนทุนเฉลี่ย</span>
+            </div>
+            <div class="hero-badge-item">
+              <span class="hero-badge-num">&lt; 1 วินาที</span>
+              <span class="hero-badge-label">ความเร็ว GPS Realtime WSS</span>
+            </div>
+            <div class="hero-badge-item">
+              <span class="hero-badge-num">100%</span>
+              <span class="hero-badge-label">AI ตรวจจับความผิดปกติ</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Futuristic Radar Art Mockup -->
+        <div class="hero-art-card">
+          <div class="mockup-topbar">
+            <div class="mockup-dots">
+              <div class="mockup-dot dot-red"></div>
+              <div class="mockup-dot dot-yellow"></div>
+              <div class="mockup-dot dot-green"></div>
+            </div>
+            <div style="font-size: 11.5px; font-family: var(--font-mono); color: var(--primary-glow);">
+              🛰️ TELEMETRY ACTIVE · THAILAND FLEET
+            </div>
+          </div>
+
+          <div class="mockup-grid">
+            <div class="mockup-stat">
+              <div class="mockup-stat-title">รถในระบบทั้งหมด</div>
+              <div class="mockup-stat-val" style="color: var(--primary-glow);">12 คัน</div>
+            </div>
+            <div class="mockup-stat">
+              <div class="mockup-stat-title">สถานะความพร้อม</div>
+              <div class="mockup-stat-val" style="color: var(--emerald-glow);">ONLINE 100%</div>
+            </div>
+          </div>
+
+          <div class="radar-box">
+            <div class="radar-circle rc-1"></div>
+            <div class="radar-circle rc-2"></div>
+            <div class="radar-circle rc-3"></div>
+            <div class="radar-sweep"></div>
+            
+            <div class="vehicle-ping" style="top: 45px; left: 60px;">กข-1234</div>
+            <div class="vehicle-ping" style="bottom: 50px; right: 55px;">ฮพ-5026</div>
+            <div class="vehicle-ping" style="top: 80px; right: 80px;">70-9988</div>
+          </div>
+
+          <div style="margin-top: 14px; font-size: 11.5px; color: var(--text-dim); display: flex; justify-content: space-between;">
+            <span>📍 OSRM Routing Engine</span>
+            <span>⚡ Sub-second Postgres RLS</span>
+          </div>
+        </div>
       </div>
-      <p style="opacity:0.8;font-size:13px;margin-top:-20px;margin-bottom:20px">Live Map · AI Copilot · Dashboard · ไม่ต้องสมัคร</p>
     </div>
   </section>
 
   <!-- Features Section -->
-  <section class="features" id="features">
+  <section class="section" id="features">
     <div class="container">
-      <h2 class="section-title">✨ ฟีเจอร์หลัก</h2>
+      <div class="section-header">
+        <span class="section-badge">CORE CAPABILITIES</span>
+        <h2 class="section-title">ฟังก์ชันครบวงจร ตอบโจทย์การขนส่งยุคใหม่</h2>
+        <p class="section-desc">ออกแบบด้วยมาตรฐาน Enterprise-Grade รองรับทั้งผู้จัดการกองรถและพนักงานขับรถ</p>
+      </div>
 
-      <div class="feature-grid">
-        <div class="feature-card">
-          <div class="feature-icon">🗺️</div>
-          <h3>GPS Realtime</h3>
-          <p>ติดตามตำแหน่งรถและคนขับแบบเรียลไทม์บนแผนที่สด พร้อม dual marker</p>
+      <div class="features-grid">
+        <div class="feat-card">
+          <div class="feat-icon fi-blue">🗺️</div>
+          <h3 class="feat-title">วางแผนเส้นทาง Google Maps Style</h3>
+          <p class="feat-text">ระบุจุดเริ่มต้น จุดแวะรับส่งสินค้า จุดพักรถ และจุดหมายปลายทาง พร้อมปุ่มเพิ่มจุดแวะได้เองไม่จำกัด</p>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">📊</div>
-          <h3>วิเคราะห์เส้นทาง</h3>
-          <p>ดูประวัติการเดินทาง ระยะทาง ความเร็ว เวลาจอด แบบละเอียด</p>
+        <div class="feat-card">
+          <div class="feat-icon fi-emerald">🛰️</div>
+          <h3 class="feat-title">GPS Live Tracking สด</h3>
+          <p class="feat-text">เชื่อมต่อกล่อง GPS ผ่าน IMEI / Device ID หรือสมาร์ตโฟนคนขับ แสดงพิกัดและทิศทางแบบเรียลไทม์</p>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">💰</div>
-          <h3>บันทึกค่าใช้จ่าย</h3>
-          <p>บันทึกค่าน้ำมัน ค่าซ่อม ค่ายาง วิเคราะห์ค่าใช้จ่ายต่อเดือน</p>
+        <div class="feat-card">
+          <div class="feat-icon fi-purple">🤖</div>
+          <h3 class="feat-title">AI Gemini Copilot</h3>
+          <p class="feat-text">สแกนบิลน้ำมันด้วย OCR อัจฉริยะ ตรวจจับความผิดปกติของอัตราสิ้นเปลือง และสรุปรายงานวิเคราะห์ภาษาไทย</p>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">🤖</div>
-          <h3>AI สรุปไทย</h3>
-          <p>AI วิเคราะห์และสรุปค่าใช้จ่ายประจำวัน พร้อมแนะนำการประหยัด</p>
+        <div class="feat-card">
+          <div class="feat-icon fi-green">💬</div>
+          <h3 class="feat-title">LINE Bot Auto Dispatch</h3>
+          <p class="feat-text">ส่งใบจ่ายงาน (Trip Dispatch Slip) และสรุปยอดประจำวันเข้า LINE Official @655Jmtme อัตโนมัติ</p>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">💬</div>
-          <h3>LINE Integration</h3>
-          <p>ส่งสรุปไป LINE Bot รับแจ้งเตือนค่าใช้จ่ายแบบเรียลไทม์</p>
+        <div class="feat-card">
+          <div class="feat-icon fi-amber">🛠️</div>
+          <h3 class="feat-title">การแจ้งเตือนซ่อมบำรุง</h3>
+          <p class="feat-text">บันทึกประวัติเปลี่ยนถ่ายน้ำมันเครื่อง ยาง แบตเตอรี่ พร้อมระบบเตือนระยะทางและวันที่ล่วงหน้า</p>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">📱</div>
-          <h3>โหมดคนขับ</h3>
-          <p>คนขับกดเริ่มเดินทาง แอปส่ง GPS ให้อัตโนมัติทุก 60 วินาที</p>
+        <div class="feat-card">
+          <div class="feat-icon fi-rose">📑</div>
+          <h3 class="feat-title">รายงานสรุป & เอกสารภาษี</h3>
+          <p class="feat-text">พิมพ์ใบเสร็จและรายงานการเดินทางมาตรฐาน (Trip Slip) พร้อมคำนวณค่าน้ำมันประเมินในคลิกเดียว</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Stats Section -->
-  <section class="stats">
+  <!-- Pricing Section -->
+  <section class="section" id="pricing">
     <div class="container">
-      <div class="stats-grid">
-        <div class="stat-item">
-          <h4>0+</h4>
-          <p>ผู้ใช้งาน</p>
+      <div class="section-header">
+        <span class="section-badge">TRANSPARENT PRICING</span>
+        <h2 class="section-title">แพ็กเกจราคาโปร่งใส คืนทุนรวดเร็ว</h2>
+        <p class="section-desc">เริ่มต้นใช้งานได้ทันที ไม่มีค่าแรกเข้าแอบแฝง ปรับเปลี่ยนแพ็กเกจได้ตามขนาดกองรถ</p>
+      </div>
+
+      <div class="pricing-grid">
+        <!-- Starter Tier -->
+        <div class="price-card">
+          <h3 class="price-name">Starter</h3>
+          <div class="price-sub">สำหรับ SME รายย่อย (1-5 คัน)</div>
+          <div class="price-val">฿599</div>
+          <div class="price-unit">/ คัน / เดือน (หรือ $18 / mo)</div>
+          <ul class="price-features">
+            <li><span class="check">✓</span> ติดตามพิกัด GPS สดทุกคัน</li>
+            <li><span class="check">✓</span> บันทึกค่าน้ำมันและค่าซ่อมบำรุง</li>
+            <li><span class="check">✓</span> ออกเอกสารใบจ่ายงาน (Trip Slip)</li>
+            <li><span class="check">✓</span> รองรับ iOS, Android & WebApp</li>
+          </ul>
+          <a href="https://line.me/R/ti/p/@655Jmtme" target="_blank" class="btn-pricing btn-pricing-subtle">เลือก Starter</a>
         </div>
-        <div class="stat-item">
-          <h4>99.9%</h4>
-          <p>Uptime</p>
+
+        <!-- Pro Fleet Tier (Popular) -->
+        <div class="price-card popular">
+          <div class="popular-tag">🔥 แนะนำสำหรับธุรกิจ</div>
+          <h3 class="price-name" style="color: var(--primary-glow);">Pro Fleet</h3>
+          <div class="price-sub">สำหรับกองรถขนาดกลาง (6-20 คัน)</div>
+          <div class="price-val">฿2,990</div>
+          <div class="price-unit">/ เดือน (เหมาจ่ายเฉลี่ย ฿149/คัน)</div>
+          <ul class="price-features">
+            <li><span class="check">✓</span> รวมฟังก์ชันทั้งหมดใน Starter</li>
+            <li><span class="check">✓</span> <strong>AI วิเคราะห์ความผิดปกติระดับพรีเมี่ยม</strong></li>
+            <li><span class="check">✓</span> วางแผนเส้นทาง Multi-Stop แบบไม่จำกัด</li>
+            <li><span class="check">✓</span> แจ้งเตือนผ่าน LINE Official อัตโนมัติ</li>
+            <li><span class="check">✓</span> ประวัติการเดินทางย้อนหลัง 90 วัน</li>
+          </ul>
+          <a href="https://line.me/R/ti/p/@655Jmtme" target="_blank" class="btn-pricing btn-pricing-primary">เริ่มใช้งาน Pro Fleet</a>
         </div>
-        <div class="stat-item">
-          <h4>ฟรี</h4>
-          <p>ลองใช้เลย</p>
-        </div>
-        <div class="stat-item">
-          <h4>24/7</h4>
-          <p>Support</p>
+
+        <!-- Enterprise Tier -->
+        <div class="price-card">
+          <h3 class="price-name">Enterprise</h3>
+          <div class="price-sub">สำหรับบริษัทขนส่งขนาดใหญ่ (20+ คัน)</div>
+          <div class="price-val">฿6,990</div>
+          <div class="price-unit">/ เดือน (ไม่จำกัดจำนวนรถ)</div>
+          <ul class="price-features">
+            <li><span class="check">✓</span> รวมฟังก์ชันทั้งหมดใน Pro Fleet</li>
+            <li><span class="check">✓</span> <strong>บริการทีมช่าง Onsite ติดตั้งและตรวจเช็ก</strong></li>
+            <li><span class="check">✓</span> เชื่อมต่อ API / ERP / SAP Custom</li>
+            <li><span class="check">✓</span> Dedicated Database & Supabase Team</li>
+            <li><span class="check">✓</span> เจ้าหน้าที่ดูแลพิเศษตลอด 24/7</li>
+          </ul>
+          <a href="https://line.me/R/ti/p/@655Jmtme" target="_blank" class="btn-pricing btn-pricing-subtle">ติดต่อฝ่ายขาย Enterprise</a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Download Section -->
-  <section class="download" id="download">
+  <!-- LINE Official CTA Box -->
+  <section class="section" style="padding-top: 20px;">
     <div class="container">
-      <h2>📲 ดาวน์โหลดแอป H2HFleet</h2>
-      <p style="margin-bottom: 40px; font-size: 18px;">เปิดใช้งานบน iOS และ Android</p>
+      <div class="line-cta-box">
+        <div>
+          <h2 class="line-cta-title">ปรึกษาผู้เชี่ยวชาญหรือทดลองใช้งานฟรี</h2>
+          <p class="line-cta-text">
+            เพิ่มเพื่อนใน LINE Official <strong>@655Jmtme</strong> เพื่อรับสิทธิ์ทดลองใช้ฟรี 14 วัน หรือนัดหมายรับการสาธิตระบบ (Live Demo) สำหรับองค์กรของคุณ
+          </p>
+          <a href="https://line.me/R/ti/p/@655Jmtme" target="_blank" class="btn-line" style="display: inline-flex; padding: 14px 28px; font-size: 16px;">
+            <span>💬 แชตกับเราบน LINE (@655Jmtme)</span>
+          </a>
+        </div>
 
-      <div class="download-buttons">
-        <a href="https://apps.apple.com" class="download-btn">
-          <span class="app-icon">🍎</span>
-          <span>App Store</span>
-        </a>
-        <a href="https://play.google.com" class="download-btn">
-          <span class="app-icon">🤖</span>
-          <span>Google Play</span>
-        </a>
+        <div class="line-qr-card">
+          <div style="font-size: 13px; font-weight: 700; color: #475569;">สแกนเพื่อเพิ่มเพื่อน</div>
+          <div class="line-qr-id">@655Jmtme</div>
+          <div style="font-size: 11px; color: #94A3B8; margin-top: 6px;">บริการให้คำปรึกษาตลอด 24 ชั่วโมง</div>
+        </div>
       </div>
-
-      <p style="opacity: 0.9; font-size: 14px;">หรือติดต่อเราได้ที่ LINE @655jmtme</p>
     </div>
   </section>
 
   <!-- Footer -->
   <footer>
     <div class="container">
-      <div class="footer-links">
-        <a href="https://rnai-io.github.io/H2Hfleet/privacy-policy.html">นโยบายความเป็นส่วนตัว</a>
-        <a href="https://rnai-io.github.io/H2Hfleet/terms-of-service.html">ข้อกำหนดการใช้บริการ</a>
-        <a href="#">ติดต่อเรา</a>
+      <div class="footer-grid">
+        <div>
+          <div style="font-size: 18px; font-weight: 900; color: white; margin-bottom: 12px;">H2H FLEET</div>
+          <p style="color: var(--text-muted); font-size: 13px; max-width: 320px; margin-bottom: 16px;">
+            ระบบบริหารจัดการกองยานพาหนะสำหรับธุรกิจยุคใหม่ สัญชาติไทย ออกแบบตามการใช้งานจริง
+          </p>
+          <div style="color: var(--text-dim); font-size: 12px;">© 2026 H2HFleet Inc. All rights reserved.</div>
+        </div>
+
+        <div>
+          <div style="font-size: 14px; font-weight: 700; color: white; margin-bottom: 14px;">ฟังก์ชัน</div>
+          <ul class="footer-links">
+            <li><a href="#features">ระบบนำทาง & แผนที่</a></li>
+            <li><a href="#features">GPS Telematics สด</a></li>
+            <li><a href="#features">AI Copilot OCR</a></li>
+            <li><a href="#features">การแจ้งเตือนซ่อมบำรุง</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div style="font-size: 14px; font-weight: 700; color: white; margin-bottom: 14px;">เอกสาร & กฎหมาย</div>
+          <ul class="footer-links">
+            <li><a href="privacy-policy.html">นโยบายความเป็นส่วนตัว (Privacy)</a></li>
+            <li><a href="terms-of-service.html">ข้อกำหนดการใช้งาน (Terms)</a></li>
+            <li><a href="H2HFLEET_EXECUTIVE_REPORT.pdf" target="_blank">รายงานผู้บริหาร (PDF)</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div style="font-size: 14px; font-weight: 700; color: white; margin-bottom: 14px;">ติดต่อเรา</div>
+          <ul class="footer-links">
+            <li><a href="https://line.me/R/ti/p/@655Jmtme" target="_blank" style="color: #06C755; font-weight: 700;">LINE: @655Jmtme</a></li>
+            <li><span>กรุงเทพมหานคร ประเทศไทย</span></li>
+          </ul>
+        </div>
       </div>
-      <p>© 2568 H2HFleet | Made with ❤️ for Thai SMEs</p>
-      <p style="margin-top: 10px; opacity: 0.7;">LINE Official: @655jmtme</p>
     </div>
   </footer>
+
 </body>
 </html>

@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../../core/theme/app_theme.dart';
+import '../../providers/locale_provider.dart';
 import '../../services/gemini_service.dart';
 
-class AiSettingsScreen extends StatefulWidget {
+class AiSettingsScreen extends ConsumerStatefulWidget {
   const AiSettingsScreen({super.key});
 
   @override
-  State<AiSettingsScreen> createState() => _AiSettingsScreenState();
+  ConsumerState<AiSettingsScreen> createState() => _AiSettingsScreenState();
 }
 
-class _AiSettingsScreenState extends State<AiSettingsScreen> {
+class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
   final _ctrl = TextEditingController();
   bool _obscure = true;
   bool _saving = false;
@@ -35,6 +37,7 @@ class _AiSettingsScreenState extends State<AiSettingsScreen> {
   }
 
   Future<void> _save() async {
+    final s = ref.read(strProvider);
     final key = _ctrl.text.trim();
     if (key.isEmpty) return;
     setState(() {
@@ -47,6 +50,9 @@ class _AiSettingsScreenState extends State<AiSettingsScreen> {
         _saving = false;
         _saved = true;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(s.apiKeySaved), backgroundColor: const Color(0xFF059669)),
+      );
     }
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) setState(() => _saved = false);
@@ -54,12 +60,13 @@ class _AiSettingsScreenState extends State<AiSettingsScreen> {
   }
 
   Future<void> _testConnection() async {
+    final s = ref.read(strProvider);
     final key = _ctrl.text.trim();
     if (key.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('กรุณากรอก API Key ก่อนทดสอบ'),
-          backgroundColor: Color(0xFFEA580C),
+        SnackBar(
+          content: Text(s.isTh ? 'กรุณากรอก API Key ก่อนทดสอบ' : 'Please enter API Key before testing'),
+          backgroundColor: const Color(0xFFEA580C),
         ),
       );
       return;
@@ -73,47 +80,47 @@ class _AiSettingsScreenState extends State<AiSettingsScreen> {
 
     try {
       final dio = Dio();
-      final url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$key';
+      final url = 'https://generativelanguage.googleapis.com/v1beta/models/$_selectedModel:generateContent?key=$key';
       final res = await dio.post(
         url,
         data: {
-          "contents": [
+          'contents': [
             {
-              "parts": [
-                {"text": "Ping"}
+              'parts': [
+                {'text': 'ping'}
               ]
             }
           ]
         },
-        options: Options(
-          headers: {'Content-Type': 'application/json'},
-          validateStatus: (status) => true,
-        ),
       );
 
       if (res.statusCode == 200) {
         setState(() {
+          _isTesting = false;
           _testSuccess = true;
-          _testResult = 'เชื่อมต่อ Gemini AI สำเร็จพร้อมใช้งาน ⚡';
+          _testResult = s.isTh ? 'เชื่อมต่อ Gemini สำเร็จ! Model ตอบสนองปกติ ⚡' : 'Connected to Gemini successfully! Model is active ⚡';
         });
       } else {
         setState(() {
+          _isTesting = false;
           _testSuccess = false;
-          _testResult = 'Key ไม่ถูกต้อง หรือไม่มีสิทธิ์เข้าถึง (Error: ${res.statusCode})';
+          _testResult = 'Error: Status ${res.statusCode}';
         });
       }
     } catch (e) {
       setState(() {
+        _isTesting = false;
         _testSuccess = false;
-        _testResult = 'ไม่สามารถเชื่อมต่อได้: $e';
+        _testResult = 'Connection Failed: $e';
       });
-    } finally {
-      if (mounted) setState(() => _isTesting = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final s = ref.watch(strProvider);
+    final isTh = s.isTh;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -155,14 +162,14 @@ class _AiSettingsScreenState extends State<AiSettingsScreen> {
               child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 18),
             ),
             const SizedBox(width: 10),
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'ตั้งค่าระบบ Gemini AI',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white),
+                  s.aiSettings,
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white),
                 ),
-                Text(
+                const Text(
                   'AI Telematics Copilot & Analysis Engine',
                   style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w500, color: Colors.white70),
                 ),
@@ -209,11 +216,11 @@ class _AiSettingsScreenState extends State<AiSettingsScreen> {
                         child: const Icon(Icons.psychology_rounded, color: Color(0xFFC4B5FD), size: 22),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               'Google Gemini 2.5 Flash Engine',
                               style: TextStyle(
                                 color: Colors.white,
@@ -222,8 +229,8 @@ class _AiSettingsScreenState extends State<AiSettingsScreen> {
                               ),
                             ),
                             Text(
-                              'ระบบประมวลผลกองรถอัจฉริยะแบบเรียลไทม์',
-                              style: TextStyle(color: Color(0xFFDDD6FE), fontSize: 11),
+                              isTh ? 'ระบบประมวลผลกองรถอัจฉริยะแบบเรียลไทม์' : 'Real-time Intelligent Fleet Telematics Engine',
+                              style: const TextStyle(color: Color(0xFFDDD6FE), fontSize: 11),
                             ),
                           ],
                         ),

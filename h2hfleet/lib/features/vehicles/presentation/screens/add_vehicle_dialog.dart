@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../providers/vehicles_provider.dart';
+import '../widgets/vehicle_photo_picker.dart';
 
 // ประเภทรถทั้งหมด
 const _vehicleTypes = [
@@ -93,9 +94,13 @@ class _AddVehicleDialogState extends ConsumerState<AddVehicleDialog> {
   final _modelController = TextEditingController();
   final _yearController = TextEditingController(text: DateTime.now().year.toString());
   final _customRemarkController = TextEditingController();
+  final _imeiController = TextEditingController();
 
   String _vehicleType = 'รถเก๋ง';
   String _fuelType = 'diesel';
+  String _gpsDeviceType = 'teltonika';
+  String? _imageUrl;
+  bool _enableGpsSetup = false;
   String? _selectedRemark;
   bool _showCustomRemark = false;
   bool _isLoading = false;
@@ -110,6 +115,7 @@ class _AddVehicleDialogState extends ConsumerState<AddVehicleDialog> {
     _modelController.dispose();
     _yearController.dispose();
     _customRemarkController.dispose();
+    _imeiController.dispose();
     super.dispose();
   }
 
@@ -131,6 +137,7 @@ class _AddVehicleDialogState extends ConsumerState<AddVehicleDialog> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     try {
+      final imeiText = _imeiController.text.trim();
       await ref.read(vehiclesProvider.notifier).addVehicle(
             plateNumber: _plateController.text.trim().toUpperCase(),
             nickName: _nickNameController.text.trim().isEmpty
@@ -142,6 +149,9 @@ class _AddVehicleDialogState extends ConsumerState<AddVehicleDialog> {
             year: int.tryParse(_yearController.text) ?? DateTime.now().year,
             fuelType: _fuelType,
             remark: _finalRemark,
+            gpsDeviceImei: imeiText.isNotEmpty ? imeiText : null,
+            gpsDeviceType: imeiText.isNotEmpty ? _gpsDeviceType : null,
+            imageUrl: _imageUrl,
           );
       if (mounted) {
         Navigator.pop(context);
@@ -150,7 +160,7 @@ class _AddVehicleDialogState extends ConsumerState<AddVehicleDialog> {
             content: Row(children: [
               Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
               SizedBox(width: 8),
-              Text('เพิ่มรถสำเร็จแล้ว'),
+              Text('เพิ่มรถและตั้งค่าเรียบร้อยแล้ว 🚛✨'),
             ]),
             backgroundColor: AppColors.success,
           ),
@@ -192,7 +202,17 @@ class _AddVehicleDialogState extends ConsumerState<AddVehicleDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
+
+                      // Vehicle Photo Picker Section
+                      const _FieldLabel('ภาพถ่ายประจำตัวรถ (Vehicle Photo)'),
+                      const SizedBox(height: 6),
+                      VehiclePhotoPicker(
+                        initialImageUrl: _imageUrl,
+                        vehicleType: _vehicleType,
+                        onImageChanged: (url) => setState(() => _imageUrl = url),
+                      ),
+                      const SizedBox(height: 16),
 
                       // ทะเบียนรถ
                       const _FieldLabel('ทะเบียนรถ *'),
@@ -361,6 +381,141 @@ class _AddVehicleDialogState extends ConsumerState<AddVehicleDialog> {
                             ),
                           );
                         }).toList(),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // ── ตั้งค่าอุปกรณ์ GPS ──────────────────────────
+                      Container(
+                        decoration: BoxDecoration(
+                          color: _enableGpsSetup ? const Color(0xFFF0F9FF) : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: _enableGpsSetup ? const Color(0xFF38BDF8) : AppColors.divider,
+                            width: _enableGpsSetup ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            InkWell(
+                              onTap: () => setState(() => _enableGpsSetup = !_enableGpsSetup),
+                              borderRadius: BorderRadius.circular(14),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF0284C7).withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(Icons.gps_fixed_rounded,
+                                          color: Color(0xFF0284C7), size: 18),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    const Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'ตั้งค่าอุปกรณ์ GPS / IMEI',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                          Text(
+                                            'ผูกกล่อง GPS หรือโหมดคนขับเพื่อติดตามสด',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Switch(
+                                      value: _enableGpsSetup,
+                                      activeTrackColor: const Color(0xFF0284C7),
+                                      onChanged: (val) => setState(() => _enableGpsSetup = val),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            if (_enableGpsSetup) ...[
+                              const Divider(height: 1, color: Color(0xFFBAE6FD)),
+                              Padding(
+                                padding: const EdgeInsets.all(14),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const _FieldLabel('ประเภทอุปกรณ์ GPS'),
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 6,
+                                      children: [
+                                        ('teltonika', 'Teltonika'),
+                                        ('ruptela', 'Ruptela'),
+                                        ('driver_app', 'มือถือคนขับ'),
+                                        ('other', 'อื่นๆ / GPS Box'),
+                                      ].map((t) {
+                                        final isSel = _gpsDeviceType == t.$1;
+                                        return GestureDetector(
+                                          onTap: () => setState(() => _gpsDeviceType = t.$1),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color: isSel ? const Color(0xFF0284C7) : Colors.white,
+                                              borderRadius: BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: isSel ? const Color(0xFF0284C7) : AppColors.divider,
+                                              ),
+                                            ),
+                                            child: Text(
+                                              t.$2,
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: isSel ? Colors.white : AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                    const SizedBox(height: 14),
+                                    const _FieldLabel('IMEI / Device ID'),
+                                    const SizedBox(height: 6),
+                                    TextFormField(
+                                      controller: _imeiController,
+                                      keyboardType: TextInputType.text,
+                                      decoration: InputDecoration(
+                                        hintText: 'เช่น 867941040123456 หรือ Device ID',
+                                        prefixIcon: const Icon(Icons.qr_code_rounded, size: 18),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                          borderSide: const BorderSide(color: AppColors.divider),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    const Text(
+                                      '💡 นำเลข IMEI 15 หลักหลังกล่อง GPS มากรอก เพื่อให้ตำแหน่งรถอัปเดตบนแผนที่สดอัตโนมัติ',
+                                      style: TextStyle(fontSize: 10.5, color: Color(0xFF0369A1), height: 1.3),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 24),
                     ],

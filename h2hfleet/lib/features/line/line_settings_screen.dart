@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerStatefulWid
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/file_exporter.dart';
+import '../../providers/locale_provider.dart';
 
 class LineSettingsScreen extends ConsumerStatefulWidget {
   const LineSettingsScreen({super.key});
@@ -35,11 +37,12 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
   }
 
   Future<void> _saveSettings() async {
+    final s = ref.read(strProvider);
     if (_userIdCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('กรุณากรอก LINE User ID'),
-          backgroundColor: Color(0xFFEA580C),
+        SnackBar(
+          content: Text(s.fillUserId),
+          backgroundColor: const Color(0xFFEA580C),
         ),
       );
       return;
@@ -55,6 +58,12 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
         _isSaving = false;
         _isSaved = true;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(s.saveSuccess),
+          backgroundColor: const Color(0xFF059669),
+        ),
+      );
     }
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) setState(() => _isSaved = false);
@@ -62,12 +71,13 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
   }
 
   Future<void> _testSend() async {
+    final s = ref.read(strProvider);
     final userId = _userIdCtrl.text.trim();
     if (userId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('กรุณากรอก LINE User ID ก่อนทดสอบ'),
-          backgroundColor: Color(0xFFEA580C),
+        SnackBar(
+          content: Text(s.fillUserId),
+          backgroundColor: const Color(0xFFEA580C),
         ),
       );
       return;
@@ -83,13 +93,17 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
       const anonKey =
           'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkb2JodnVpYWRtc3FkZnVncmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNjU4MzMsImV4cCI6MjA5NDc0MTgzM30.7pvs8B38unEmBkPmP14lfgDrr59wjd-WroMiqpkIzvY';
 
+      final testMessage = s.isTh
+          ? '🔔 [H2HFleet Bot ทดสอบการแจ้งเตือน]\nระบบเชื่อมต่อกับบัญชี LINE ของคุณสำเร็จแล้ว!\nคุณจะได้รับสรุปรายงานค่าใช้จ่ายและสถานะรถรายวันผ่านช่องทางนี้ 🚛✨'
+          : '🔔 [H2HFleet Bot Test Notification]\nSystem connected to your LINE account successfully!\nYou will receive fleet summaries and expense reports through this channel 🚛✨';
+
       final dio = Dio(BaseOptions(validateStatus: (status) => true));
 
-      final response = await dio.post(
+      final res = await dio.post(
         '$supabaseUrl/functions/v1/line-push-message',
         data: jsonEncode({
           'userId': userId,
-          'message': '✅ H2HFleet Telematics: ทดสอบการเชื่อมต่อ LINE สำเร็จ!\n\nระบบพร้อมแจ้งเตือนสรุปรายวันและรายงานด่วนแล้วครับ 🚛⚡',
+          'message': testMessage,
         }),
         options: Options(headers: {
           'apikey': anonKey,
@@ -98,32 +112,24 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
         }),
       );
 
+      final ok = res.statusCode == 200;
       if (mounted) {
-        final ok = response.statusCode == 200;
         setState(() {
+          _isTesting = false;
           _testSuccess = ok;
           _testResult = ok
-              ? 'ส่งข้อความทดสอบเข้า LINE สำเร็จแล้ว! กรุณาเช็คในแอป LINE'
-              : 'เกิดข้อผิดพลาด: [${response.statusCode}] ${response.data}';
-        });
-      }
-    } on DioException catch (e) {
-      final body = e.response?.data?.toString() ?? e.message ?? '$e';
-      if (mounted) {
-        setState(() {
-          _testSuccess = false;
-          _testResult = 'LINE Error: $body';
+              ? s.testSendSuccess
+              : (s.isTh ? 'ส่งไม่สำเร็จ (${res.statusCode}): ${res.data}' : 'Send failed (${res.statusCode}): ${res.data}');
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
+          _isTesting = false;
           _testSuccess = false;
-          _testResult = 'Network Error: $e';
+          _testResult = 'Connection Error: $e';
         });
       }
-    } finally {
-      if (mounted) setState(() => _isTesting = false);
     }
   }
 
@@ -135,6 +141,7 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = ref.watch(strProvider);
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -176,14 +183,14 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
               child: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 18),
             ),
             const SizedBox(width: 10),
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'ตั้งค่า LINE Notify',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white),
+                  s.lineSettings,
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white),
                 ),
-                Text(
+                const Text(
                   'Automated Broadcast & Daily Summary',
                   style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w500, color: Colors.white70),
                 ),
@@ -277,6 +284,100 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
               ),
             ),
 
+            // ─── LINE Official Account Card ─────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF06C755).withValues(alpha: 0.3), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF06C755).withValues(alpha: 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF06C755).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.chat_bubble_rounded, color: Color(0xFF06C755), size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'LINE Official Account',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                            ),
+                            Text(
+                              'LINE ID: @655jmtme',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF06C755)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            openExternalUrl('https://line.me/R/ti/p/@655jmtme');
+                          },
+                          icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                          label: const Text('แอด LINE @655Jmtme', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF06C755),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            elevation: 0,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          await Clipboard.setData(const ClipboardData(text: '@655jmtme'));
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('คัดลอก LINE ID @655jmtme แล้ว'),
+                                backgroundColor: Color(0xFF06C755),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.copy_rounded, size: 16),
+                        label: const Text('คัดลอก ID', style: TextStyle(fontSize: 12)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.textPrimary,
+                          side: const BorderSide(color: Color(0xFFCBD5E1)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
             const SizedBox(height: 22),
 
             // ─── 2. How to get LINE User ID Steps ───────────────────────────
@@ -292,8 +393,8 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
 
             _StepCard(
               stepNumber: '1',
-              title: 'เพิ่มเพื่อน LINE Bot ของระบบ',
-              desc: 'สแกน QR Code หรือเพิ่มเพื่อน LINE Official ของ H2HFleet',
+              title: 'เพิ่มเพื่อน LINE Official: @655jmtme',
+              desc: 'กดปุ่ม "แอด LINE" ด้านบน หรือค้นหาไอดี @655jmtme ในแอป LINE',
               icon: Icons.person_add_rounded,
               color: const Color(0xFF0284C7),
             ),

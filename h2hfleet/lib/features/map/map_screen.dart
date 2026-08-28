@@ -8,12 +8,14 @@ import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/file_exporter.dart';
 import '../../models/vehicle_location_model.dart';
 import '../../models/vehicle_model.dart';
 import '../../models/driver_location_model.dart';
 import '../../providers/driver_location_provider.dart';
+import '../../providers/locale_provider.dart';
 import '../../providers/vehicle_location_provider.dart';
 import '../../providers/vehicles_provider.dart';
 import 'gps_device_dialog.dart';
@@ -129,11 +131,37 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   void _openLocationSearchSheet(BuildContext context, {WaypointType? targetType}) {
+    final vehicles = ref.read(vehiclesProvider).valueOrNull ?? [];
+    final locations = ref.read(vehicleLocationsProvider).valueOrNull ?? [];
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _LocationSearchModal(
+        vehicles: vehicles,
+        vehicleLocations: locations,
+        initialStart: _startPoint,
+        initialPickups: _pickupStops,
+        initialRests: _restStops,
+        initialDestination: _destinationPoint,
+        onApplyRoute: ({start, required List<RouteWaypoint> pickups, required List<RouteWaypoint> rests, destination}) {
+          setState(() {
+            _isRoutingMode = true;
+            if (start != null) _startPoint = start;
+            if (destination != null) _destinationPoint = destination;
+            _pickupStops.clear();
+            _pickupStops.addAll(pickups);
+            _restStops.clear();
+            _restStops.addAll(rests);
+          });
+          if (destination != null) {
+            _mapController.move(destination.point, 13);
+          } else if (start != null) {
+            _mapController.move(start.point, 13);
+          }
+          _calculateRoutePath();
+        },
         onSelectLocation: (result, type) {
           final waypoint = RouteWaypoint(
             id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -270,6 +298,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = ref.watch(strProvider);
+    final isTh = s.isTh;
     final locationsAsync = ref.watch(vehicleLocationsProvider);
     final driverLocsAsync = ref.watch(driverLocationsProvider);
     final vehiclesAsync = ref.watch(vehiclesProvider);
@@ -368,9 +398,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                         ),
                                       ),
                                       const SizedBox(width: 6),
-                                      const Text(
-                                        'แผนที่สด & ติดตามรถ',
-                                        style: TextStyle(
+                                      Text(
+                                        isTh ? 'แผนที่สด & ติดตามรถ' : 'Live Map & Telematics',
+                                        style: const TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w800,
                                           color: Color(0xFF0F172A),
@@ -394,7 +424,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                   color: _isRoutingMode ? Colors.white : const Color(0xFF0284C7),
                                 ),
                                 label: Text(
-                                  _isRoutingMode ? 'ปิดนำทาง' : 'วางแผนเส้นทาง',
+                                  _isRoutingMode ? (isTh ? 'ปิดนำทาง' : 'Close Route') : (isTh ? 'วางแผนเส้นทาง' : 'Route Planner'),
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w800,
@@ -1587,12 +1617,50 @@ class _HudKpiItem extends StatelessWidget {
   }
 }
 
-// ─── Location Search Modal ──────────────────────────────────────────────────
+// ─── Route Slot Item Model (Google Maps Style) ──────────────────────────────
+class _RouteSlotItem {
+  final String id;
+  final WaypointType type;
+  String title;
+  final IconData icon;
+  final Color color;
+  RouteWaypoint? waypoint;
+
+  _RouteSlotItem({
+    required this.id,
+    required this.type,
+    required this.title,
+    required this.icon,
+    required this.color,
+    this.waypoint,
+  });
+}
+
+// ─── Location Search Modal (Google Maps Style Multi-Stop Directions) ────────
 class _LocationSearchModal extends StatefulWidget {
+  final List<VehicleModel> vehicles;
+  final List<VehicleLocationModel> vehicleLocations;
+  final RouteWaypoint? initialStart;
+  final List<RouteWaypoint> initialPickups;
+  final List<RouteWaypoint> initialRests;
+  final RouteWaypoint? initialDestination;
+  final void Function({
+    RouteWaypoint? start,
+    required List<RouteWaypoint> pickups,
+    required List<RouteWaypoint> rests,
+    RouteWaypoint? destination,
+  }) onApplyRoute;
   final void Function(LocationSearchResult result, WaypointType type) onSelectLocation;
   final WaypointType defaultType;
 
   const _LocationSearchModal({
+    required this.vehicles,
+    required this.vehicleLocations,
+    this.initialStart,
+    this.initialPickups = const [],
+    this.initialRests = const [],
+    this.initialDestination,
+    required this.onApplyRoute,
     required this.onSelectLocation,
     required this.defaultType,
   });
@@ -1605,17 +1673,165 @@ class _LocationSearchModalState extends State<_LocationSearchModal> {
   final _searchCtrl = TextEditingController();
   List<LocationSearchResult> _results = RouteNavigationService.presetHubs;
   bool _isSearching = false;
-  late WaypointType _selectedType;
+
+  late List<_RouteSlotItem> _slots;
+  int _activeSlotIndex = 0;
+
+  LatLng? _currentGpsPos;
+  String _currentGpsAddress = 'กำลังค้นหาตำแหน่ง GPS...';
+  bool _loadingGps = false;
+  String _selectedCategory = 'all';
 
   @override
   void initState() {
     super.initState();
-    _selectedType = widget.defaultType;
+    _initSlots();
+    _fetchCurrentGps();
+  }
+
+  void _initSlots() {
+    _slots = [];
+
+    // 1. จุดเริ่มต้น (Start Point)
+    _slots.add(_RouteSlotItem(
+      id: 'start',
+      type: WaypointType.start,
+      title: 'จุดเริ่มต้น',
+      icon: Icons.trip_origin_rounded,
+      color: const Color(0xFF10B981),
+      waypoint: widget.initialStart,
+    ));
+
+    // 2. จุดแวะรับ/ส่ง (Pickups)
+    if (widget.initialPickups.isNotEmpty) {
+      for (int i = 0; i < widget.initialPickups.length; i++) {
+        _slots.add(_RouteSlotItem(
+          id: 'pickup_$i',
+          type: WaypointType.pickup,
+          title: 'แวะรับ/ส่ง ${i + 1}',
+          icon: Icons.inventory_2_rounded,
+          color: const Color(0xFF0284C7),
+          waypoint: widget.initialPickups[i],
+        ));
+      }
+    } else {
+      _slots.add(_RouteSlotItem(
+        id: 'pickup_0',
+        type: WaypointType.pickup,
+        title: 'แวะรับ/ส่ง 1',
+        icon: Icons.inventory_2_rounded,
+        color: const Color(0xFF0284C7),
+        waypoint: null,
+      ));
+    }
+
+    // 3. จุดพักรถ (Rest Stops)
+    if (widget.initialRests.isNotEmpty) {
+      for (int i = 0; i < widget.initialRests.length; i++) {
+        _slots.add(_RouteSlotItem(
+          id: 'rest_$i',
+          type: WaypointType.rest,
+          title: 'จุดพักรถ ${i + 1}',
+          icon: Icons.local_cafe_rounded,
+          color: const Color(0xFFD97706),
+          waypoint: widget.initialRests[i],
+        ));
+      }
+    } else {
+      _slots.add(_RouteSlotItem(
+        id: 'rest_0',
+        type: WaypointType.rest,
+        title: 'จุดพักรถ 1',
+        icon: Icons.local_cafe_rounded,
+        color: const Color(0xFFD97706),
+        waypoint: null,
+      ));
+    }
+
+    // 4. ปลายทาง (Destination)
+    _slots.add(_RouteSlotItem(
+      id: 'destination',
+      type: WaypointType.destination,
+      title: 'ปลายทาง',
+      icon: Icons.location_on_rounded,
+      color: const Color(0xFFE11D48),
+      waypoint: widget.initialDestination,
+    ));
+
+    // Set initial active slot based on defaultType
+    if (widget.defaultType == WaypointType.destination) {
+      _activeSlotIndex = _slots.indexWhere((s) => s.type == WaypointType.destination);
+    } else if (widget.defaultType == WaypointType.pickup) {
+      _activeSlotIndex = _slots.indexWhere((s) => s.type == WaypointType.pickup);
+    } else if (widget.defaultType == WaypointType.rest) {
+      _activeSlotIndex = _slots.indexWhere((s) => s.type == WaypointType.rest);
+    } else {
+      _activeSlotIndex = 0;
+    }
+    if (_activeSlotIndex < 0) _activeSlotIndex = 0;
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchCurrentGps() async {
+    setState(() => _loadingGps = true);
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      Position? pos;
+      if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+        pos = await Geolocator.getLastKnownPosition();
+        if (pos == null) {
+          try {
+            pos = await Geolocator.getCurrentPosition(
+              locationSettings: const LocationSettings(
+                accuracy: LocationAccuracy.medium,
+                timeLimit: Duration(seconds: 4),
+              ),
+            );
+          } catch (_) {}
+        }
+      }
+
+      if (pos != null && mounted) {
+        final pt = LatLng(pos.latitude, pos.longitude);
+        final addr = await RouteNavigationService.reverseGeocode(pt);
+        if (mounted) {
+          setState(() {
+            _currentGpsPos = pt;
+            _currentGpsAddress = addr;
+            _loadingGps = false;
+          });
+          _onSearch(_searchCtrl.text);
+          return;
+        }
+      }
+    } catch (_) {}
+
+    if (mounted) {
+      setState(() {
+        _loadingGps = false;
+        if (_currentGpsPos == null) {
+          _currentGpsAddress = 'เปิด GPS เพื่อระบุตำแหน่งปัจจุบันและคำนวณระยะทาง';
+        }
+      });
+    }
   }
 
   void _onSearch(String query) async {
     setState(() => _isSearching = true);
-    final list = await RouteNavigationService.searchLocations(query);
+    final list = await RouteNavigationService.searchLocations(
+      query,
+      userLocation: _currentGpsPos,
+      categoryFilter: _selectedCategory == 'all' ? null : _selectedCategory,
+    );
     if (mounted) {
       setState(() {
         _results = list;
@@ -1624,11 +1840,130 @@ class _LocationSearchModalState extends State<_LocationSearchModal> {
     }
   }
 
+  void _onCategorySelected(String category) {
+    setState(() => _selectedCategory = category);
+    _onSearch(_searchCtrl.text);
+  }
+
+  void _applyLocationToActiveSlot(LocationSearchResult result) {
+    if (_activeSlotIndex < 0 || _activeSlotIndex >= _slots.length) return;
+
+    final activeSlot = _slots[_activeSlotIndex];
+    final waypoint = RouteWaypoint(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: result.title,
+      point: result.point,
+      type: activeSlot.type,
+      address: result.subtitle,
+    );
+
+    setState(() {
+      activeSlot.waypoint = waypoint;
+    });
+
+    widget.onSelectLocation(result, activeSlot.type);
+
+    // Auto-advance to next empty slot if available
+    final nextEmpty = _slots.indexWhere((s) => s.waypoint == null);
+    if (nextEmpty != -1) {
+      setState(() => _activeSlotIndex = nextEmpty);
+    }
+  }
+
+  void _addNewStop(WaypointType type) {
+    setState(() {
+      final destIndex = _slots.indexWhere((s) => s.type == WaypointType.destination);
+      final insertIndex = destIndex != -1 ? destIndex : _slots.length;
+      final count = _slots.where((s) => s.type == type).length + 1;
+      final newSlot = _RouteSlotItem(
+        id: '${type.name}_${DateTime.now().millisecondsSinceEpoch}',
+        type: type,
+        title: type == WaypointType.pickup ? 'แวะรับ/ส่ง $count' : 'จุดพักรถ $count',
+        icon: type == WaypointType.pickup ? Icons.inventory_2_rounded : Icons.local_cafe_rounded,
+        color: type == WaypointType.pickup ? const Color(0xFF0284C7) : const Color(0xFFD97706),
+        waypoint: null,
+      );
+      _slots.insert(insertIndex, newSlot);
+      _activeSlotIndex = insertIndex;
+    });
+  }
+
+  void _removeSlot(int index) {
+    setState(() {
+      final slot = _slots[index];
+      // If it's start or destination or standard first slot, just clear waypoint
+      final sameTypeCount = _slots.where((s) => s.type == slot.type).length;
+      if (slot.type == WaypointType.start || slot.type == WaypointType.destination || sameTypeCount <= 1) {
+        slot.waypoint = null;
+      } else {
+        _slots.removeAt(index);
+        if (_activeSlotIndex >= _slots.length) {
+          _activeSlotIndex = _slots.length - 1;
+        }
+      }
+    });
+  }
+
+  void _swapStartAndDestination() {
+    setState(() {
+      final startIndex = _slots.indexWhere((s) => s.type == WaypointType.start);
+      final destIndex = _slots.indexWhere((s) => s.type == WaypointType.destination);
+      if (startIndex != -1 && destIndex != -1) {
+        final startWp = _slots[startIndex].waypoint;
+        final destWp = _slots[destIndex].waypoint;
+        _slots[startIndex].waypoint = destWp != null
+            ? RouteWaypoint(id: destWp.id, name: destWp.name, point: destWp.point, type: WaypointType.start, address: destWp.address)
+            : null;
+        _slots[destIndex].waypoint = startWp != null
+            ? RouteWaypoint(id: startWp.id, name: startWp.name, point: startWp.point, type: WaypointType.destination, address: startWp.address)
+            : null;
+      }
+    });
+  }
+
+  void _finishAndApply() {
+    final startWp = _slots.where((s) => s.type == WaypointType.start).firstOrNull?.waypoint;
+    final destWp = _slots.where((s) => s.type == WaypointType.destination).firstOrNull?.waypoint;
+    final pickups = _slots.where((s) => s.type == WaypointType.pickup && s.waypoint != null).map((s) => s.waypoint!).toList();
+    final rests = _slots.where((s) => s.type == WaypointType.rest && s.waypoint != null).map((s) => s.waypoint!).toList();
+
+    widget.onApplyRoute(
+      start: startWp,
+      pickups: pickups,
+      rests: rests,
+      destination: destWp,
+    );
+    Navigator.pop(context);
+  }
+
+  IconData _categoryIcon(String category) {
+    if (category.contains('ปั๊ม')) return Icons.local_gas_station_rounded;
+    if (category.contains('พัก')) return Icons.coffee_rounded;
+    if (category.contains('ซ่อม')) return Icons.build_rounded;
+    if (category.contains('คลัง') || category.contains('ท่าเรือ') || category.contains('ตลาด')) {
+      return Icons.warehouse_rounded;
+    }
+    return Icons.place_rounded;
+  }
+
+  Color _categoryColor(String category) {
+    if (category.contains('ปั๊ม')) return const Color(0xFF0284C7);
+    if (category.contains('พัก')) return const Color(0xFFD97706);
+    if (category.contains('ซ่อม')) return const Color(0xFFDC2626);
+    if (category.contains('คลัง') || category.contains('ท่าเรือ')) {
+      return const Color(0xFF059669);
+    }
+    return const Color(0xFF64748B);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final activeSlot = _slots.isNotEmpty && _activeSlotIndex < _slots.length ? _slots[_activeSlotIndex] : null;
+    final validStopsCount = _slots.where((s) => s.waypoint != null).length;
+
     return Container(
-      height: MediaQuery.of(context).size.height * 0.75,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+      height: MediaQuery.of(context).size.height * 0.90,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -1639,7 +1974,7 @@ class _LocationSearchModalState extends State<_LocationSearchModal> {
           // Modal Drag Handle
           Center(
             child: Container(
-              width: 36,
+              width: 38,
               height: 4,
               decoration: BoxDecoration(
                 color: const Color(0xFFCBD5E1),
@@ -1647,79 +1982,393 @@ class _LocationSearchModalState extends State<_LocationSearchModal> {
               ),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
 
-          // Title
-          const Row(
-            children: [
-              Icon(Icons.search_rounded, color: Color(0xFF0284C7), size: 22),
-              SizedBox(width: 8),
-              Text(
-                'ค้นหาพิกัด & วางจุดหมายการนำทาง',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Waypoint Type Selector Pills
-          const Text('กำหนดเป็นตำแหน่ง:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
-          const SizedBox(height: 6),
+          // Title Row
           Row(
             children: [
-              _TypePill(
-                label: '🚩 จุดเริ่มต้น',
-                isSelected: _selectedType == WaypointType.start,
-                color: const Color(0xFF10B981),
-                onTap: () => setState(() => _selectedType = WaypointType.start),
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0284C7).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.alt_route_rounded, color: Color(0xFF0284C7), size: 20),
               ),
-              const SizedBox(width: 6),
-              _TypePill(
-                label: '📦 แวะรับ/ส่ง',
-                isSelected: _selectedType == WaypointType.pickup,
-                color: const Color(0xFF0284C7),
-                onTap: () => setState(() => _selectedType = WaypointType.pickup),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'วางแผนเส้นทางและจุดแวะ (Google Maps Style)',
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    Text(
+                      'แตะช่องที่ต้องการเพื่อค้นหา หรือกด + เพิ่มจุดแวะได้เอง',
+                      style: TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(width: 6),
-              _TypePill(
-                label: '☕ จุดพักรถ',
-                isSelected: _selectedType == WaypointType.rest,
-                color: const Color(0xFFD97706),
-                onTap: () => setState(() => _selectedType = WaypointType.rest),
-              ),
-              const SizedBox(width: 6),
-              _TypePill(
-                label: '🏁 ปลายทาง',
-                isSelected: _selectedType == WaypointType.destination,
-                color: const Color(0xFFE11D48),
-                onTap: () => setState(() => _selectedType = WaypointType.destination),
+              IconButton(
+                icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
+                onPressed: () => Navigator.pop(context),
               ),
             ],
           ),
+          const SizedBox(height: 10),
 
-          const SizedBox(height: 12),
+          // ─── 1. Google Maps Multi-Stop Direction Slots ─────────────────────
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              children: [
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _slots.length,
+                  separatorBuilder: (_, i) => Padding(
+                    padding: const EdgeInsets.only(left: 15),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        width: 2,
+                        height: 6,
+                        color: const Color(0xFFCBD5E1),
+                      ),
+                    ),
+                  ),
+                  itemBuilder: (context, index) {
+                    final slot = _slots[index];
+                    final isActive = index == _activeSlotIndex;
+                    final hasWp = slot.waypoint != null;
 
-          // Search Text Field
+                    return GestureDetector(
+                      onTap: () => setState(() => _activeSlotIndex = index),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isActive ? const Color(0xFFF0F9FF) : Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isActive ? const Color(0xFF0284C7) : const Color(0xFFE2E8F0),
+                            width: isActive ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            // Left Icon
+                            Icon(slot.icon, color: slot.color, size: 16),
+                            const SizedBox(width: 8),
+
+                            // Label Badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: slot.color.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                slot.title,
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: slot.color,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+
+                            // Place Name / Placeholder
+                            Expanded(
+                              child: Text(
+                                hasWp ? slot.waypoint!.name : 'แตะเพื่อเลือก ${slot.title}...',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: hasWp ? FontWeight.w700 : FontWeight.w500,
+                                  color: hasWp ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
+                                ),
+                              ),
+                            ),
+
+                            // Active indicator or Clear button
+                            if (hasWp)
+                              GestureDetector(
+                                onTap: () => _removeSlot(index),
+                                child: Container(
+                                  padding: const EdgeInsets.all(3),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFF1F5F9),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.close_rounded, size: 13, color: Color(0xFF64748B)),
+                                ),
+                              )
+                            else if (isActive)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF0284C7),
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: const Text(
+                                  'กำลังเลือก',
+                                  style: TextStyle(fontSize: 8.5, color: Colors.white, fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 8),
+
+                // Multi-Stop Action Buttons (+ เพิ่มจุดแวะ, + เพิ่มจุดพัก, ⇄ สลับ)
+                Row(
+                  children: [
+                    InkWell(
+                      onTap: () => _addNewStop(WaypointType.pickup),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.add_rounded, size: 13, color: Color(0xFF0284C7)),
+                            SizedBox(width: 3),
+                            Text('+ เพิ่มจุดแวะ', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF0284C7))),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    InkWell(
+                      onTap: () => _addNewStop(WaypointType.rest),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFD97706).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.add_rounded, size: 13, color: Color(0xFFD97706)),
+                            SizedBox(width: 3),
+                            Text('+ เพิ่มจุดพักรถ', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFFD97706))),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    InkWell(
+                      onTap: _swapStartAndDestination,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.swap_vert_rounded, size: 13, color: Color(0xFF475569)),
+                            SizedBox(width: 2),
+                            Text('สลับจุด', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // ─── 2. Quick Location Choices (Current GPS & Fleet Vehicles) ───────
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFBBF7D0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Quick Current GPS Option
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF10B981),
+                        shape: BoxShape.circle,
+                      ),
+                      child: _loadingGps
+                          ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5, color: Colors.white))
+                          : const Icon(Icons.my_location_rounded, color: Colors.white, size: 12),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Flexible(
+                                child: Text(
+                                  'ตำแหน่ง GPS ปัจจุบัน',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text('สด Live', style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w700, color: Color(0xFF059669))),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            _currentGpsAddress,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 10, color: Color(0xFF475569)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    ElevatedButton(
+                      onPressed: _currentGpsPos != null
+                          ? () {
+                              _applyLocationToActiveSlot(
+                                LocationSearchResult(
+                                  title: 'ตำแหน่งปัจจุบัน (GPS)',
+                                  subtitle: _currentGpsAddress,
+                                  point: _currentGpsPos!,
+                                  category: 'ตำแหน่งปัจจุบัน',
+                                  distanceKm: 0,
+                                ),
+                              );
+                            }
+                          : _fetchCurrentGps,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _currentGpsPos != null ? const Color(0xFF10B981) : const Color(0xFF0284C7),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        _currentGpsPos != null ? 'ใส่ใน ${activeSlot?.title ?? 'ช่องนี้'}' : 'เปิด GPS',
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Quick Fleet Vehicles Option
+                if (widget.vehicleLocations.isNotEmpty && widget.vehicles.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: widget.vehicles.map((v) {
+                        final loc = widget.vehicleLocations.where((l) => l.vehicleId == v.id).firstOrNull;
+                        if (loc == null) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: InkWell(
+                            onTap: () {
+                              _applyLocationToActiveSlot(
+                                LocationSearchResult(
+                                  title: 'พิกัดรถ ${v.plateNumber}',
+                                  subtitle: v.nickName ?? '${v.brand} ${v.model}'.trim(),
+                                  point: LatLng(loc.lat, loc.lng),
+                                  category: 'พิกัดรถในกองรถ',
+                                  distanceKm: _currentGpsPos != null
+                                      ? const Distance().as(LengthUnit.Kilometer, _currentGpsPos!, LatLng(loc.lat, loc.lng))
+                                      : null,
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(6),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.3)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(width: 5, height: 5, decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle)),
+                                  const SizedBox(width: 4),
+                                  Text(v.plateNumber, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF0284C7))),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // ─── 3. Search Bar ────────────────────────────────────────────────
           Container(
             decoration: BoxDecoration(
               color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
             child: TextField(
               controller: _searchCtrl,
-              style: const TextStyle(fontSize: 13.5, color: Color(0xFF0F172A)),
+              style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
               decoration: InputDecoration(
-                hintText: 'ค้นหาชื่อคลังสินค้า, ท่าเรือ, ถนน หรือจังหวัด...',
-                hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                prefixIcon: const Icon(Icons.location_on_rounded, color: Color(0xFF0284C7), size: 20),
+                hintText: 'ค้นหาชื่อสถานที่ใส่ใน ${activeSlot?.title ?? 'ช่องที่เลือก'}...',
+                hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF0284C7), size: 18),
                 suffixIcon: _searchCtrl.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear_rounded, size: 18),
+                        icon: const Icon(Icons.clear_rounded, size: 16),
                         onPressed: () {
                           _searchCtrl.clear();
                           _onSearch('');
@@ -1727,107 +2376,158 @@ class _LocationSearchModalState extends State<_LocationSearchModal> {
                       )
                     : null,
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
               ),
               onChanged: _onSearch,
             ),
           ),
+          const SizedBox(height: 6),
 
-          const SizedBox(height: 12),
-
-          if (_isSearching)
-            const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(strokeWidth: 2)))
-          else ...[
-            Text(
-              _searchCtrl.text.isEmpty ? 'ศูนย์กระจายสินค้า & คลังหลักแนะนำ' : 'ผลการค้นหา (${_results.length})',
-              style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
-            ),
-            const SizedBox(height: 6),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _results.length,
-                itemBuilder: (context, i) {
-                  final item = _results[i];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    elevation: 0,
+          // ─── 4. Category Filter Chips ─────────────────────────────────────
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                ('all', '🌟 ทั้งหมด'),
+                ('ปั๊มน้ำมัน', '⛽ ปั๊มน้ำมัน'),
+                ('จุดพักรถ', '☕ จุดพักรถ'),
+                ('คลังสินค้า', '📦 คลังสินค้า'),
+                ('อู่ซ่อมบำรุง', '🛠️ อู่ซ่อม'),
+              ].map((cat) {
+                final isSel = _selectedCategory == cat.$1;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 5),
+                  child: ChoiceChip(
+                    label: Text(cat.$2),
+                    selected: isSel,
+                    onSelected: (_) => _onCategorySelected(cat.$1),
+                    selectedColor: const Color(0xFF0284C7),
+                    backgroundColor: const Color(0xFFF1F5F9),
+                    labelStyle: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: isSel ? Colors.white : const Color(0xFF475569),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(color: isSel ? const Color(0xFF0284C7) : const Color(0xFFE2E8F0)),
                     ),
-                    child: ListTile(
-                      dense: true,
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0284C7).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          // ─── 5. Results List ──────────────────────────────────────────────
+          Expanded(
+            child: _isSearching
+                ? const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator(strokeWidth: 2)))
+                : _results.isEmpty
+                    ? Center(
+                        child: Text(
+                          'ไม่พบสถานที่ที่ค้นหา',
+                          style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                         ),
-                        child: const Icon(Icons.warehouse_rounded, color: Color(0xFF0284C7), size: 18),
+                      )
+                    : ListView.builder(
+                        itemCount: _results.length,
+                        itemBuilder: (context, i) {
+                          final item = _results[i];
+                          final catColor = _categoryColor(item.category);
+                          final catIcon = _categoryIcon(item.category);
+                          final distText = item.distanceKm != null
+                              ? '${item.distanceKm! < 1 ? (item.distanceKm! * 1000).toStringAsFixed(0) : item.distanceKm!.toStringAsFixed(1)} ${item.distanceKm! < 1 ? 'ม.' : 'กม.'}'
+                              : null;
+
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 6),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              side: const BorderSide(color: Color(0xFFE2E8F0)),
+                            ),
+                            child: ListTile(
+                              dense: true,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                              leading: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: catColor.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(catIcon, color: catColor, size: 16),
+                              ),
+                              title: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      item.title,
+                                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Color(0xFF0F172A)),
+                                    ),
+                                  ),
+                                  if (distText != null)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFE0F2FE),
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                      child: Text(
+                                        distText,
+                                        style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Color(0xFF0369A1)),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              subtitle: Text(
+                                '${item.category} · ${item.subtitle}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                              ),
+                              trailing: Container(
+                                padding: const EdgeInsets.all(5),
+                                decoration: BoxDecoration(
+                                  color: (activeSlot?.color ?? const Color(0xFF0284C7)).withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(Icons.add_rounded, color: activeSlot?.color ?? const Color(0xFF0284C7), size: 14),
+                              ),
+                              onTap: () => _applyLocationToActiveSlot(item),
+                            ),
+                          );
+                        },
                       ),
-                      title: Text(
-                        item.title,
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-                      ),
-                      subtitle: Text(
-                        '${item.category} · ${item.subtitle}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
-                      ),
-                      trailing: const Icon(Icons.add_location_alt_rounded, color: Color(0xFF0284C7), size: 18),
-                      onTap: () {
-                        Navigator.pop(context);
-                        widget.onSelectLocation(item, _selectedType);
-                      },
-                    ),
-                  );
-                },
+          ),
+
+          const SizedBox(height: 8),
+
+          // ─── 6. Bottom Finish / Calculate Route Action Button ─────────────
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: validStopsCount >= 1 ? _finishAndApply : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0284C7),
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: const Color(0xFFCBD5E1),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+              ),
+              icon: const Icon(Icons.navigation_rounded, size: 18),
+              label: Text(
+                validStopsCount >= 1
+                    ? '🚀 คำนวณเส้นทาง ($validStopsCount จุดหมาย) & เริ่มนำทาง'
+                    : 'กรุณาเลือกจุดหมายอย่างน้อย 1 จุด',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
               ),
             ),
-          ],
+          ),
         ],
-      ),
-    );
-  }
-}
-
-class _TypePill extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _TypePill({
-    required this.label,
-    required this.isSelected,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          decoration: BoxDecoration(
-            color: isSelected ? color : const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                color: isSelected ? Colors.white : const Color(0xFF475569),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

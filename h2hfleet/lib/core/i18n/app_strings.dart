@@ -194,6 +194,36 @@ class AppStrings {
   String get aiChatHint => isTh ? 'สอบถามข้อมูลรถหรือค่าใช้จ่าย' : 'Ask about vehicles or expenses';
   String get aiChatInputHint => isTh ? 'พิมพ์คำถามของคุณ...' : 'Type your question...';
 
+  // ─── Enterprise Command Center & Radar ──────────
+  String get fleetHeroTag => isTh ? 'ระบบองค์กรอัจฉริยะ · IPAD & WEB' : 'H2H FLEET ENTERPRISE · IPAD & WEB';
+  String onlineVehicles(int count) => isTh ? 'ออนไลน์ $count คัน' : 'ONLINE $count Vehicles';
+  String get smartFleetCommandCenter => isTh ? 'ศูนย์ควบคุมกองยานพาหนะอัจฉริยะ' : 'Smart Fleet Command Center';
+  String get smartFleetSubtitle => isTh
+      ? 'ติดตาม GPS สดผ่านดาวเทียม วิเคราะห์ต้นทุนด้วย AI และกระจายงานสู่พนักงานขับรถอัตโนมัติ'
+      : 'Live satellite GPS tracking, AI cost analytics, and automated fleet dispatching';
+  String get fleetControlCenter => isTh ? 'ศูนย์ควบคุมกองรถ' : 'Fleet Control Center';
+  String modulesCount(int count) => isTh ? '$count โมดูล' : '$count Modules';
+  String get liveRadarTitle => isTh ? 'เรดาร์ตรวจสอบพิกัดสด' : 'Live Telematics Radar';
+  String get liveRadarSubtitle => isTh ? 'สแกนพิกัดกองรถ & ตรวจจับสถานที่ใกล้เคียงแบบเรียลไทม์' : 'Fleet telemetry scanning & nearby facility live detection';
+  String get fullMap => isTh ? 'แผนที่เต็ม' : 'Full Map';
+  String get refreshLiveGps => isTh ? 'รีเฟรชพิกัดสด' : 'Refresh Live GPS';
+  String get currentGpsLocation => isTh ? 'ตำแหน่ง GPS ปัจจุบัน' : 'Current GPS Location';
+  String get realtimeTag => isTh ? 'เรียลไทม์' : 'Realtime';
+  String get nearestPlaceOrHub => isTh ? 'สถานที่/ศูนย์กระจายสินค้าใกล้เคียงที่สุด' : 'Nearest Logistics Hub / Rest Area';
+  String vehiclesReadyToDetect(int count) => isTh ? 'ยานพาหนะพร้อมตรวจจับ $count คัน' : '$count Vehicles Ready';
+  String get subsecondSync => isTh ? 'ซิงค์ข้อมูลดาวเทียมความเร็วสูง' : 'Sub-Second Satellite Sync';
+  String get fleetInsightsSubtitle => isTh ? 'วิเคราะห์ข้อมูลการดำเนินงานอัจฉริยะ' : 'Fleet Intelligence Insights';
+  String get sendToLineBtn => isTh ? 'ส่งสรุปเข้า LINE' : 'Send to LINE';
+  String get askCopilot => isTh ? 'ปรึกษา AI Copilot' : 'Ask Copilot';
+  String get viewAll => isTh ? 'ดูทั้งหมด' : 'View All';
+  String get today => isTh ? 'วันนี้' : 'Today';
+  String get thisMonthLabel => isTh ? 'เดือนนี้' : 'This Month';
+  String get gpsTelemetryLabel => isTh ? 'พิกัด GPS สด' : 'GPS Telemetry';
+  String get onlineStatusLabel => isTh ? 'ออนไลน์' : 'Online';
+  String get noExpensesTodayMsg => isTh ? 'วันนี้ยังไม่มีค่าใช้จ่าย' : 'No expenses recorded today';
+  String get checkFuelTireAdvice => isTh ? 'อย่าลืมตรวจระดับน้ำมัน ลมยาง และสภาพรถก่อนออกเดินทาง' : 'Remember to check fuel level, tire pressure, and vehicle condition before departure';
+  String get liveConnected => isTh ? 'ระบบออนไลน์สด' : 'Live Connected';
+
   // ─── Common ────────────────────────────────────
   String get error => isTh ? 'เกิดข้อผิดพลาด' : 'Error';
   String get loading => isTh ? 'กำลังโหลด...' : 'Loading...';

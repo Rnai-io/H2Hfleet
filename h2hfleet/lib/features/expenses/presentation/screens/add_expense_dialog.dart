@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../models/vehicle_model.dart';
+import '../../../../providers/locale_provider.dart';
 import '../../../../providers/vehicles_provider.dart';
 import '../../../../providers/expenses_provider.dart';
 
@@ -24,15 +25,6 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
   String _selectedType = 'น้ำมัน';
   DateTime _selectedDate = DateTime.now();
   bool _isSaving = false;
-
-  static const _expenseCategories = [
-    ('น้ำมัน', Icons.local_gas_station_rounded, Color(0xFFE11D48)),
-    ('ซ่อมบำรุง', Icons.build_circle_rounded, Color(0xFFD97706)),
-    ('ยาง / ล้อ', Icons.tire_repair_rounded, Color(0xFF059669)),
-    ('ค่าเที่ยว / ทางด่วน', Icons.toll_rounded, Color(0xFF4F46E5)),
-    ('ประกัน / ภาษี', Icons.shield_rounded, Color(0xFF7C3AED)),
-    ('อื่นๆ', Icons.more_horiz_rounded, Color(0xFF64748B)),
-  ];
 
   static const _quickAmounts = [500, 1000, 1500, 2000, 3000, 5000];
 
@@ -62,7 +54,9 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
         child: child!,
       ),
     );
-    if (picked != null) setState(() => _selectedDate = picked);
+    if (picked != null) {
+      setState(() => _selectedDate = picked);
+    }
   }
 
   void _addQuickAmount(int val) {
@@ -74,23 +68,24 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
   }
 
   Future<void> _save() async {
+    final s = ref.read(strProvider);
     if (!_formKey.currentState!.validate()) return;
     if (_selectedVehicle == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('กรุณาเลือกรถประจำรายการก่อน'),
-          backgroundColor: Color(0xFFEA580C),
+        SnackBar(
+          content: Text(s.selectVehicleFirst),
+          backgroundColor: const Color(0xFFEA580C),
         ),
       );
       return;
     }
 
-    final amountVal = double.tryParse(_amountCtrl.text.replaceAll(',', ''));
+    final amountVal = double.tryParse(_amountCtrl.text.replaceAll(',', '').trim());
     if (amountVal == null || amountVal <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('กรุณาระบุจำนวนเงินที่ถูกต้อง'),
-          backgroundColor: Color(0xFFEA580C),
+        SnackBar(
+          content: Text(s.isTh ? 'กรุณาระบุจำนวนเงินที่ถูกต้อง' : 'Please enter a valid amount'),
+          backgroundColor: const Color(0xFFEA580C),
         ),
       );
       return;
@@ -109,7 +104,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('เกิดข้อผิดพลาด: $e'), backgroundColor: AppColors.danger),
+          SnackBar(content: Text('${s.error}: $e'), backgroundColor: AppColors.danger),
         );
       }
     } finally {
@@ -119,9 +114,20 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final s = ref.watch(strProvider);
+    final isTh = s.isTh;
     final vehiclesAsync = ref.watch(vehiclesProvider);
     final vehicles = vehiclesAsync.valueOrNull ?? [];
-    final dateLabel = DateFormat('d MMMM yyyy', 'th_TH').format(_selectedDate);
+    final dateLabel = DateFormat('d MMMM yyyy', isTh ? 'th_TH' : 'en_US').format(_selectedDate);
+
+    final expenseCategories = [
+      (isTh ? 'น้ำมัน' : 'Fuel', Icons.local_gas_station_rounded, const Color(0xFFE11D48)),
+      (isTh ? 'ซ่อมบำรุง' : 'Repair', Icons.build_circle_rounded, const Color(0xFFD97706)),
+      (isTh ? 'ยาง / ล้อ' : 'Tires', Icons.tire_repair_rounded, const Color(0xFF059669)),
+      (isTh ? 'ค่าเที่ยว / ทางด่วน' : 'Toll / Trip', Icons.toll_rounded, const Color(0xFF4F46E5)),
+      (isTh ? 'ประกัน / ภาษี' : 'Tax / Insurance', Icons.shield_rounded, const Color(0xFF7C3AED)),
+      (isTh ? 'อื่นๆ' : 'Other', Icons.more_horiz_rounded, const Color(0xFF64748B)),
+    ];
 
     // Auto select first vehicle if none selected
     if (_selectedVehicle == null && vehicles.isNotEmpty) {
@@ -171,21 +177,21 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                     child: const Icon(Icons.receipt_long_rounded, color: Colors.white, size: 20),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'บันทึกค่าใช้จ่ายใหม่',
-                          style: TextStyle(
+                          s.addExpenseTitle,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                         Text(
-                          'Expense & Fuel Telematics Entry',
-                          style: TextStyle(
+                          isTh ? 'บันทึกค่าน้ำมันและใบเสร็จกองรถ' : 'Expense & Fuel Telematics Entry',
+                          style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 10.5,
                             fontWeight: FontWeight.w500,
@@ -214,9 +220,9 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Vehicle Selector
-                      const Text(
-                        'เลือกรถในฟลีต (Vehicle)',
-                        style: TextStyle(
+                      Text(
+                        isTh ? 'เลือกรถในฟลีต (Vehicle)' : 'Select Fleet Vehicle',
+                        style: const TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary,
@@ -234,7 +240,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                           child: DropdownButton<VehicleModel>(
                             value: _selectedVehicle,
                             isExpanded: true,
-                            hint: const Text('เลือกรถ', style: TextStyle(fontSize: 13)),
+                            hint: Text(s.selectVehicle, style: const TextStyle(fontSize: 13)),
                             icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
                             items: vehicles.map((v) {
                               return DropdownMenuItem<VehicleModel>(
@@ -277,9 +283,9 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                       const SizedBox(height: 16),
 
                       // Category Selector Grid
-                      const Text(
-                        'หมวดหมู่ค่าใช้จ่าย (Category)',
-                        style: TextStyle(
+                      Text(
+                        isTh ? 'หมวดหมู่ค่าใช้จ่าย (Category)' : 'Expense Category',
+                        style: const TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary,
@@ -293,7 +299,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                         crossAxisSpacing: 8,
                         mainAxisSpacing: 8,
                         childAspectRatio: 1.85,
-                        children: _expenseCategories.map((cat) {
+                        children: expenseCategories.map((cat) {
                           final isSelected = _selectedType == cat.$1;
                           final color = cat.$3;
                           return GestureDetector(
@@ -340,9 +346,9 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                       const SizedBox(height: 16),
 
                       // Amount Input
-                      const Text(
-                        'จำนวนเงิน (บาท)',
-                        style: TextStyle(
+                      Text(
+                        isTh ? 'จำนวนเงิน (บาท)' : 'Amount (THB)',
+                        style: const TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary,
@@ -391,7 +397,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                           ),
                         ),
                         validator: (val) {
-                          if (val == null || val.trim().isEmpty) return 'กรุณาระบุจำนวนเงิน';
+                          if (val == null || val.trim().isEmpty) return isTh ? 'กรุณาระบุจำนวนเงิน' : 'Please enter amount';
                           return null;
                         },
                       ),
@@ -422,9 +428,9 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                       const SizedBox(height: 14),
 
                       // Date Picker Box
-                      const Text(
-                        'วันที่ทำรายการ',
-                        style: TextStyle(
+                      Text(
+                        isTh ? 'วันที่ทำรายการ' : 'Expense Date',
+                        style: const TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary,
@@ -467,9 +473,9 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                       const SizedBox(height: 14),
 
                       // Note / Reference Input
-                      const Text(
-                        'หมายเหตุ / รายละเอียดบิล (ไม่บังคับ)',
-                        style: TextStyle(
+                      Text(
+                        isTh ? 'หมายเหตุ / รายละเอียดบิล (ไม่บังคับ)' : 'Note / Invoice Ref (Optional)',
+                        style: const TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary,
@@ -481,7 +487,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                         maxLines: 2,
                         style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
                         decoration: InputDecoration(
-                          hintText: 'เช่น ปั๊ม ปตท. วังน้อย, เลขที่บิล #1042...',
+                          hintText: isTh ? 'เช่น ปั๊ม ปตท. วังน้อย, เลขที่บิล #1042...' : 'e.g. PTT Station, Invoice #1042...',
                           hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
                           filled: true,
                           fillColor: const Color(0xFFF8FAFC),
@@ -524,7 +530,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                         )
                       : const Icon(Icons.check_circle_rounded, size: 18),
                   label: Text(
-                    _isSaving ? 'กำลังบันทึก...' : 'บันทึกค่าใช้จ่าย',
+                    _isSaving ? s.saving : s.addExpenseTitle,
                     style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
                   ),
                   style: ElevatedButton.styleFrom(

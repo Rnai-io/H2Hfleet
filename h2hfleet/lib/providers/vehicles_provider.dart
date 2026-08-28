@@ -103,6 +103,24 @@ class VehiclesNotifier extends StateNotifier<AsyncValue<List<VehicleModel>>> {
     }
   }
 
+  Future<String?> uploadPhotoBytes(Uint8List bytes, String fileName, {String? vehicleId}) async {
+    try {
+      final safeId = vehicleId ?? 'new_${DateTime.now().millisecondsSinceEpoch}';
+      final path = '$safeId/${DateTime.now().millisecondsSinceEpoch}_$fileName';
+      try {
+        await _supabase.client.storage.from('vehicle-photos').uploadBinary(path, bytes);
+        return _supabase.client.storage.from('vehicle-photos').getPublicUrl(path);
+      } catch (_) {
+        // Fallback to maintenance-photos bucket if vehicle-photos doesn't exist
+        await _supabase.client.storage.from('maintenance-photos').uploadBinary(path, bytes);
+        return _supabase.client.storage.from('maintenance-photos').getPublicUrl(path);
+      }
+    } catch (e) {
+      debugPrint('Storage upload error, returning null: $e');
+      return null;
+    }
+  }
+
   Future<void> addVehicle({
     required String plateNumber,
     String? nickName,
@@ -112,6 +130,9 @@ class VehiclesNotifier extends StateNotifier<AsyncValue<List<VehicleModel>>> {
     required int year,
     required String fuelType,
     String? remark,
+    String? gpsDeviceImei,
+    String? gpsDeviceType,
+    String? imageUrl,
   }) async {
     final companyId = await _getOrCreateCompanyId();
     if (companyId == null) {
@@ -134,6 +155,12 @@ class VehiclesNotifier extends StateNotifier<AsyncValue<List<VehicleModel>>> {
         ...basePayload,
         if (nickName != null && nickName.isNotEmpty) 'nick_name': nickName,
         if (remark != null && remark.isNotEmpty) 'remark': remark,
+        if (gpsDeviceImei != null && gpsDeviceImei.isNotEmpty)
+          'gps_device_imei': gpsDeviceImei,
+        if (gpsDeviceType != null && gpsDeviceType.isNotEmpty)
+          'gps_device_type': gpsDeviceType,
+        if (imageUrl != null && imageUrl.isNotEmpty)
+          'image_url': imageUrl,
       };
       await _supabase.client.from('vehicles').insert(fullPayload);
     } catch (insertErr) {
@@ -181,6 +208,9 @@ class VehiclesNotifier extends StateNotifier<AsyncValue<List<VehicleModel>>> {
     required String fuelType,
     required String status,
     String? remark,
+    String? gpsDeviceImei,
+    String? gpsDeviceType,
+    String? imageUrl,
   }) async {
     try {
       // core payload — columns ที่มีแน่นอนใน DB
@@ -201,6 +231,9 @@ class VehiclesNotifier extends StateNotifier<AsyncValue<List<VehicleModel>>> {
           ...basePayload,
           if (nickName != null && nickName.isNotEmpty) 'nick_name': nickName,
           'remark': (remark != null && remark.isNotEmpty) ? remark : null,
+          'gps_device_imei': (gpsDeviceImei != null && gpsDeviceImei.isNotEmpty) ? gpsDeviceImei : null,
+          'gps_device_type': (gpsDeviceType != null && gpsDeviceType.isNotEmpty) ? gpsDeviceType : 'teltonika',
+          'image_url': (imageUrl != null && imageUrl.isNotEmpty) ? imageUrl : null,
         };
         await _supabase.client
             .from('vehicles')

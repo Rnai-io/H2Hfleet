@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -226,14 +227,30 @@ class VehicleCard extends ConsumerWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Icon
+                      // Avatar (Photo or Icon)
                       Container(
-                        width: 50, height: 50,
+                        width: 50,
+                        height: 50,
                         decoration: BoxDecoration(
                           color: color.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(_typeIcon, color: color, size: 24),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: vehicle.imageUrl != null && vehicle.imageUrl!.isNotEmpty
+                              ? (vehicle.imageUrl!.startsWith('data:image')
+                                  ? Image.memory(
+                                      base64Decode(vehicle.imageUrl!.split(',').last),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Icon(_typeIcon, color: color, size: 24),
+                                    )
+                                  : Image.network(
+                                      vehicle.imageUrl!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Icon(_typeIcon, color: color, size: 24),
+                                    ))
+                              : Icon(_typeIcon, color: color, size: 24),
+                        ),
                       ),
                       const SizedBox(width: 12),
 
@@ -322,11 +339,17 @@ class VehicleCard extends ConsumerWidget {
                             // Tags
                             Wrap(
                               spacing: 6,
+                              runSpacing: 4,
                               children: [
                                 _Tag(label: vehicle.vehicleType, color: color),
                                 _Tag(
                                     label: _fuelLabel,
                                     color: AppColors.textSecondary),
+                                if (vehicle.gpsDeviceImei != null && vehicle.gpsDeviceImei!.isNotEmpty)
+                                  _Tag(
+                                    label: 'GPS: ${vehicle.gpsDeviceImei}',
+                                    color: const Color(0xFF0284C7),
+                                  ),
                               ],
                             ),
                           ],

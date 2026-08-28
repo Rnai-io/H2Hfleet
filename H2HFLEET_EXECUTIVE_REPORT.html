@@ -527,6 +527,7 @@
   </header>
 
   <!-- 1. Executive Summary -->
+  <!-- 1. Executive Summary -->
   <section class="section" id="summary">
     <div class="section-header">
       <div class="section-icon">1</div>
@@ -545,17 +546,17 @@
       </div>
       <div class="kpi-card kpi-card-green">
         <div class="kpi-label">ระยะเวลาคืนทุน (Payback)</div>
-        <div class="kpi-value" style="color: var(--emerald);">2.4 เดือน</div>
+        <div class="kpi-value" style="color: var(--emerald);">1.6 เดือน</div>
         <div class="kpi-desc" style="color: var(--emerald);">✓ จากกำไรส่วนเพิ่มค่าน้ำมันและค่าซ่อม</div>
       </div>
       <div class="kpi-card kpi-card-amber">
         <div class="kpi-label">จุดคุ้มทุน (Break-Even)</div>
-        <div class="kpi-value" style="color: var(--amber);">145 คัน</div>
-        <div class="kpi-desc" style="color: var(--amber);">✓ ครอบคลุม Fixed Cost ทั้งระบบ</div>
+        <div class="kpi-value" style="color: var(--amber);">48 องค์กร</div>
+        <div class="kpi-desc" style="color: var(--amber);">✓ รวม Dev, Onsite, ดอกเบี้ยกู้ 2 ล.</div>
       </div>
       <div class="kpi-card kpi-card-purple">
         <div class="kpi-label">Gross Margin เป้าหมาย</div>
-        <div class="kpi-value" style="color: var(--purple);">78.5%</div>
+        <div class="kpi-value" style="color: var(--purple);">92.3%</div>
         <div class="kpi-desc" style="color: var(--purple);">✓ โมเดล SaaS Recurring Revenue</div>
       </div>
     </div>
@@ -595,7 +596,7 @@
 |                                    THIRD-PARTY ECOSYSTEM                                      |
 |   +-----------------------+   +-----------------------+   +-------------------------------+   |
 |   | Google Cloud AI       |   | OSRM Routing Engine   |   | LINE Messaging API            |   |
-|   | • Gemini 1.5 Flash    |   | • OpenStreetMap Tiles |   | • Driver Trip Push Messages   |   |
+|   | • Gemini 1.5 Pro/Flash|   | • OpenStreetMap Tiles |   | • Driver Trip Push Messages   |   |
 |   +-----------------------+   +-----------------------+   +-------------------------------+   |
 +-----------------------------------------------------------------------------------------------+
     </div>
@@ -621,7 +622,7 @@
         <div>
           <div class="card-title">🤖 AI Intelligence Engine</div>
           <div class="card-desc">
-            ผสานโมเดล Gemini 1.5 Flash วิเคราะห์บิลค่าน้ำมัน ค้นหาความผิดปกติในการใช้เชื้อเพลิง และแจ้งเตือนรอบซ่อมบำรุงล่วงหน้าอัตโนมัติ
+            ผสานโมเดล Gemini 1.5 Pro/Flash วิเคราะห์บิลค่าน้ำมัน ค้นหาความผิดปกติในการใช้เชื้อเพลิง และแจ้งเตือนรอบซ่อมบำรุงล่วงหน้าอัตโนมัติ
           </div>
         </div>
       </div>
@@ -632,7 +633,7 @@
   <section class="section" id="cost">
     <div class="section-header">
       <div class="section-icon">3</div>
-      <h2 class="section-title">โครงสร้างต้นทุนและเศรษฐศาสตร์ต่อหน่วย (Unit Economics)</h2>
+      <h2 class="section-title">โครงสร้างต้นทุนจริง ณ ปัจจุบันและอนาคต (Realistic Cost Structure & Unit Economics)</h2>
     </div>
 
     <div class="table-responsive">
@@ -648,52 +649,59 @@
         </thead>
         <tbody>
           <tr>
-            <td><strong>Cloud Database & Realtime</strong></td>
-            <td>Supabase Pro Tier (Postgres, Storage, Auth, Realtime)</td>
-            <td class="price-tag">฿1,200</td>
-            <td class="price-tag">฿8.50</td>
-            <td>รองรับฐานข้อมูลขนาดใหญ่และขยายตัวได้ทันที</td>
+            <td><strong>AI Premium Token & Models</strong></td>
+            <td>Gemini 1.5 Pro / GPT-4o (OCR บิล, วิเคราะห์เส้นทาง, Voice AI)</td>
+            <td class="price-tag">฿6,500</td>
+            <td class="price-tag">฿12.00</td>
+            <td>ประมวลผล OCR อัตโนมัติและสรุปความผิดปกติทุกวัน</td>
           </tr>
           <tr>
-            <td><strong>Web & CDN Hosting</strong></td>
-            <td>Netlify Global Edge CDN (SSL, Bandwidth, Custom Domain)</td>
-            <td class="price-tag">฿750</td>
-            <td class="price-tag">฿2.00</td>
-            <td>ความเร็วโหลดหน้าเว็บในอาเซียน &lt; 0.8 วินาที</td>
+            <td><strong>Supabase Premium (Team/Enterprise)</strong></td>
+            <td>PostgreSQL RLS, Storage, Realtime WSS, Dedicated Compute</td>
+            <td class="price-tag">฿5,500</td>
+            <td class="price-tag">฿15.00</td>
+            <td>รองรับการสตรีมพิกัด GPS ระดับ Sub-second เสถียรภาพสูง</td>
           </tr>
           <tr>
-            <td><strong>AI Intelligence Token</strong></td>
-            <td>Gemini 1.5 Flash สำหรับประมวลผล OCR & Analytics</td>
+            <td><strong>Server Maintenance & CDN</strong></td>
+            <td>Netlify CDN, Tile Server Cache, OSRM Routing Nodes & SSL</td>
+            <td class="price-tag">฿4,500</td>
+            <td class="price-tag">฿5.00</td>
+            <td>ความเร็วโหลดหน้าเว็บในระดับสากล &lt; 0.6 วินาที</td>
+          </tr>
+          <tr>
+            <td><strong>Software Engineering & DevOps (Dev)</strong></td>
+            <td>ทีมวิศวกรซอฟต์แวร์และดูแลระบบ R&D ต่อเนื่อง</td>
+            <td class="price-tag">฿55,000</td>
             <td>—</td>
-            <td class="price-tag">฿4.50</td>
-            <td>คำนวณเฉลี่ย 30 การวิเคราะห์ต่อคันต่อเดือน</td>
+            <td>พัฒนาฟีเจอร์ใหม่ ดูแลเสถียรภาพและระบบความปลอดภัย</td>
           </tr>
           <tr>
-            <td><strong>Map Routing Engine</strong></td>
-            <td>OSRM Routing + OpenStreetMap Tile Caching</td>
-            <td class="price-tag">฿500</td>
-            <td class="price-tag">฿1.50</td>
-            <td>ประหยัดกว่า Google Maps API ถึง 90%</td>
+            <td><strong>พนักงาน Onsite และ Operator Support</strong></td>
+            <td>ทีมลงพื้นที่ติดตั้งกล่อง GPS + Operator ตอบข้อซักถาม 24/7</td>
+            <td class="price-tag">฿35,000</td>
+            <td class="price-tag">฿18.00</td>
+            <td>บริการ Onsite ติดตั้งและ Call Center ดูแลลูกค้าใกล้ชิด</td>
           </tr>
           <tr>
-            <td><strong>LINE Push Notifications</strong></td>
-            <td>LINE Official Account Pro Messaging Package</td>
-            <td class="price-tag">฿1,500</td>
-            <td class="price-tag">฿3.00</td>
-            <td>ส่งรายละเอียดงานเข้า LINE คนขับโดยตรง</td>
-          </tr>
-          <tr>
-            <td><strong>Store Licenses</strong></td>
-            <td>Apple Developer Program & Google Play Console</td>
-            <td class="price-tag">฿350</td>
+            <td><strong>ดอกเบี้ยเงินกู้เพื่อการลงทุน (2,000,000 บาท)</strong></td>
+            <td>ดอกเบี้ยเงินกู้ธนาคารเพื่อธุรกิจ (อัตราเฉลี่ย ~7.2% ต่อปี)</td>
+            <td class="price-tag">฿12,000</td>
             <td>—</td>
-            <td>ค่าธรรมเนียมรายปีหารเฉลี่ยรายเดือน</td>
+            <td>ภาระดอกเบี้ยจ่ายเฉลี่ยรายเดือนของวงเงินกู้ 2 ล้านบาท</td>
+          </tr>
+          <tr>
+            <td><strong>LINE Official Pro & App Licenses</strong></td>
+            <td>LINE Pro Package + Apple Developer & Google Play Fees</td>
+            <td class="price-tag">฿1,850</td>
+            <td class="price-tag">฿4.00</td>
+            <td>ส่งรายละเอียดงานเข้า LINE คนขับ และค่าธรรมเนียม Store</td>
           </tr>
           <tr style="background: var(--bg-blue-light); font-weight: 700;">
-            <td colspan="2">รวมต้นทุนโดยประมาณทั้งระบบ</td>
-            <td style="color: var(--primary-blue); font-weight: 800;">฿4,300 / เดือน</td>
-            <td style="color: var(--emerald); font-weight: 800;">฿19.50 / คัน / เดือน</td>
-            <td><strong>Unit Cost ต่ำมาก สร้าง Gross Margin สูงถึง 92.5%</strong></td>
+            <td colspan="2">รวมต้นทุนโดยประมาณทั้งระบบ (Total Operating Cost)</td>
+            <td style="color: var(--primary-blue); font-weight: 800;">฿120,350 / เดือน</td>
+            <td style="color: var(--emerald); font-weight: 800;">฿54.00 / คัน / เดือน</td>
+            <td><strong>ครอบคลุมต้นทุนจริงทั้ง Dev, Onsite, Server, AI & ดอกเบี้ยเงินกู้ 2 ล.</strong></td>
           </tr>
         </tbody>
       </table>
@@ -712,13 +720,14 @@
       <div class="card">
         <div>
           <div style="font-size: 13px; font-weight: 700; color: var(--primary-blue); margin-bottom: 4px;">STARTER TIER</div>
-          <div style="font-family: 'Prompt', sans-serif; font-size: 26px; font-weight: 800; color: var(--primary-navy); margin-bottom: 6px;">฿199 <span style="font-size: 13px; color: var(--text-muted); font-weight: 400;">/ คัน / เดือน</span></div>
+          <div style="font-family: 'Prompt', sans-serif; font-size: 26px; font-weight: 800; color: var(--primary-navy); margin-bottom: 6px;">฿599 <span style="font-size: 13px; color: var(--text-muted); font-weight: 400;">/ คัน / เดือน</span></div>
           <p class="card-desc">สำหรับผู้ประกอบการรายย่อย (1-5 คัน)</p>
           <ul class="feature-list">
-            <li>ติดตามพิกัด GPS Real-Time บนแผนที่</li>
+            <li>ติดตามพิกัด GPS Real-Time บนแผนที่สด</li>
             <li>บันทึกค่าน้ำมันและค่าซ่อมบำรุง</li>
             <li>ส่งเส้นทางนำทางเข้า LINE คนขับ</li>
             <li>ส่งออกรายงานประจำเดือน PDF</li>
+            <li>รองรับ GPS มือถือคนขับ และ GPS IMEI</li>
           </ul>
         </div>
       </div>
@@ -727,14 +736,15 @@
         <div class="badge-recommend">แพ็กเกจยอดนิยม</div>
         <div>
           <div style="font-size: 13px; font-weight: 700; color: var(--emerald); margin-bottom: 4px;">PRO FLEET TIER</div>
-          <div style="font-family: 'Prompt', sans-serif; font-size: 26px; font-weight: 800; color: var(--emerald); margin-bottom: 6px;">฿299 <span style="font-size: 13px; color: var(--text-muted); font-weight: 400;">/ คัน / เดือน</span></div>
+          <div style="font-family: 'Prompt', sans-serif; font-size: 26px; font-weight: 800; color: var(--emerald); margin-bottom: 6px;">฿2,990 <span style="font-size: 13px; color: var(--text-muted); font-weight: 400;">/ เดือน</span></div>
           <p class="card-desc">สำหรับธุรกิจขนส่งขนาดกลาง (6-20 คัน)</p>
           <ul class="feature-list">
             <li>ฟังก์ชัน Starter ทั้งหมด</li>
-            <li><strong>AI ผู้ช่วยอัจฉริยะวิเคราะห์ความผิดปกติ</strong></li>
+            <li><strong>AI ผู้ช่วยอัจฉริยะวิเคราะห์ความผิดปกติระดับพรีเมี่ยม</strong></li>
             <li>วางแผนเส้นทางหลายจุดแวะ (Multi-Waypoints)</li>
             <li>ระบบแจ้งเตือนรอบบำรุงรักษาล่วงหน้า</li>
             <li>Export บิลค่าใช้จ่ายเป็น Excel / CSV</li>
+            <li>วิเคราะห์พฤติกรรมการขับขี่และความเร็ว</li>
           </ul>
         </div>
       </div>
@@ -742,13 +752,13 @@
       <div class="card">
         <div>
           <div style="font-size: 13px; font-weight: 700; color: var(--purple); margin-bottom: 4px;">ENTERPRISE TIER</div>
-          <div style="font-family: 'Prompt', sans-serif; font-size: 26px; font-weight: 800; color: var(--purple); margin-bottom: 6px;">฿399 <span style="font-size: 13px; color: var(--text-muted); font-weight: 400;">/ คัน / เดือน</span></div>
+          <div style="font-family: 'Prompt', sans-serif; font-size: 26px; font-weight: 800; color: var(--purple); margin-bottom: 6px;">฿6,990 <span style="font-size: 13px; color: var(--text-muted); font-weight: 400;">/ เดือน</span></div>
           <p class="card-desc">กองยานพาหนะขนาดใหญ่ (20+ คันขึ้นไป)</p>
           <ul class="feature-list">
             <li>ฟังก์ชัน Pro Fleet ทั้งหมด</li>
+            <li><strong>บริการทีมช่าง Onsite ลงพื้นที่ตรวจเช็คระบบ</strong></li>
             <li>Custom Webhook & ERP Integration</li>
-            <li>Dedicated Account Manager ดูแลใกล้ชิด</li>
-            <li>วิเคราะห์พฤติกรรมและความเร็วคนขับ</li>
+            <li>Dedicated Account Manager ดูแลใกล้ชิด 24/7</li>
             <li>การันตีระบบ 99.9% Uptime SLA</li>
           </ul>
         </div>
@@ -763,8 +773,8 @@
             <th>ประเทศเป้าหมาย</th>
             <th>สกุลเงิน</th>
             <th>Starter / คัน / ด.</th>
-            <th>Pro Fleet / คัน / ด.</th>
-            <th>Enterprise / คัน / ด.</th>
+            <th>Pro Fleet / ด.</th>
+            <th>Enterprise / ด.</th>
             <th>คู่แข่งสำคัญในตลาด</th>
           </tr>
         </thead>
@@ -772,49 +782,49 @@
           <tr>
             <td><strong>🇹🇭 ไทย (Thailand)</strong></td>
             <td>THB</td>
-            <td class="price-tag">฿199</td>
-            <td class="price-tag" style="color: var(--emerald); font-weight: 800;">฿299</td>
-            <td class="price-tag">฿399</td>
+            <td class="price-tag">฿599</td>
+            <td class="price-tag" style="color: var(--emerald); font-weight: 800;">฿2,990</td>
+            <td class="price-tag" style="color: var(--purple); font-weight: 800;">฿6,990</td>
             <td>Cartrack, Onelink, Nostra</td>
           </tr>
           <tr>
             <td><strong>🇲🇾 มาเลเซีย (Malaysia)</strong></td>
             <td>MYR</td>
-            <td class="price-tag">RM 28</td>
-            <td class="price-tag" style="color: var(--emerald); font-weight: 800;">RM 42</td>
-            <td class="price-tag">RM 58</td>
+            <td class="price-tag">RM 79</td>
+            <td class="price-tag" style="color: var(--emerald); font-weight: 800;">RM 390</td>
+            <td class="price-tag" style="color: var(--purple); font-weight: 800;">RM 910</td>
             <td>Katsana, Cartrack MY</td>
           </tr>
           <tr>
             <td><strong>🇸🇬 สิงคโปร์ (Singapore)</strong></td>
             <td>SGD</td>
-            <td class="price-tag">S$ 12</td>
-            <td class="price-tag" style="color: var(--emerald); font-weight: 800;">S$ 18</td>
-            <td class="price-tag">S$ 25</td>
+            <td class="price-tag">S$ 24</td>
+            <td class="price-tag" style="color: var(--emerald); font-weight: 800;">S$ 119</td>
+            <td class="price-tag" style="color: var(--purple); font-weight: 800;">S$ 279</td>
             <td>Overdrive, Webfleet SG</td>
           </tr>
           <tr>
             <td><strong>🇮🇩 อินโดนีเซีย (Indonesia)</strong></td>
             <td>IDR</td>
-            <td class="price-tag">Rp 95,000</td>
-            <td class="price-tag" style="color: var(--emerald); font-weight: 800;">Rp 145,000</td>
-            <td class="price-tag">Rp 195,000</td>
+            <td class="price-tag">Rp 280,000</td>
+            <td class="price-tag" style="color: var(--emerald); font-weight: 800;">Rp 1,390,000</td>
+            <td class="price-tag" style="color: var(--purple); font-weight: 800;">Rp 3,250,000</td>
             <td>McEasy, TransTRACK</td>
           </tr>
           <tr>
             <td><strong>🇻🇳 เวียดนาม (Vietnam)</strong></td>
             <td>VND</td>
-            <td class="price-tag">₫ 150,000</td>
-            <td class="price-tag" style="color: var(--emerald); font-weight: 800;">₫ 230,000</td>
-            <td class="price-tag">₫ 310,000</td>
+            <td class="price-tag">₫ 450,000</td>
+            <td class="price-tag" style="color: var(--emerald); font-weight: 800;">₫ 2,250,000</td>
+            <td class="price-tag" style="color: var(--purple); font-weight: 800;">₫ 5,250,000</td>
             <td>Binh Anh, Vtracking</td>
           </tr>
           <tr>
             <td><strong>🇵🇭 ฟิลิปปินส์ (Philippines)</strong></td>
             <td>PHP</td>
-            <td class="price-tag">₱ 350</td>
-            <td class="price-tag" style="color: var(--emerald); font-weight: 800;">₱ 520</td>
-            <td class="price-tag">₱ 700</td>
+            <td class="price-tag">₱ 1,050</td>
+            <td class="price-tag" style="color: var(--emerald); font-weight: 800;">₱ 5,200</td>
+            <td class="price-tag" style="color: var(--purple); font-weight: 800;">₱ 12,200</td>
             <td>Tramigo, Webtrack PH</td>
           </tr>
         </tbody>
@@ -835,31 +845,31 @@
       
       <div class="chart-bar-group">
         <div class="chart-bar-label">
-          <span>ปีที่ 1 (500 คัน)</span>
-          <span style="font-family: 'JetBrains Mono', monospace;">฿1,794,000</span>
+          <span>ปีที่ 1 (500 คัน / ~80 องค์กร)</span>
+          <span style="font-family: 'JetBrains Mono', monospace;">฿4,194,000</span>
         </div>
         <div class="chart-bar-track">
-          <div class="chart-bar-fill" style="width: 15%; background: #0284C7;">฿1.79M</div>
+          <div class="chart-bar-fill" style="width: 15%; background: #0284C7;">฿4.19M</div>
         </div>
       </div>
 
       <div class="chart-bar-group">
         <div class="chart-bar-label">
-          <span>ปีที่ 2 (2,500 คัน)</span>
-          <span style="font-family: 'JetBrains Mono', monospace;">฿8,970,000</span>
+          <span>ปีที่ 2 (2,000 คัน / ~300 องค์กร)</span>
+          <span style="font-family: 'JetBrains Mono', monospace;">฿16,776,000</span>
         </div>
         <div class="chart-bar-track">
-          <div class="chart-bar-fill" style="width: 45%; background: #059669;">฿8.97M</div>
+          <div class="chart-bar-fill" style="width: 45%; background: #059669;">฿16.78M</div>
         </div>
       </div>
 
       <div class="chart-bar-group">
         <div class="chart-bar-label">
-          <span>ปีที่ 3 (10,000 คัน)</span>
-          <span style="font-family: 'JetBrains Mono', monospace;">฿35,880,000</span>
+          <span>ปีที่ 3 (6,000 คัน / ~900 องค์กร)</span>
+          <span style="font-family: 'JetBrains Mono', monospace;">฿50,328,000</span>
         </div>
         <div class="chart-bar-track">
-          <div class="chart-bar-fill" style="width: 100%; background: #7C3AED;">฿35.88M</div>
+          <div class="chart-bar-fill" style="width: 100%; background: #7C3AED;">฿50.33M</div>
         </div>
       </div>
     </div>
@@ -876,40 +886,40 @@
         </thead>
         <tbody>
           <tr>
-            <td><strong>จำนวนรถที่ใช้บริการในระบบ (Active Fleet)</strong></td>
-            <td><strong>500 คัน</strong></td>
-            <td><strong>2,500 คัน</strong></td>
-            <td><strong>10,000 คัน</strong></td>
+            <td><strong>จำนวนรถและองค์กรในระบบ (Active Fleet & Clients)</strong></td>
+            <td><strong>500 คัน (~80 องค์กร)</strong></td>
+            <td><strong>2,000 คัน (~300 องค์กร)</strong></td>
+            <td><strong>6,000 คัน (~900 องค์กร)</strong></td>
           </tr>
           <tr>
             <td>รายได้รวมรายปี (Annual SaaS Revenue)</td>
-            <td class="price-tag">฿1,794,000</td>
-            <td class="price-tag">฿8,970,000</td>
-            <td class="price-tag">฿35,880,000</td>
+            <td class="price-tag">฿4,194,000</td>
+            <td class="price-tag">฿16,776,000</td>
+            <td class="price-tag">฿50,328,000</td>
           </tr>
           <tr>
-            <td>ต้นทุนการให้บริการ (Cost of Goods Sold - COGS)</td>
-            <td class="price-tag" style="color: var(--text-muted);">(฿135,000)</td>
-            <td class="price-tag" style="color: var(--text-muted);">(฿675,000)</td>
-            <td class="price-tag" style="color: var(--text-muted);">(฿2,700,000)</td>
+            <td>ต้นทุนการให้บริการ (Cost of Goods Sold - COGS: Cloud, AI, Supabase)</td>
+            <td class="price-tag" style="color: var(--text-muted);">(฿324,000)</td>
+            <td class="price-tag" style="color: var(--text-muted);">(฿1,296,000)</td>
+            <td class="price-tag" style="color: var(--text-muted);">(฿3,888,000)</td>
           </tr>
           <tr style="font-weight: 800; color: var(--emerald); background: var(--bg-emerald-light);">
             <td>กำไรขั้นต้น (Gross Profit Margin)</td>
-            <td class="price-tag">฿1,659,000 (92.5%)</td>
-            <td class="price-tag">฿8,295,000 (92.5%)</td>
-            <td class="price-tag">฿33,180,000 (92.5%)</td>
+            <td class="price-tag">฿3,870,000 (92.3%)</td>
+            <td class="price-tag">฿15,480,000 (92.3%)</td>
+            <td class="price-tag">฿46,440,000 (92.3%)</td>
           </tr>
           <tr>
-            <td>ค่าใช้จ่ายดำเนินงาน (OPEX: เงินเดือน, การตลาด, สนับสนุน)</td>
-            <td class="price-tag" style="color: var(--text-muted);">(฿840,000)</td>
-            <td class="price-tag" style="color: var(--text-muted);">(฿2,880,000)</td>
-            <td class="price-tag" style="color: var(--text-muted);">(฿9,600,000)</td>
+            <td>ค่าใช้จ่ายดำเนินงาน (OPEX: Dev, Onsite, Operator, ดอกเบี้ยเงินกู้ 2 ล.)</td>
+            <td class="price-tag" style="color: var(--text-muted);">(฿1,444,200)</td>
+            <td class="price-tag" style="color: var(--text-muted);">(฿3,600,000)</td>
+            <td class="price-tag" style="color: var(--text-muted);">(฿10,800,000)</td>
           </tr>
           <tr style="background: var(--bg-blue-light); font-weight: 900;">
             <td style="color: var(--primary-navy);">กำไรสุทธิก่อนหักภาษี (EBITDA / Net Profit)</td>
-            <td class="price-tag" style="color: var(--primary-blue);">฿819,000 (45.6%)</td>
-            <td class="price-tag" style="color: var(--emerald);">฿5,415,000 (60.4%)</td>
-            <td class="price-tag" style="color: var(--purple);">฿23,580,000 (65.7%)</td>
+            <td class="price-tag" style="color: var(--primary-blue);">฿2,425,800 (57.8%)</td>
+            <td class="price-tag" style="color: var(--emerald);">฿11,880,000 (70.8%)</td>
+            <td class="price-tag" style="color: var(--purple);">฿35,640,000 (70.8%)</td>
           </tr>
         </tbody>
       </table>
