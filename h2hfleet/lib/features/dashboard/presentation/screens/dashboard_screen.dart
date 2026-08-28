@@ -383,111 +383,114 @@ $summary
 
             // ─── Dashboard Body Content (Responsive Mobile vs iPad/Web) ───
             SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  isLargeScreen ? 24 : 16,
-                  18,
-                  isLargeScreen ? 24 : 16,
-                  32,
-                ),
-                child: isLargeScreen
-                    // ═══════════════ iPad & Web Large Screen Layout ═══════════════
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // 1. Hero Art Banner with Cybernetic Mesh & Isometric Truck
-                          CyberFleetHeroArt(
-                            height: 180,
-                            activeVehicles: vehicleCount,
-                            isTh: isTh,
-                          ),
-                          const SizedBox(height: 20),
-
-                          // 2. 4-Column KPI Stats Row
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _KpiStatCard(
-                                  icon: Icons.local_shipping_rounded,
-                                  label: s.totalVehicles,
-                                  value: '$vehicleCount',
-                                  unit: s.vehiclesUnit,
-                                  accentColor: const Color(0xFF0284C7),
-                                  bgGradient: const [Color(0xFFF0F9FF), Color(0xFFE0F2FE)],
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _KpiStatCard(
-                                  icon: Icons.payments_rounded,
-                                  label: s.todayExpense,
-                                  value: '฿${currencyFormat.format(todayTotal)}',
-                                  unit: isTh ? 'วันนี้' : 'Today',
-                                  accentColor: todayTotal > 0 ? const Color(0xFFEA580C) : const Color(0xFF10B981),
-                                  bgGradient: const [Color(0xFFFEF2F2), Color(0xFFFFF7ED)],
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _KpiStatCard(
-                                  icon: Icons.calendar_month_rounded,
-                                  label: s.monthExpense,
-                                  value: '฿${currencyFormat.format(monthTotal)}',
-                                  unit: isTh ? 'เดือนนี้' : 'This Mo.',
-                                  accentColor: const Color(0xFF6366F1),
-                                  bgGradient: const [Color(0xFFEEF2FF), Color(0xFFE0E7FF)],
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _KpiStatCard(
-                                  icon: Icons.satellite_alt_rounded,
-                                  label: isTh ? 'สถานะ GPS สด' : 'GPS Telemetry',
-                                  value: '$vehicleCount/$vehicleCount',
-                                  unit: isTh ? 'ออนไลน์' : 'Online',
-                                  accentColor: const Color(0xFF10B981),
-                                  bgGradient: const [Color(0xFFF0FDF4), Color(0xFFDCFCE7)],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-
-                          // 3. Dual-Pane Columns (Left 50% : Right 50%)
-                          Row(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1360),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      isLargeScreen ? 24 : 16,
+                      18,
+                      isLargeScreen ? 24 : 16,
+                      32,
+                    ),
+                    child: isLargeScreen
+                        // ═══════════════ iPad & Web Large Screen Layout ═══════════════
+                        ? Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // ─── Left Column (Menus & Expenses: 50%) ───
-                              Expanded(
-                                flex: 5,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _SectionTitle(
-                                      title: s.fleetControlCenter,
-                                      badge: s.modulesCount(9),
-                                    ),
-                                    const SizedBox(height: 14),
+                              // 1. Hero Art Banner with Cybernetic Mesh & Isometric Truck
+                              CyberFleetHeroArt(
+                                height: 180,
+                                activeVehicles: vehicleCount,
+                                isTh: isTh,
+                              ),
+                              const SizedBox(height: 20),
 
-                                    // 3-Column Menu Grid on Large Screen
-                                    GridView.count(
-                                      crossAxisCount: 3,
-                                      crossAxisSpacing: 10,
-                                      mainAxisSpacing: 10,
-                                      childAspectRatio: 1.38,
-                                      shrinkWrap: true,
-                                      physics: const NeverScrollableScrollPhysics(),
+                              // 2. 4-Column KPI Stats Row
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _KpiStatCard(
+                                      icon: Icons.local_shipping_rounded,
+                                      label: s.totalVehicles,
+                                      value: '$vehicleCount',
+                                      unit: s.vehiclesUnit,
+                                      accentColor: const Color(0xFF0284C7),
+                                      bgGradient: const [Color(0xFFF0F9FF), Color(0xFFE0F2FE)],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _KpiStatCard(
+                                      icon: Icons.payments_rounded,
+                                      label: s.todayExpense,
+                                      value: '฿${currencyFormat.format(todayTotal)}',
+                                      unit: isTh ? 'วันนี้' : 'Today',
+                                      accentColor: todayTotal > 0 ? const Color(0xFFEA580C) : const Color(0xFF10B981),
+                                      bgGradient: const [Color(0xFFFEF2F2), Color(0xFFFFF7ED)],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _KpiStatCard(
+                                      icon: Icons.calendar_month_rounded,
+                                      label: s.monthExpense,
+                                      value: '฿${currencyFormat.format(monthTotal)}',
+                                      unit: isTh ? 'เดือนนี้' : 'This Mo.',
+                                      accentColor: const Color(0xFF6366F1),
+                                      bgGradient: const [Color(0xFFEEF2FF), Color(0xFFE0E7FF)],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _KpiStatCard(
+                                      icon: Icons.satellite_alt_rounded,
+                                      label: isTh ? 'สถานะ GPS สด' : 'GPS Telemetry',
+                                      value: '$vehicleCount/$vehicleCount',
+                                      unit: isTh ? 'ออนไลน์' : 'Online',
+                                      accentColor: const Color(0xFF10B981),
+                                      bgGradient: const [Color(0xFFF0FDF4), Color(0xFFDCFCE7)],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 24),
+
+                              // 3. Dual-Pane Columns (Left 50% : Right 50%)
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // ─── Left Column (Menus & Expenses: 50%) ───
+                                  Expanded(
+                                    flex: 5,
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        _BespokeMenuTile(
-                                          badge: const _FleetTruckIconBadge(),
-                                          title: s.myVehicles,
-                                          subtitle: '$vehicleCount ${s.vehiclesUnit} · ${isTh ? "ข้อมูลรถ" : "Fleet info"}',
-                                          badgeTag: '$vehicleCount',
-                                          badgeTagColor: const Color(0xFF1E3A8A),
-                                          onTap: () => Navigator.of(context).push(
-                                            MaterialPageRoute(builder: (_) => const VehicleListScreen()),
-                                          ),
+                                        _SectionTitle(
+                                          title: s.fleetControlCenter,
+                                          badge: s.modulesCount(9),
                                         ),
+                                        const SizedBox(height: 14),
+
+                                        // 3-Column Menu Grid on Large Screen
+                                        GridView.count(
+                                          crossAxisCount: 3,
+                                          crossAxisSpacing: 10,
+                                          mainAxisSpacing: 10,
+                                          mainAxisExtent: 96,
+                                          shrinkWrap: true,
+                                          physics: const NeverScrollableScrollPhysics(),
+                                          children: [
+                                            _BespokeMenuTile(
+                                              badge: const _FleetTruckIconBadge(),
+                                              title: s.myVehicles,
+                                              subtitle: '$vehicleCount ${s.vehiclesUnit} · ${isTh ? "ข้อมูลรถ" : "Fleet info"}',
+                                              badgeTag: '$vehicleCount',
+                                              badgeTagColor: const Color(0xFF1E3A8A),
+                                              onTap: () => Navigator.of(context).push(
+                                                MaterialPageRoute(builder: (_) => const VehicleListScreen()),
+                                              ),
+                                            ),
                                         _BespokeMenuTile(
                                           badge: const _LiveMapGpsIconBadge(),
                                           title: s.liveMap,
@@ -694,23 +697,23 @@ $summary
                           // 3. All Features & Menus (9 Menus)
                           _SectionTitle(
                             title: s.fleetControlCenter,
-                            badge: s.modulesCount(9),
+                            badge: s.modulesCount(10),
                           ),
                           const SizedBox(height: 14),
 
-                          // Grid of 9 Bespoke Action Menus
+                          // Grid of 10 Bespoke Action Menus
                           GridView.count(
                             crossAxisCount: 2,
                             crossAxisSpacing: 10,
                             mainAxisSpacing: 10,
-                            childAspectRatio: 1.38,
+                            mainAxisExtent: 96,
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             children: [
                               _BespokeMenuTile(
                                 badge: const _FleetTruckIconBadge(),
                                 title: s.myVehicles,
-                                subtitle: '$vehicleCount ${s.vehiclesUnit} · จัดการข้อมูล',
+                                subtitle: '$vehicleCount ${s.vehiclesUnit} · ${isTh ? "ข้อมูลรถ" : "Fleet info"}',
                                 badgeTag: '$vehicleCount',
                                 badgeTagColor: const Color(0xFF1E3A8A),
                                 onTap: () => Navigator.of(context).push(
@@ -844,6 +847,8 @@ $summary
                           _buildExpensesStream(expensesAsync, currencyFormat, isTh, s),
                         ],
                       ),
+                  ),
+                ),
               ),
             ),
           ],

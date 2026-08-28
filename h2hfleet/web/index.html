@@ -70,8 +70,17 @@
     }
     window.addEventListener('flutter-first-frame', h2hHideSplash);
     setTimeout(h2hHideSplash, 12000); // fallback: never leave the splash stuck
+
+    // Ensure immediate updates across deployments
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (var registration of registrations) {
+          registration.update();
+        }
+      });
+    }
   </script>
 
-  <script src="flutter_bootstrap.js" async></script>
+  <script src="flutter_bootstrap.js?v=20260828_2" async></script>
 </body>
 </html>
