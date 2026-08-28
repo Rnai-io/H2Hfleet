@@ -34,32 +34,376 @@
   <title>H2HFleet · ระบบบริหารฟลีตอัจฉริยะ SME</title>
   <link rel="manifest" href="manifest.json">
 
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800;900&family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
   <style>
-    /* Branded loading splash shown until Flutter renders its first frame */
+    /* ─── Production Grade Luxury Cyber Splash ─── */
     #h2h-splash {
       position: fixed; inset: 0; z-index: 99999;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: linear-gradient(160deg, #1E3A8A 0%, #1E40AF 55%, #2563EB 100%);
-      color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Thai', sans-serif;
-      transition: opacity .45s ease; gap: 22px;
+      background: radial-gradient(circle at 50% 38%, #1E293B 0%, #0F172A 50%, #070D18 100%);
+      color: #fff; font-family: 'Prompt', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      transition: opacity 0.55s cubic-bezier(0.4, 0, 0.2, 1), transform 0.55s ease;
+      overflow: hidden;
     }
-    #h2h-splash.hide { opacity: 0; pointer-events: none; }
-    #h2h-splash .brand { display: flex; align-items: center; gap: 12px; font-size: 30px; font-weight: 800; letter-spacing: -.5px; }
-    #h2h-splash .brand .truck { font-size: 38px; }
-    #h2h-splash .tag { font-size: 14px; color: rgba(255,255,255,.82); font-weight: 500; }
-    #h2h-splash .spinner {
-      width: 34px; height: 34px; margin-top: 6px;
-      border: 3px solid rgba(255,255,255,.25); border-top-color: #fff;
-      border-radius: 50%; animation: h2hspin .8s linear infinite;
+    #h2h-splash.hide {
+      opacity: 0;
+      transform: scale(1.03);
+      pointer-events: none;
     }
-    @keyframes h2hspin { to { transform: rotate(360deg); } }
+
+    /* Ambient Background Glow */
+    .splash-orb {
+      position: absolute;
+      width: 460px;
+      height: 460px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(2, 132, 199, 0.18) 0%, rgba(99, 102, 241, 0.08) 50%, transparent 70%);
+      top: 25%;
+      filter: blur(40px);
+      pointer-events: none;
+      animation: orbPulse 4s ease-in-out infinite alternate;
+    }
+    @keyframes orbPulse {
+      0% { transform: scale(0.9) translateY(0); opacity: 0.7; }
+      100% { transform: scale(1.15) translateY(-20px); opacity: 1; }
+    }
+
+    /* Fleet Animation Stage */
+    .truck-stage {
+      position: relative;
+      width: 280px;
+      height: 120px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    /* Headlight Beam */
+    .headlight-cone {
+      position: absolute;
+      right: -25px;
+      bottom: 28px;
+      width: 140px;
+      height: 42px;
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.55) 0%, rgba(56, 189, 248, 0.15) 55%, transparent 100%);
+      clip-path: polygon(0% 40%, 100% 0%, 100% 100%, 0% 60%);
+      filter: blur(2px);
+      pointer-events: none;
+      animation: headlightFlicker 2.5s infinite;
+    }
+    @keyframes headlightFlicker {
+      0%, 100% { opacity: 0.85; }
+      50% { opacity: 1; filter: blur(3px); }
+      75% { opacity: 0.9; }
+    }
+
+    /* Animated Vehicle Container */
+    .truck-body-wrap {
+      position: relative;
+      z-index: 2;
+      animation: truckSuspension 0.8s ease-in-out infinite alternate;
+    }
+    @keyframes truckSuspension {
+      0% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-2.5px) rotate(0.4deg); }
+      100% { transform: translateY(1px) rotate(-0.3deg); }
+    }
+
+    /* GPS Ping from Antenna */
+    .gps-ping {
+      position: absolute;
+      top: -12px;
+      left: 78px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 1.5px solid #38BDF8;
+      opacity: 0;
+      animation: pingWave 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+    .gps-ping.delay {
+      animation-delay: 0.8s;
+    }
+    @keyframes pingWave {
+      0% { transform: scale(0.2); opacity: 1; }
+      70% { transform: scale(2.2); opacity: 0.2; }
+      100% { transform: scale(2.8); opacity: 0; }
+    }
+
+    /* Speed Wind Streaks */
+    .speed-lines {
+      position: absolute;
+      left: -40px;
+      bottom: 45px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      pointer-events: none;
+    }
+    .speed-line {
+      height: 2px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.7), transparent);
+      animation: speedStreak 0.6s linear infinite;
+    }
+    .speed-line:nth-child(1) { width: 45px; animation-delay: 0.1s; }
+    .speed-line:nth-child(2) { width: 65px; animation-delay: 0.3s; }
+    .speed-line:nth-child(3) { width: 35px; animation-delay: 0s; }
+    @keyframes speedStreak {
+      0% { transform: translateX(20px); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateX(-40px); opacity: 0; }
+    }
+
+    /* Rotating Wheels */
+    .wheel-rotate {
+      transform-origin: center;
+      animation: spinRims 0.45s linear infinite;
+    }
+    @keyframes spinRims {
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Fast Road Grid */
+    .road-track {
+      position: absolute;
+      bottom: 8px;
+      width: 260px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .road-dash {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(90deg, #38BDF8 0, #38BDF8 20px, transparent 20px, transparent 40px);
+      background-size: 60px 100%;
+      animation: roadScroll 0.35s linear infinite;
+    }
+    @keyframes roadScroll {
+      0% { background-position: 60px 0; }
+      100% { background-position: 0 0; }
+    }
+
+    /* Brand Header Box */
+    .brand-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+      z-index: 10;
+    }
+    .brand-logo-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    .brand-name {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.6px;
+      color: #FFFFFF;
+      text-shadow: 0 2px 10px rgba(2, 132, 199, 0.4);
+    }
+    .fleet-badge {
+      background: linear-gradient(135deg, #0284C7 0%, #2563EB 100%);
+      color: #FFFFFF;
+      font-family: 'Inter', sans-serif;
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      padding: 3px 7px;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    /* Live Telematics Indicator */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      color: #E2E8F0;
+      font-weight: 500;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      margin-top: 4px;
+    }
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px #10B981;
+      animation: liveBlink 1.4s ease-in-out infinite alternate;
+    }
+    @keyframes liveBlink {
+      0% { opacity: 0.4; transform: scale(0.85); }
+      100% { opacity: 1; transform: scale(1.15); box-shadow: 0 0 12px #34D399; }
+    }
+
+    /* High-tech Progress Bar */
+    .progress-track {
+      width: 180px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      margin-top: 18px;
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-bar-shimmer {
+      position: absolute;
+      height: 100%;
+      width: 60px;
+      background: linear-gradient(90deg, transparent, #38BDF8, #818CF8, transparent);
+      border-radius: 10px;
+      animation: progressAnim 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+    @keyframes progressAnim {
+      0% { left: -60px; }
+      100% { left: 180px; }
+    }
   </style>
 </head>
 <body>
+  <!-- ─── Luxury High-Tech Fleet Loading Screen ─── -->
   <div id="h2h-splash">
-    <div class="brand"><span class="truck">🚛</span><span>H2HFleet</span></div>
-    <div class="tag">ระบบบริหารฟลีตอัจฉริยะ · กำลังเริ่มต้น…</div>
-    <div class="spinner"></div>
+    <div class="splash-orb"></div>
+
+    <!-- Truck Stage & Moving Graphics -->
+    <div class="truck-stage">
+      <!-- Speed Wind Streaks behind truck -->
+      <div class="speed-lines">
+        <div class="speed-line"></div>
+        <div class="speed-line"></div>
+        <div class="speed-line"></div>
+      </div>
+
+      <!-- GPS Signal Rings -->
+      <div class="gps-ping"></div>
+      <div class="gps-ping delay"></div>
+
+      <!-- Animated Headlight Beam -->
+      <div class="headlight-cone"></div>
+
+      <!-- Vector Truck Silhouette with Rotating Cyber Wheels -->
+      <div class="truck-body-wrap">
+        <svg width="190" height="78" viewBox="0 0 190 78" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Ambient Vehicle Glow -->
+          <defs>
+            <linearGradient id="bodyGrad" x1="0" y1="0" x2="190" y2="70" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#1E3A8A"/>
+              <stop offset="45%" stop-color="#0284C7"/>
+              <stop offset="100%" stop-color="#38BDF8"/>
+            </linearGradient>
+            <linearGradient id="cabGrad" x1="120" y1="10" x2="185" y2="60" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#F8FAFC"/>
+              <stop offset="100%" stop-color="#CBD5E1"/>
+            </linearGradient>
+            <linearGradient id="glassGrad" x1="135" y1="18" x2="175" y2="40" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.9"/>
+              <stop offset="100%" stop-color="#0284C7" stop-opacity="0.5"/>
+            </linearGradient>
+            <linearGradient id="neonStripe" x1="0" y1="0" x2="140" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.2"/>
+              <stop offset="70%" stop-color="#38BDF8"/>
+              <stop offset="100%" stop-color="#FFFFFF"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Cargo Trailer Box -->
+          <rect x="8" y="10" width="124" height="46" rx="6" fill="url(#bodyGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
+          
+          <!-- Cyber Cargo Stripes -->
+          <line x1="8" y1="36" x2="132" y2="36" stroke="url(#neonStripe)" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="26" y1="16" x2="26" y2="50" stroke="rgba(255,255,255,0.18)" stroke-width="1.2"/>
+          <line x1="58" y1="16" x2="58" y2="50" stroke="rgba(255,255,255,0.18)" stroke-width="1.2"/>
+          <line x1="90" y1="16" x2="90" y2="50" stroke="rgba(255,255,255,0.18)" stroke-width="1.2"/>
+
+          <!-- High-Tech Fleet Badge on Cargo -->
+          <text x="36" y="29" fill="#FFFFFF" font-family="'Inter', sans-serif" font-weight="900" font-size="10" letter-spacing="1.2">H2H FLEET</text>
+
+          <!-- Cab Chassis & Body -->
+          <path d="M132 26 L154 26 L172 40 L176 56 L132 56 Z" fill="url(#cabGrad)" stroke="#94A3B8" stroke-width="1"/>
+          <!-- Windshield Glass -->
+          <path d="M152 28 L168 40 L152 40 Z" fill="url(#glassGrad)" stroke="#38BDF8" stroke-width="0.8"/>
+          <!-- Headlight Projector -->
+          <rect x="173" y="44" width="3" height="7" rx="1.5" fill="#38BDF8"/>
+
+          <!-- GPS IoT Antenna Dome -->
+          <circle cx="85" cy="8" r="3.5" fill="#38BDF8"/>
+          <circle cx="85" cy="8" r="1.5" fill="#FFFFFF"/>
+
+          <!-- Rear Wheel Hub (Wheel 1) -->
+          <g transform="translate(32, 58)">
+            <circle cx="0" cy="0" r="11" fill="#0F172A" stroke="#475569" stroke-width="2"/>
+            <circle cx="0" cy="0" r="6.5" fill="#1E293B"/>
+            <g class="wheel-rotate">
+              <line x1="-5.5" y1="0" x2="5.5" y2="0" stroke="#38BDF8" stroke-width="1.5"/>
+              <line x1="0" y1="-5.5" x2="0" y2="5.5" stroke="#38BDF8" stroke-width="1.5"/>
+              <circle cx="0" cy="0" r="2.2" fill="#FFFFFF"/>
+            </g>
+          </g>
+
+          <!-- Rear Wheel Hub (Wheel 2) -->
+          <g transform="translate(60, 58)">
+            <circle cx="0" cy="0" r="11" fill="#0F172A" stroke="#475569" stroke-width="2"/>
+            <circle cx="0" cy="0" r="6.5" fill="#1E293B"/>
+            <g class="wheel-rotate">
+              <line x1="-5.5" y1="0" x2="5.5" y2="0" stroke="#38BDF8" stroke-width="1.5"/>
+              <line x1="0" y1="-5.5" x2="0" y2="5.5" stroke="#38BDF8" stroke-width="1.5"/>
+              <circle cx="0" cy="0" r="2.2" fill="#FFFFFF"/>
+            </g>
+          </g>
+
+          <!-- Front Cab Wheel (Wheel 3) -->
+          <g transform="translate(156, 58)">
+            <circle cx="0" cy="0" r="11" fill="#0F172A" stroke="#475569" stroke-width="2"/>
+            <circle cx="0" cy="0" r="6.5" fill="#1E293B"/>
+            <g class="wheel-rotate">
+              <line x1="-5.5" y1="0" x2="5.5" y2="0" stroke="#38BDF8" stroke-width="1.5"/>
+              <line x1="0" y1="-5.5" x2="0" y2="5.5" stroke="#38BDF8" stroke-width="1.5"/>
+              <circle cx="0" cy="0" r="2.2" fill="#FFFFFF"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Animated Road Track Underneath -->
+      <div class="road-track">
+        <div class="road-dash"></div>
+      </div>
+    </div>
+
+    <!-- Brand Header -->
+    <div class="brand-box">
+      <div class="brand-logo-row">
+        <span class="brand-name">H2H</span>
+        <span class="fleet-badge">FLEET</span>
+      </div>
+      <div class="status-pill">
+        <span class="live-dot"></span>
+        <span>ระบบบริหารกองยานพาหนะอัจฉริยะ · กำลังเชื่อมต่อระบบสด…</span>
+      </div>
+    </div>
+
+    <!-- Sleek Neon Shimmer Progress Bar -->
+    <div class="progress-track">
+      <div class="progress-bar-shimmer"></div>
+    </div>
   </div>
 
   <script>
