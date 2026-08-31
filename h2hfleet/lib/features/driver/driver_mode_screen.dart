@@ -102,7 +102,6 @@ class _DriverModeScreenState extends ConsumerState<DriverModeScreen> {
     final isTh = s.isTh;
     final vehiclesAsync = ref.watch(vehiclesProvider);
     final isLargeScreen = MediaQuery.of(context).size.width >= 800;
-    final statusText = _customStatusText ?? (_isTracking ? (isTh ? 'กำลังส่ง GPS แบบเรียลไทม์' : 'Broadcasting Live GPS Telemetry') : (isTh ? 'กดเริ่มเดินทางเพื่อส่ง GPS' : 'Tap Start Trip to begin GPS tracking'));
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),

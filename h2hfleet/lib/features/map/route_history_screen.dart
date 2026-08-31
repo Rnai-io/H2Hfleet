@@ -249,19 +249,19 @@ class _RouteMapTab extends StatelessWidget {
                     blurRadius: 6)
               ],
             ),
-            child: Column(
+            child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 _LegendItem(
                     color: AppColors.success, icon: Icons.play_arrow_rounded, label: 'จุดเริ่มต้น'),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 _LegendItem(
                     color: AppColors.danger, icon: Icons.stop_rounded, label: 'จุดสิ้นสุด'),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 _LegendItem(
                     color: AppColors.danger, isCircle: true, label: 'จอดรถ'),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 _LegendItem(
                     color: AppColors.primary, isCircle: true, label: 'วิ่งอยู่'),
               ],
@@ -369,7 +369,7 @@ class _AnalyticsTab extends StatelessWidget {
 
           // Moving vs Idle bar
           if (totalMinutes > 0) ...[
-            _SectionTitle('สัดส่วนการใช้งาน'),
+            const _SectionTitle('สัดส่วนการใช้งาน'),
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.all(16),
@@ -428,7 +428,7 @@ class _AnalyticsTab extends StatelessWidget {
           ],
 
           // Speed profile (simple chart)
-          _SectionTitle('ความเร็วตลอดเส้นทาง'),
+          const _SectionTitle('ความเร็วตลอดเส้นทาง'),
           const SizedBox(height: 10),
           Container(
             height: 100,
@@ -443,7 +443,7 @@ class _AnalyticsTab extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Timeline
-          _SectionTitle('ไทม์ไลน์การเดินทาง'),
+          const _SectionTitle('ไทม์ไลน์การเดินทาง'),
           const SizedBox(height: 10),
           Container(
             decoration: BoxDecoration(
@@ -622,7 +622,7 @@ class _SpeedPainter extends CustomPainter {
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
     canvas.drawLine(
-        Offset(0, 0), Offset(size.width, 0), maxPaint);
+        const Offset(0, 0), Offset(size.width, 0), maxPaint);
   }
 
   @override

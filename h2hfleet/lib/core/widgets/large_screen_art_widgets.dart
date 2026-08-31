@@ -405,7 +405,7 @@ class _IpadTelemetryRadarCardState extends State<IpadTelemetryRadarCard> with Si
         final addr = await RouteNavigationService.reverseGeocode(
           LatLng(pos.latitude, pos.longitude),
         );
-        if (mounted && addr != null) {
+        if (mounted) {
           setState(() => _currentAddress = addr);
         }
 

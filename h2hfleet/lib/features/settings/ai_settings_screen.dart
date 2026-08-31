@@ -245,18 +245,18 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
                     ),
-                    child: Column(
+                    child: const Column(
                       children: [
                         _FeatureBullet(
                           icon: Icons.analytics_rounded,
                           text: 'สรุปค่าใช้จ่ายและค่าน้ำมันประจำวันอัตโนมัติ',
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         _FeatureBullet(
                           icon: Icons.shield_rounded,
                           text: 'Key จะถูกเข้ารหัสและบันทึกเฉพาะในเครื่องอย่างปลอดภัย',
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         _FeatureBullet(
                           icon: Icons.bolt_rounded,
                           text: 'ตอบสนองเร็วพิเศษ พร้อมส่งวิเคราะห์เข้า LINE ได้ทันที',

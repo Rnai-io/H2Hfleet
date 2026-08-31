@@ -960,16 +960,16 @@ class _MessageBubble extends StatelessWidget {
                                   ),
                                 );
                               },
-                              child: Row(
+                              child: const Row(
                                 children: [
-                                  const Icon(Icons.copy_rounded, size: 12, color: Color(0xFF94A3B8)),
-                                  const SizedBox(width: 3),
+                                  Icon(Icons.copy_rounded, size: 12, color: Color(0xFF94A3B8)),
+                                  SizedBox(width: 3),
                                   Text(
                                     'คัดลอก',
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF94A3B8),
+                                      color: Color(0xFF94A3B8),
                                     ),
                                   ),
                                 ],

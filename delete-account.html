@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ขอลบบัญชีและข้อมูล — H2HFleet</title>
+<meta name="description" content="วิธีขอลบบัญชีผู้ใช้และข้อมูลส่วนบุคคลออกจากระบบ H2HFleet">
+<style>
+  :root {
+    --primary:#1E40AF; --accent:#2563EB; --light:#EFF6FF; --text:#1E293B;
+    --muted:#64748B; --border:#E2E8F0; --success:#059669; --danger:#DC2626;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans Thai',sans-serif;
+    background:#F8FAFC;color:var(--text);line-height:1.7;font-size:15px}
+  header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 100%);color:#fff;padding:48px 24px 40px;text-align:center}
+  .logo-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px}
+  .logo-icon{width:48px;height:48px;background:rgba(255,255,255,.15);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;font-size:24px}
+  .logo-text{font-size:28px;font-weight:800;letter-spacing:-.5px}
+  header h1{font-size:22px;font-weight:700;opacity:.95;margin-bottom:8px}
+  header p{font-size:13px;opacity:.75}
+  .badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);
+    border-radius:20px;padding:4px 14px;font-size:12px;margin-top:12px}
+  .container{max-width:760px;margin:0 auto;padding:40px 24px 80px}
+  section{background:#fff;border:1px solid var(--border);border-radius:14px;padding:28px;margin-bottom:20px}
+  h2{font-size:18px;font-weight:700;color:var(--primary);margin-bottom:14px}
+  h3{font-size:15px;font-weight:700;margin:18px 0 8px}
+  p{margin-bottom:12px}
+  ol,ul{margin:0 0 12px 22px}
+  li{margin-bottom:8px}
+  .steps{counter-reset:s;list-style:none;margin-left:0}
+  .steps li{counter-increment:s;position:relative;padding-left:42px;margin-bottom:14px}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:28px;height:28px;
+    background:var(--light);color:var(--primary);border-radius:8px;font-weight:700;font-size:13px;
+    display:flex;align-items:center;justify-content:center}
+  table{width:100%;border-collapse:collapse;margin:8px 0 16px;font-size:14px}
+  th,td{border:1px solid var(--border);padding:10px 12px;text-align:left;vertical-align:top}
+  th{background:var(--light);font-weight:700;color:var(--primary)}
+  .cta{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;
+    padding:12px 22px;border-radius:10px;font-weight:700;font-size:15px;margin-top:6px}
+  .note{background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:14px 16px;font-size:14px}
+  .muted{color:var(--muted);font-size:13px}
+  footer{text-align:center;color:var(--muted);font-size:13px;padding:0 24px 60px}
+  footer a{color:var(--accent)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo-row">
+    <div class="logo-icon">🚛</div>
+    <div class="logo-text">H2HFleet</div>
+  </div>
+  <h1>ขอลบบัญชีและข้อมูลส่วนบุคคล</h1>
+  <p>Account &amp; Data Deletion Request</p>
+  <div class="badge">แก้ไขล่าสุด: 31 สิงหาคม 2569</div>
+</header>
+
+<div class="container">
+
+  <section>
+    <h2>วิธีที่ 1 — ลบบัญชีด้วยตนเองในแอป (แนะนำ)</h2>
+    <p>วิธีนี้เร็วที่สุด บัญชีจะถูกลบทันทีโดยไม่ต้องรอการตรวจสอบ</p>
+    <ol class="steps">
+      <li>เปิดแอป H2HFleet แล้วเข้าสู่ระบบด้วยบัญชีที่ต้องการลบ</li>
+      <li>ไปที่เมนู <strong>โปรไฟล์</strong> → <strong>ตั้งค่าบัญชี</strong></li>
+      <li>เลือก <strong>ลบบัญชีของฉัน</strong></li>
+      <li>อ่านรายการข้อมูลที่จะถูกลบ แล้วยืนยันด้วยรหัสผ่านของคุณ</li>
+      <li>กด <strong>ยืนยันการลบ</strong> — ระบบจะออกจากระบบและลบบัญชีทันที</li>
+    </ol>
+    <div class="note">
+      หากบัญชีของคุณเป็น <strong>ผู้ดูแลระบบคนสุดท้าย</strong>ของบริษัท ระบบจะให้คุณเลือกก่อนว่าจะโอนสิทธิ์ผู้ดูแลให้ผู้ใช้คนอื่น หรือลบข้อมูลของทั้งบริษัทไปพร้อมกัน
+    </div>
+  </section>
+
+  <section>
+    <h2>วิธีที่ 2 — ส่งคำขอลบบัญชี</h2>
+    <p>หากคุณเข้าสู่ระบบไม่ได้ หรือถอนการติดตั้งแอปไปแล้ว ส่งคำขอมาได้ตามช่องทางนี้</p>
+    <h3>ส่งอีเมลมาที่</h3>
+    <p><a class="cta" href="mailto:naiguitarfolk@gmail.com?subject=%E0%B8%82%E0%B8%AD%E0%B8%A5%E0%B8%9A%E0%B8%9A%E0%B8%B1%E0%B8%8D%E0%B8%8A%E0%B8%B5%20H2HFleet">ส่งคำขอลบบัญชีทางอีเมล</a></p>
+    <p class="muted">หรือทักผ่าน LINE Official Account <strong>@655jmtme</strong></p>
+    <h3>กรุณาระบุข้อมูลต่อไปนี้ในคำขอ</h3>
+    <ul>
+      <li>อีเมลที่ใช้สมัครบัญชี H2HFleet</li>
+      <li>ชื่อบริษัทหรือชื่อกองรถที่อยู่ในระบบ</li>
+      <li>ยืนยันว่าคุณเป็นเจ้าของบัญชีนี้</li>
+    </ul>
+    <p>เราจะยืนยันตัวตนของคุณและดำเนินการลบให้ <strong>ภายใน 30 วัน</strong> นับจากวันที่ได้รับคำขอ และจะส่งอีเมลแจ้งเมื่อดำเนินการเสร็จสิ้น</p>
+  </section>
+
+  <section>
+    <h2>ข้อมูลอะไรบ้างที่จะถูกลบ</h2>
+    <table>
+      <tr><th>ประเภทข้อมูล</th><th>ผลลัพธ์</th><th>ระยะเวลา</th></tr>
+      <tr><td>บัญชีผู้ใช้ ชื่อ อีเมล และรหัสผ่าน</td><td>ลบถาวร</td><td>ทันที</td></tr>
+      <tr><td>ประวัติตำแหน่ง GPS และเส้นทางการเดินทาง</td><td>ลบถาวร</td><td>ทันที</td></tr>
+      <tr><td>รูปใบเสร็จและรูปภาพที่อัปโหลด</td><td>ลบถาวร</td><td>ทันที</td></tr>
+      <tr><td>บันทึกค่าใช้จ่าย งานวิ่ง และประวัติซ่อมบำรุงส่วนบุคคล</td><td>ลบถาวร</td><td>ทันที</td></tr>
+      <tr><td>ประวัติการสนทนากับผู้ช่วย AI</td><td>ลบถาวร</td><td>ทันที</td></tr>
+      <tr><td>ข้อมูลสำรอง (backup) ของฐานข้อมูล</td><td>ทับด้วยรอบสำรองใหม่</td><td>ภายใน 90 วัน</td></tr>
+    </table>
+
+    <h3>ข้อมูลที่อาจเก็บต่อ</h3>
+    <ul>
+      <li><strong>ข้อมูลของบริษัทที่ผู้ใช้คนอื่นยังใช้งานอยู่</strong> — เช่น ข้อมูลรถและบันทึกค่าใช้จ่ายระดับบริษัท จะยังอยู่กับบัญชีผู้ดูแลคนอื่น แต่จะไม่ผูกกับตัวตนของคุณอีกต่อไป</li>
+      <li><strong>บันทึกที่กฎหมายกำหนดให้เก็บ</strong> — เอกสารทางบัญชีหรือภาษีที่ต้องเก็บตามกฎหมายไทย จะถูกเก็บเท่าที่จำเป็นและแยกออกจากข้อมูลระบุตัวตน</li>
+      <li><strong>บันทึกความปลอดภัยของระบบ</strong> — log การเข้าถึงแบบไม่ระบุตัวตน เก็บสูงสุด 90 วัน</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>คำถามที่พบบ่อย</h2>
+    <h3>ลบแล้วกู้คืนได้ไหม</h3>
+    <p>ไม่ได้ การลบบัญชีเป็นการดำเนินการถาวร หากต้องการใช้งานอีกครั้งต้องสมัครบัญชีใหม่</p>
+    <h3>ถ้าเป็นคนขับ นายจ้างจะยังเห็นข้อมูลของฉันไหม</h3>
+    <p>ประวัติตำแหน่ง GPS ที่ผูกกับตัวตนของคุณจะถูกลบออกจากระบบ ข้อมูลระดับงานวิ่งที่บริษัทเป็นเจ้าของจะยังอยู่แต่จะไม่แสดงชื่อคุณอีกต่อไป</p>
+    <h3>ต้องการลบเฉพาะข้อมูลบางส่วนโดยไม่ลบบัญชี</h3>
+    <p>ติดต่อเราตามช่องทางด้านบนและระบุว่าต้องการลบข้อมูลส่วนใด เราจะดำเนินการตามสิทธิ์ของเจ้าของข้อมูลภายใต้ พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล (PDPA)</p>
+  </section>
+
+  <section>
+    <h2>ติดต่อเรา</h2>
+    <p>
+      อีเมล: <a href="mailto:naiguitarfolk@gmail.com">naiguitarfolk@gmail.com</a><br>
+      LINE Official Account: <strong>@655jmtme</strong><br>
+      ระยะเวลาตอบกลับ: ภายใน 7 วันทำการ
+    </p>
+  </section>
+
+</div>
+
+<footer>
+  <p>
+    <a href="./privacy-policy.html">นโยบายความเป็นส่วนตัว</a> ·
+    <a href="./terms-of-service.html">ข้อกำหนดการใช้งาน</a> ·
+    <a href="./">หน้าแรก H2HFleet</a>
+  </p>
+  <p style="margin-top:10px">© 2569 H2HFleet. All rights reserved.</p>
+</footer>
+</body>
+</html>

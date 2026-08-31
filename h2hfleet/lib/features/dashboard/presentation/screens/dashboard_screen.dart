@@ -20,6 +20,7 @@ import '../../../line/line_settings_screen.dart';
 import '../../../map/map_screen.dart';
 import '../../../driver/driver_mode_screen.dart';
 import '../../../settings/ai_settings_screen.dart';
+import '../../../settings/account_settings_screen.dart';
 import '../../../settings/company_profile_screen.dart';
 import '../../../maintenance/maintenance_screen.dart';
 import '../../../ai_chat/presentation/screens/ai_chat_screen.dart';
@@ -477,7 +478,7 @@ $summary
                                           crossAxisCount: 3,
                                           crossAxisSpacing: 10,
                                           mainAxisSpacing: 10,
-                                          mainAxisExtent: 96,
+                                          mainAxisExtent: 102,
                                           shrinkWrap: true,
                                           physics: const NeverScrollableScrollPhysics(),
                                           children: [
@@ -569,6 +570,16 @@ $summary
                                           badgeTagColor: const Color(0xFF0F172A),
                                           onTap: () => Navigator.of(context).push(
                                             MaterialPageRoute(builder: (_) => const CompanyProfileScreen()),
+                                          ),
+                                        ),
+                                        _BespokeMenuTile(
+                                          badge: const _AccountShieldBadge(),
+                                          title: isTh ? 'บัญชีของฉัน' : 'My Account',
+                                          subtitle: isTh ? 'ความเป็นส่วนตัว & ลบบัญชี' : 'Privacy & Delete',
+                                          badgeTag: isTh ? 'บัญชี' : 'Account',
+                                          badgeTagColor: const Color(0xFF475569),
+                                          onTap: () => Navigator.of(context).push(
+                                            MaterialPageRoute(builder: (_) => const AccountSettingsScreen()),
                                           ),
                                         ),
                                       ],
@@ -706,7 +717,7 @@ $summary
                             crossAxisCount: 2,
                             crossAxisSpacing: 10,
                             mainAxisSpacing: 10,
-                            mainAxisExtent: 96,
+                            mainAxisExtent: 102,
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             children: [
@@ -808,6 +819,16 @@ $summary
                                 badgeTagColor: const Color(0xFF64748B),
                                 onTap: () => Navigator.of(context).push(
                                   MaterialPageRoute(builder: (_) => const AiSettingsScreen()),
+                                ),
+                              ),
+                              _BespokeMenuTile(
+                                badge: const _AccountShieldBadge(),
+                                title: isTh ? 'บัญชีของฉัน' : 'My Account',
+                                subtitle: isTh ? 'ความเป็นส่วนตัว & ลบบัญชี' : 'Privacy & Delete',
+                                badgeTag: isTh ? 'บัญชี' : 'Account',
+                                badgeTagColor: const Color(0xFF475569),
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (_) => const AccountSettingsScreen()),
                                 ),
                               ),
                             ],
@@ -1737,8 +1758,8 @@ class _AiSettingsGearBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 44,
-      height: 44,
+      width: 38,
+      height: 38,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -1755,7 +1776,39 @@ class _AiSettingsGearBadge extends StatelessWidget {
         ],
       ),
       child: const Center(
-        child: Icon(Icons.tune_rounded, color: Colors.white, size: 20),
+        child: Icon(Icons.tune_rounded, color: Colors.white, size: 18),
+      ),
+    );
+  }
+}
+
+
+// ─── Account & Privacy Badge ────────────────────────────────────────────────
+class _AccountShieldBadge extends StatelessWidget {
+  const _AccountShieldBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF334155), Color(0xFF475569)],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF334155).withValues(alpha: 0.25),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: const Center(
+        child: Icon(Icons.shield_moon_outlined, color: Colors.white, size: 18),
       ),
     );
   }
@@ -1830,8 +1883,8 @@ class _EmptyExpensesCard extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8FAFC),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.receipt_long_rounded, size: 28, color: Color(0xFF94A3B8)),

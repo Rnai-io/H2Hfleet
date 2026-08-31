@@ -211,6 +211,49 @@ class AuthRepository {
     }
   }
 
+  // ─── Account deletion (ข้อบังคับ Google Play) ─────────────────────────
+  /// สรุปว่ากำลังจะลบอะไรบ้าง เรียกก่อนแสดง dialog ยืนยัน
+  Future<Map<String, dynamic>> accountDeletionPreview() async {
+    final res = await _supabase.client.rpc('account_deletion_preview');
+    return Map<String, dynamic>.from(res as Map);
+  }
+
+  /// รายชื่อผู้ใช้ในบริษัทเดียวกันที่โอนสิทธิ์ผู้ดูแลให้ได้
+  Future<List<Map<String, dynamic>>> transferCandidates() async {
+    final res = await _supabase.client.rpc('company_transfer_candidates');
+    return (res as List)
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
+  }
+
+  /// ลบบัญชีถาวร แล้วออกจากระบบ
+  ///
+  /// โยน [PostgrestException] เมื่อ:
+  /// - `confirm_company_delete` : เป็นสมาชิกคนสุดท้าย ต้องส่ง deleteCompany = true
+  /// - `transfer_required`      : เป็นแอดมินคนสุดท้าย ต้องเลือกผู้รับสิทธิ์
+  /// - `invalid_transfer_target`: ผู้รับสิทธิ์ไม่ได้อยู่ในบริษัทเดียวกัน
+  Future<Map<String, dynamic>> deleteMyAccount({
+    String? transferTo,
+    bool deleteCompany = false,
+  }) async {
+    final res = await _supabase.client.rpc(
+      'delete_my_account',
+      params: {
+        'p_transfer_to': transferTo,
+        'p_delete_company': deleteCompany,
+      },
+    );
+
+    // token ใช้ไม่ได้แล้วหลังลบ auth user จึงต้องกลืน error ตรงนี้
+    try {
+      await _supabase.signOut();
+    } catch (e) {
+      debugPrint('signOut after account deletion: $e');
+    }
+
+    return Map<String, dynamic>.from(res as Map);
+  }
+
   Future<void> logout() => _supabase.signOut();
 
   User? getCurrentUser() => _supabase.getCurrentUser();

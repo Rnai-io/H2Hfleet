@@ -391,28 +391,28 @@ class _LineSettingsScreenState extends ConsumerState<LineSettingsScreen> {
             ),
             const SizedBox(height: 10),
 
-            _StepCard(
+            const _StepCard(
               stepNumber: '1',
               title: 'เพิ่มเพื่อน LINE Official: @655jmtme',
               desc: 'กดปุ่ม "แอด LINE" ด้านบน หรือค้นหาไอดี @655jmtme ในแอป LINE',
               icon: Icons.person_add_rounded,
-              color: const Color(0xFF0284C7),
+              color: Color(0xFF0284C7),
             ),
             const SizedBox(height: 8),
-            _StepCard(
+            const _StepCard(
               stepNumber: '2',
               title: 'พิมพ์คำว่า "id" ในห้องแชท LINE',
               desc: 'บอทจะตอบกลับเป็นรหัส User ID ขึ้นต้นด้วยตัว U (เช่น U4a8...)',
               icon: Icons.chat_rounded,
-              color: const Color(0xFF059669),
+              color: Color(0xFF059669),
             ),
             const SizedBox(height: 8),
-            _StepCard(
+            const _StepCard(
               stepNumber: '3',
               title: 'คัดลอกมาวางในช่องด้านล่างนี้',
               desc: 'กดปุ่ม "ทดสอบส่งข้อความ" เพื่อยืนยันการเชื่อมต่อ',
               icon: Icons.verified_rounded,
-              color: const Color(0xFF7C3AED),
+              color: Color(0xFF7C3AED),
             ),
 
             const SizedBox(height: 22),

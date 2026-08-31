@@ -177,12 +177,12 @@ class VehicleCard extends ConsumerWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
         ),
-        child: Column(
+        child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.edit_rounded, color: AppColors.success, size: 26),
-            const SizedBox(height: 4),
-            const Text('แก้ไข',
+            SizedBox(height: 4),
+            Text('แก้ไข',
                 style: TextStyle(
                     color: AppColors.success,
                     fontSize: 12,
@@ -413,9 +413,9 @@ class VehicleCard extends ConsumerWidget {
                     width: double.infinity,
                     padding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppColors.dangerSurface,
-                      borderRadius: const BorderRadius.vertical(
+                      borderRadius: BorderRadius.vertical(
                           bottom: Radius.circular(16)),
                     ),
                     child: const Row(

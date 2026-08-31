@@ -103,13 +103,13 @@ class VehicleGeometry {
 VehicleGeometry geometryFor(VehicleArchetype a) {
   switch (a) {
     case VehicleArchetype.sedan:
-      return VehicleGeometry(
-        wheels: const [Offset(0.24, 0.76), Offset(0.76, 0.76)],
+      return const VehicleGeometry(
+        wheels: [Offset(0.24, 0.76), Offset(0.76, 0.76)],
         wheelR: 0.115,
         topY: 0.32,
         leftX: 0.05,
         rightX: 0.95,
-        hotspots: const [
+        hotspots: [
           HotspotSpec(0.06, 0.50, 0.22, 0.24, 'engine', 'ห้องเครื่องยนต์'),
           HotspotSpec(0.14, 0.60, 0.12, 0.15, 'oil', 'น้ำมันเครื่อง'),
           HotspotSpec(0.08, 0.44, 0.10, 0.12, 'battery', 'แบตเตอรี่'),
@@ -127,13 +127,13 @@ VehicleGeometry geometryFor(VehicleArchetype a) {
       );
 
     case VehicleArchetype.suv:
-      return VehicleGeometry(
-        wheels: const [Offset(0.25, 0.76), Offset(0.75, 0.76)],
+      return const VehicleGeometry(
+        wheels: [Offset(0.25, 0.76), Offset(0.75, 0.76)],
         wheelR: 0.125,
         topY: 0.25,
         leftX: 0.05,
         rightX: 0.95,
-        hotspots: const [
+        hotspots: [
           HotspotSpec(0.06, 0.46, 0.22, 0.26, 'engine', 'เครื่องยนต์'),
           HotspotSpec(0.12, 0.56, 0.12, 0.15, 'oil', 'น้ำมันเครื่อง'),
           HotspotSpec(0.08, 0.40, 0.10, 0.12, 'battery', 'แบตเตอรี่'),
@@ -151,13 +151,13 @@ VehicleGeometry geometryFor(VehicleArchetype a) {
       );
 
     case VehicleArchetype.pickup:
-      return VehicleGeometry(
-        wheels: const [Offset(0.24, 0.76), Offset(0.76, 0.76)],
+      return const VehicleGeometry(
+        wheels: [Offset(0.24, 0.76), Offset(0.76, 0.76)],
         wheelR: 0.125,
         topY: 0.26,
         leftX: 0.05,
         rightX: 0.95,
-        hotspots: const [
+        hotspots: [
           HotspotSpec(0.06, 0.46, 0.22, 0.26, 'engine', 'เครื่องยนต์ดีเซล'),
           HotspotSpec(0.12, 0.56, 0.12, 0.15, 'oil', 'น้ำมันเครื่อง'),
           HotspotSpec(0.08, 0.40, 0.10, 0.12, 'battery', 'แบตเตอรี่'),
@@ -175,13 +175,13 @@ VehicleGeometry geometryFor(VehicleArchetype a) {
       );
 
     case VehicleArchetype.van:
-      return VehicleGeometry(
-        wheels: const [Offset(0.22, 0.76), Offset(0.78, 0.76)],
+      return const VehicleGeometry(
+        wheels: [Offset(0.22, 0.76), Offset(0.78, 0.76)],
         wheelR: 0.12,
         topY: 0.20,
         leftX: 0.06,
         rightX: 0.94,
-        hotspots: const [
+        hotspots: [
           HotspotSpec(0.08, 0.48, 0.20, 0.24, 'engine', 'เครื่องยนต์'),
           HotspotSpec(0.12, 0.58, 0.12, 0.14, 'oil', 'น้ำมันเครื่อง'),
           HotspotSpec(0.08, 0.40, 0.10, 0.12, 'battery', 'แบตเตอรี่'),
@@ -199,13 +199,13 @@ VehicleGeometry geometryFor(VehicleArchetype a) {
       );
 
     case VehicleArchetype.boxVan:
-      return VehicleGeometry(
-        wheels: const [Offset(0.22, 0.78), Offset(0.74, 0.78), Offset(0.84, 0.78)],
+      return const VehicleGeometry(
+        wheels: [Offset(0.22, 0.78), Offset(0.74, 0.78), Offset(0.84, 0.78)],
         wheelR: 0.11,
         topY: 0.14,
         leftX: 0.05,
         rightX: 0.95,
-        hotspots: const [
+        hotspots: [
           HotspotSpec(0.06, 0.50, 0.18, 0.25, 'engine', 'เครื่องยนต์'),
           HotspotSpec(0.10, 0.60, 0.10, 0.14, 'oil', 'น้ำมันเครื่อง'),
           HotspotSpec(0.07, 0.44, 0.09, 0.12, 'battery', 'แบตเตอรี่'),
@@ -221,13 +221,13 @@ VehicleGeometry geometryFor(VehicleArchetype a) {
       );
 
     case VehicleArchetype.bus:
-      return VehicleGeometry(
-        wheels: const [Offset(0.18, 0.78), Offset(0.76, 0.78), Offset(0.86, 0.78)],
+      return const VehicleGeometry(
+        wheels: [Offset(0.18, 0.78), Offset(0.76, 0.78), Offset(0.86, 0.78)],
         wheelR: 0.115,
         topY: 0.12,
         leftX: 0.04,
         rightX: 0.96,
-        hotspots: const [
+        hotspots: [
           HotspotSpec(0.78, 0.48, 0.16, 0.26, 'engine', 'เครื่องยนต์ท้ายบัส'),
           HotspotSpec(0.82, 0.58, 0.10, 0.14, 'oil', 'น้ำมันเครื่อง'),
           HotspotSpec(0.12, 0.60, 0.10, 0.12, 'battery', 'แบตเตอรี่ระบบไฟ'),
@@ -244,13 +244,13 @@ VehicleGeometry geometryFor(VehicleArchetype a) {
       );
 
     case VehicleArchetype.truck:
-      return VehicleGeometry(
-        wheels: const [Offset(0.18, 0.78), Offset(0.72, 0.78), Offset(0.84, 0.78)],
+      return const VehicleGeometry(
+        wheels: [Offset(0.18, 0.78), Offset(0.72, 0.78), Offset(0.84, 0.78)],
         wheelR: 0.12,
         topY: 0.18,
         leftX: 0.04,
         rightX: 0.96,
-        hotspots: const [
+        hotspots: [
           HotspotSpec(0.06, 0.44, 0.20, 0.28, 'engine', 'เครื่องยนต์ดีเซล 6 สูบ'),
           HotspotSpec(0.12, 0.58, 0.10, 0.14, 'oil', 'น้ำมันเครื่อง'),
           HotspotSpec(0.24, 0.58, 0.10, 0.14, 'battery', 'แบตเตอรี่ 24V'),
@@ -266,13 +266,13 @@ VehicleGeometry geometryFor(VehicleArchetype a) {
       );
 
     case VehicleArchetype.mixer:
-      return VehicleGeometry(
-        wheels: const [Offset(0.18, 0.78), Offset(0.70, 0.78), Offset(0.82, 0.78)],
+      return const VehicleGeometry(
+        wheels: [Offset(0.18, 0.78), Offset(0.70, 0.78), Offset(0.82, 0.78)],
         wheelR: 0.12,
         topY: 0.12,
         leftX: 0.04,
         rightX: 0.96,
-        hotspots: const [
+        hotspots: [
           HotspotSpec(0.06, 0.44, 0.20, 0.28, 'engine', 'เครื่องยนต์โม่ปูน'),
           HotspotSpec(0.12, 0.58, 0.10, 0.14, 'oil', 'น้ำมันเครื่อง'),
           HotspotSpec(0.24, 0.58, 0.10, 0.14, 'battery', 'แบตเตอรี่ 24V'),
