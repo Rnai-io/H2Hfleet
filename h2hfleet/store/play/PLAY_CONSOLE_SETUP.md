@@ -37,7 +37,7 @@ https://rnai-io.github.io/H2Hfleet/privacy-policy.html
 |---|---|
 | ชื่อ | `Fleet manager demo account` |
 | ชื่อผู้ใช้ | `playreview@h2hfleet.app` |
-| รหัสผ่าน | `H2HPlay!Review2026` |
+| รหัสผ่าน | ➜ ดูใน `SECRETS.local.md` (ไม่อยู่ใน git) |
 | ข้อมูลอื่น ๆ | คัดลอกบล็อกภาษาอังกฤษจาก `REVIEWER_ACCESS.md` |
 
 > ⚠️ ห้ามเว้นว่าง แอปคุณล็อกอินก่อนใช้ทุกหน้า ถ้าไม่ให้บัญชี reviewer จะ reject ด้วยเหตุผล "cannot access app functionality"

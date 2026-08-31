@@ -11,7 +11,7 @@
    | ช่อง | ค่า |
    |---|---|
    | Email | `playreview@h2hfleet.app` |
-   | Password | `H2HPlay!Review2026` |
+   | Password | ➜ ดูใน `SECRETS.local.md` (ไม่อยู่ใน git) |
    | Auto Confirm User | ✅ **ต้องติ๊ก** — reviewer กดยืนยันอีเมลไม่ได้ |
 
 2. Supabase → **SQL Editor → New Query** → รัน `SUPABASE_ACCOUNT_DELETION.sql` (ที่ repo root)
@@ -30,7 +30,7 @@
 |---|---|
 | Name | `Fleet manager demo account` |
 | Username | `playreview@h2hfleet.app` |
-| Password | `H2HPlay!Review2026` |
+| Password | ➜ ดูใน `SECRETS.local.md` (ไม่อยู่ใน git) |
 | Any other information | ข้อความด้านล่าง |
 
 ### Any other information (คัดลอกทั้งบล็อก)

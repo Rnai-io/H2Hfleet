@@ -1,5 +1,8 @@
 # 🚀 H2H Fleet — คู่มืออัปขึ้น Google Play Store
 
+> 🔐 **ไฟล์นี้อยู่ใน public repo — ห้ามใส่รหัสผ่านหรือคีย์ใด ๆ ลงที่นี่**
+> ความลับทั้งหมดอยู่ใน `SECRETS.local.md` ที่ root ซึ่งถูก gitignore ไว้
+
 อัปเดตล่าสุด: 31 ส.ค. 2026 · Application ID: `com.h2hfleet.app` · เวอร์ชัน `1.1.0+5`
 
 ---
@@ -10,7 +13,7 @@
 |---|---|
 | ไฟล์ | `h2hfleet/android/upload-keystore.jks` (PKCS12) |
 | Alias | `h2hfleet-upload` |
-| Password (ทั้ง store และ key) | `vtdLUGktyJXB1nErYAbic4T6bhkf` |
+| Password (ทั้ง store และ key) | ➜ ดูใน `SECRETS.local.md` (ไม่อยู่ใน git) |
 | หมดอายุ | 16 ม.ค. 2597 |
 | SHA-256 | `1C:B7:95:7A:03:66:0A:DC:89:9A:F8:E4:4A:28:20:02:FB:7E:77:3F:5D:7F:5D:B4:3A:06:42:9B:EF:FC:25:5B` |
 

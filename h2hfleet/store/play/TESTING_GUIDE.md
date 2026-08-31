@@ -61,7 +61,7 @@ Emulator ที่เพิ่งสร้างจะ**ไม่มีพิก
 ### 4.1 เข้าสู่ระบบ
 
 - [ ] เปิดแอปขึ้นหน้า Login ไม่ใช่จอขาว
-- [ ] ล็อกอินด้วย `playreview@h2hfleet.app` / `H2HPlay!Review2026`
+- [ ] ล็อกอินด้วย `playreview@h2hfleet.app` / ➜ ดูใน `SECRETS.local.md` (ไม่อยู่ใน git)
 - [ ] เข้าแดชบอร์ดได้ ไม่ต้องยืนยันอีเมลหรือ OTP
 
 ### 4.2 ข้อมูลจาก seed ขึ้นครบ
@@ -102,7 +102,7 @@ Emulator ที่เพิ่งสร้างจะ**ไม่มีพิก
 
 1. Supabase → Authentication → Users → Add user
    - Email: `throwaway1@h2hfleet.app`
-   - Password: `Throwaway!2026`
+   - Password: ➜ ดูใน `SECRETS.local.md` (ไม่อยู่ใน git)
    - ✅ Auto Confirm User
 2. ล็อกอินด้วยบัญชีนี้ในแอป — ระบบจะสร้างบริษัทเปล่าให้อัตโนมัติ (`ensureUserProfile`)
 

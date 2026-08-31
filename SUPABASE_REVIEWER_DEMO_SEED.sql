@@ -5,7 +5,7 @@
 -- ⚠️ ก่อนรันสคริปต์นี้ ต้องสร้าง auth user ก่อนด้วยมือ:
 --    Supabase Dashboard -> Authentication -> Users -> Add user -> Create new user
 --      Email:            playreview@h2hfleet.app
---      Password:         H2HPlay!Review2026
+--      Password:         <รหัสผ่านที่คุณตั้งใน Supabase>
 --      Auto Confirm User: ✅ ติ๊กให้เรียบร้อย (สำคัญ — reviewer ยืนยันอีเมลไม่ได้)
 --    แล้วค่อยรันไฟล์นี้เพื่อเติมข้อมูลตัวอย่างให้บัญชีนั้น
 --
